@@ -26,7 +26,7 @@ jobs:
         # Path to Doxyfile
         doxyfile-path: "./Doxyfile" # default is ./Doxyfile
         # Working directory
-        working-directory: "./n4-flight-software" # default is .
+        working-directory: "." # default is .
     
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
