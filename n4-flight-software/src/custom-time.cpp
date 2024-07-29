@@ -7,6 +7,9 @@
 
 #include "custom-time.h"
 
+char tstamp[50]; // to hold a timestamp
+int minute=0, sec=0, msec=0;
+
 /*!****************************************************************************
  * @brief convert time in millisecsonds to minutes, seconds and time that are human readable
  * @param msec time in milliseconds, got from millis() function

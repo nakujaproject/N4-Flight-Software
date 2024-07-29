@@ -9,9 +9,6 @@
 
 #include <Arduino.h>
 
-char tstamp[50]; // to hold a timestamp
-int minute=0, sec=0, msec=0;
-
 char* convertTimestamp(unsigned long);
 
 #endif
