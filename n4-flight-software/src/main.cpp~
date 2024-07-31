@@ -157,6 +157,21 @@ QueueHandle_t gps_data_qHandle;
 
 //////////////////////////// ACCELERATION AND ROCKET ATTITUDE DETERMINATION /////////////////
 
+
+/*!****************************************************************************
+ * @brief Check the current state of the flight software
+ * @param pvParameters - A value that is passed as the paramater to the created task.
+ * If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - 
+ * so it is not valid to pass the address of a stack variable.
+ * @return Updates the telemetry data flight state value
+ * 
+ *******************************************************************************/
+void checkFlightState(void* pvParameters) {
+
+	
+}
+
+
 /*!****************************************************************************
  * @brief Read aceleration data from the accelerometer
  * @param pvParameters - A value that is passed as the paramater to the created task.

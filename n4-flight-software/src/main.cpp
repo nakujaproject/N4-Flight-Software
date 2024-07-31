@@ -57,9 +57,23 @@ long long current_time = 0;
 long long previous_time = 0;
 
 /**
+ * Task syncronization variables 
+ */
+// event group bits 
+#define TRANSMIT_TELEMETRY_BIT  ((EventBits_t) 0x01 << 0)   // for bit 0
+#define CHECK_FLIGHT_STATE_BIT  ((EventBits_t) 0x01 << 1)   // for bit 1
+#define LOG_TO_MEMORY_BIT       ((EventBits_t) 0x01 << 2)   // for bit 2
+#define TRANSMIT_XBEE_TASK      ((EventBits_t) 0x01 << 3)   // for bit 3
+#define DEBUG_TO_TERM_TASK      ((EventBits_t) 0x01 << 4)   // for bit 4
+
+// event group type for task syncronization
+EventGroupHandle_t tasksDataReceiveEventGroup;
+
+
+
+/**
  * ///////////////////////// DATA VARIABLES /////////////////////////
 */
-
 accel_type_t acc_data;
 gyro_type_t gyro_data;
 gps_type_t gps_data;
@@ -155,22 +169,10 @@ QueueHandle_t gps_data_qHandle;
 //     mqtt_client.setServer(MQTT_SERVER, MQTT_PORT);
 // }
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////// ACCELERATION AND ROCKET ATTITUDE DETERMINATION /////////////////
-
-
-/*!****************************************************************************
- * @brief Check the current state of the flight software
- * @param pvParameters - A value that is passed as the paramater to the created task.
- * If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - 
- * so it is not valid to pass the address of a stack variable.
- * @return Updates the telemetry data flight state value
- * 
- *******************************************************************************/
-void checkFlightState(void* pvParameters) {
-
-	
-}
-
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!****************************************************************************
  * @brief Read aceleration data from the accelerometer
@@ -365,6 +367,58 @@ void readGPSTask(void* pvParameters){
         }
     }
 
+}
+
+/*!****************************************************************************
+ * @brief dequeue data from telemetry queue after all the tasks have consumed the data
+ * @param pvParameters - A value that is passed as the paramater to the created task.
+ * If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - 
+ * so it is not valid to pass the address of a stack variable.
+ * @return none
+ * 
+ *******************************************************************************/
+void clearTelemetryQueueTask(void* pvParameters) {
+    telemetry_type_t data_item; // data item to dequeue
+
+    const EventBits_t xBitsToWaitFor = (TRANSMIT_TELEMETRY_BIT | CHECK_FLIGHT_STATE_BIT | LOG_TO_MEMORY_BIT); // todo: ADD  TRANSMIT_TTO_XBEE AND DEBUG TO_TERMINAL
+    EventBits_t xEventGroupValue;
+    
+    while (1) {
+        xEventGroupValue = xEventGroupWaitBits(
+                tasksDataReceiveEventGroup, 		// event group to use
+                xBitsToWaitFor, 	                // bit combo to wait for 
+                pdTRUE,				                // clear all bits on exit
+                pdTRUE, 			                // Wait for all bits (AND)
+                portMAX_DELAY		                // wait indefinitely
+        );
+
+        // check if all data consuming tasks have received the data
+
+        // check TRANSMIT_TELEMETRY TASK
+        if(xEventGroupValue & TRANSMIT_TELEMETRY_BIT != 0) {
+            // TODO: MUST LOG TO SYSTEM LOGGER
+            debugln("[transmit telemetry task receive data OK!]");
+        }
+
+    }
+	
+}
+
+/*!****************************************************************************
+ * @brief Check the current state of the flight - refer to states.h
+ * @param pvParameters - A value that is passed as the paramater to the created task.
+ * If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - 
+ * so it is not valid to pass the address of a stack variable.
+ * @return Updates the telemetry data flight state value
+ * 
+ *******************************************************************************/
+void checkFlightState(void* pvParameters) {
+    // get the flight state from the telemetry task 
+    uint8_t s = xQueueReceive();
+    while (1) {
+	    switch(s);
+    }
+	
 }
 
 
@@ -756,6 +810,9 @@ void setup(){
     // }else{
     //     debugln("[+]FSM task created success");
     // }
+
+    // create task data receive event group 
+    tasksDataReceiveEventGroup = xEventGroupCreate();
 
 }
 
