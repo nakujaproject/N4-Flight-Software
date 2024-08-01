@@ -10,41 +10,41 @@ on:
   
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
 
-  deploy:
-    runs-on: ubuntu0latest
+    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: DenverCoder1/doxygen-github-pages-action@v1.3.1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: gh-pages
-          folder: docs/html
-          config_file: Doxyfile
-
-
-
-  # # This workflow contains a single job called "build"
-  # build:
-  #   # The type of runner that the job will run on
-  #   runs-on: ubuntu-latest
-
-  #   # Steps represent a sequence of tasks that will be executed as part of the job
-  #   steps:
-  #   # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-  #   - uses: actions/checkout@v2
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
         
-  #   - name: Doxygen Action
-  #     uses: mattnotmitt/doxygen-action@v1.1.0
-  #     with:
-  #       # Path to Doxyfile
-  #       doxyfile-path: "./Doxyfile" # default is ./Doxyfile
-  #       # Working directory
-  #       working-directory: "." # default is .
+    - name: Doxygen Action
+      uses: mattnotmitt/doxygen-action@v1.1.0
+      with:
+        # Path to Doxyfile
+        doxyfile-path: "./n4-flight-software/Doxyfile" # default is ./Doxyfile
+        # Working directory
+        working-directory: "./n4-flight-software" # default is .
     
-  #   - name: Deploy
-  #     uses: peaceiris/actions-gh-pages@v3
-  #     with:
-  #       github_token: ${{ secrets.GITHUB_TOKEN }}
-  #       # Default Doxyfile build documentation to html directory. 
-  #       # Change the directory if changes in Doxyfile
-  #       publish_dir: ./html
+    - name: Deploy
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        # Default Doxyfile build documentation to html directory. 
+        # Change the directory if changes in Doxyfile
+        publish_dir: ./n4-flight-software/docs/html
+
+
+
+          # deploy:
+  #   runs-on: ubuntu0latest
+  #   steps:
+  #     - uses: DenverCoder1/doxygen-github-pages-action@v1.3.1
+  #       with:
+  #         github_token: ${{ secrets.GITHUB_TOKEN }}
+  #         branch: gh-pages
+  #         folder: docs/html
+  #         config_file: Doxyfile
+
