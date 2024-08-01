@@ -15,19 +15,20 @@
 #include <Wire.h>
 #include <WiFi.h>
 #include <PubSubClient.h> // TODO: ADD A MQTT SWITCH - TO USE MQTT OR NOT
+#include <TinyGPSPlus.h>
+#include <SFE_BMP180.h>
 #include "sensors.h"
 #include "defs.h"
 #include "mpu.h"
-#include <SFE_BMP180.h>
 #include "SerialFlash.h"
 #include "logger.h"
 #include "data-types.h"
 #include "custom-time.h"
-#include <TinyGPSPlus.h>
+#include "states.h"
 
 /* state machine variables*/
 uint8_t operation_mode = 0;     /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
-uint8_t current_state = 0;	/*!< The starting state - we start at PRE_FLIGHT_GROUND state */
+uint8_t current_state = FLIGHT_STATE::PRE_FLIGHT_GROUND;	    /*!< The starting state - we start at PRE_FLIGHT_GROUND state */
 
 /* create Wi-Fi Client */
 WiFiClient wifi_client;
@@ -63,8 +64,8 @@ long long previous_time = 0;
 #define TRANSMIT_TELEMETRY_BIT  ((EventBits_t) 0x01 << 0)   // for bit 0
 #define CHECK_FLIGHT_STATE_BIT  ((EventBits_t) 0x01 << 1)   // for bit 1
 #define LOG_TO_MEMORY_BIT       ((EventBits_t) 0x01 << 2)   // for bit 2
-#define TRANSMIT_XBEE_TASK      ((EventBits_t) 0x01 << 3)   // for bit 3
-#define DEBUG_TO_TERM_TASK      ((EventBits_t) 0x01 << 4)   // for bit 4
+#define TRANSMIT_XBEE_BIT       ((EventBits_t) 0x01 << 3)   // for bit 3
+#define DEBUG_TO_TERM_BIT       ((EventBits_t) 0x01 << 4)   // for bit 4
 
 // event group type for task syncronization
 EventGroupHandle_t tasksDataReceiveEventGroup;
@@ -72,7 +73,7 @@ EventGroupHandle_t tasksDataReceiveEventGroup;
 
 
 /**
- * ///////////////////////// DATA VARIABLES /////////////////////////
+ * ///////////////////////// DATA TYPES /////////////////////////
 */
 accel_type_t acc_data;
 gyro_type_t gyro_data;
@@ -85,7 +86,9 @@ telemetry_type_t telemetry_packet;
 */
 
 
-///////////////////////// PERIPHERALS INIT /////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////// PERIPHERALS INIT                              /////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * create an MPU6050 object
@@ -98,7 +101,7 @@ MPU6050 imu(0x68, 16, 1000);
 SFE_BMP180 altimeter;
 char status;
 double T, P, p0, a;
-#define ALTITUDE 1525.0 // altitude of iPIC building, JKUAT, Juja.
+#define ALTITUDE 1525.0 // altitude of iPIC building, JKUAT, Juja. TODO: Change to launch site altitude
 
 /*!****************************************************************************
  * @brief Initialize BMP180 barometric sensor
@@ -113,7 +116,6 @@ void BMPInit() {
         Serial.println("BMP init failed");
     }
 }
-
 
 /*!****************************************************************************
  * @brief Initialize the GPS connected on Serial2
@@ -205,7 +207,9 @@ void readAccelerationTask(void* pvParameter) {
 }
 
 
-///////////////////////// ALTITUDE AND VELOCITY DETERMINATION /////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////// ALTITUDE AND VELOCITY DETERMINATION /////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!****************************************************************************
  * @brief Read ar pressure data from the barometric sensor onboard
@@ -392,20 +396,36 @@ void clearTelemetryQueueTask(void* pvParameters) {
                 portMAX_DELAY		                // wait indefinitely
         );
 
-        // check if all data consuming tasks have received the data
+        // Clear the data item from telemetry queue
+        xQueueReceive(telemetry_data_qHandle, &data_item, portMAX_DELAY);
 
+        // check if all data consuming tasks have received the data
         // check TRANSMIT_TELEMETRY TASK
         if(xEventGroupValue & TRANSMIT_TELEMETRY_BIT != 0) {
             // TODO: MUST LOG TO SYSTEM LOGGER
             debugln("[transmit telemetry task receive data OK!]");
         }
 
+        // check CHECK_FLIGHT_STATE_TASK
+        if(xEventGroupValue & CHECK_FLIGHT_STATE_BIT != 0) {
+            // TODO: MUST LOG TO SYSTEM LOGGER
+            debugln("[check state task receive data OK!]");
+        }
+
+        // check LOG_TO_MEMORY task 
+        if(xEventGroupValue & LOG_TO_MEMORY_BIT != 0) {
+            // TODO: MUST LOG TO SYSTEM LOGGER
+            debugln("[log to memory task receive data OK!]");
+        }
+
+        //TODO: XBEE, DEBUG TO TERM
+
     }
 	
 }
 
 /*!****************************************************************************
- * @brief Check the current state of the flight - refer to states.h
+ * @brief Check and update the current state of flight - refer to states.h
  * @param pvParameters - A value that is passed as the paramater to the created task.
  * If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - 
  * so it is not valid to pass the address of a stack variable.
@@ -413,13 +433,38 @@ void clearTelemetryQueueTask(void* pvParameters) {
  * 
  *******************************************************************************/
 void checkFlightState(void* pvParameters) {
-    // get the flight state from the telemetry task 
-    uint8_t s = xQueueReceive();
+    // get the flight state from the telemetry task
+    telemetry_type_t data; 
+    
     while (1) {
-	    switch(s);
+        uint8_t s = xQueuePeek(telemetry_data_qHandle, &data, portMAX_DELAY);
+        xEventGroupSetBits(tasksDataReceiveEventGroup, CHECK_FLIGHT_STATE_BIT); // signal that we have received flight data
+        
+        // extract the flight state
+        flight_state = data.state;
+
+        // check the flight state 
+        if()
+
+        // activate actions based on the current flight state
+	    switch(s) {
+            case FLIGHT_STATE::PRE_FLIGHT_GROUND:
+                // do sth
+                break;
+            case 1:
+                // do sth
+                break;
+            case 0:
+                // do sth
+                break;
+            default:
+                // do sth
+                break;
+        }
     }
-	
 }
+
+
 
 
 /*!****************************************************************************
@@ -433,7 +478,7 @@ void debugToTerminalTask(void* pvParameters){
     telemetry_type_t rcvd_data; // accelration received from acceleration_queue
 
     while(true){
-        if(xQueueReceive(telemetry_data_qHandle, &rcvd_data, portMAX_DELAY) == pdPASS){
+        if(xQueuePeek(telemetry_data_qHandle, &rcvd_data, portMAX_DELAY) == pdPASS){
             // debug CSV to terminal 
             // debug(rcvd_data.acc_data.ax); debug(","); 
             // debug(rcvd_data.acc_data.ay); debug(","); 
@@ -474,6 +519,9 @@ void debugToTerminalTask(void* pvParameters){
         // }else{
         //     /* no queue */
         // }
+
+        xEventGroupSetBits(tasksDataReceiveEventGroup, DEBUG_TO_TERM_BIT); // signal that we have received flight data
+
     }
 }
 
@@ -489,7 +537,9 @@ void logToMemory(void* pvParameter) {
     telemetry_type_t received_packet;
 
     while(1) {
-        xQueueReceive(telemetry_data_qHandle, &received_packet, portMAX_DELAY);
+        xQueuePeek(telemetry_data_qHandle, &received_packet, portMAX_DELAY);
+        xEventGroupSetBits(tasksDataReceiveEventGroup, LOG_TO_MEMORY_BIT); // signal that we have received flight data
+
         // received_packet.record_number++; 
 
         // is it time to record?
@@ -745,6 +795,23 @@ void setup(){
         debugln("GPS task created");
     } else {
         debugln("Failed to create GPS task");
+    }
+
+    /* TASK 4: CLEAR TELEMETRY QUEUE ITEM */
+    th = xTaskCreatePinnedToCore(
+            clearTelemetryQueueTask,         
+            "clearTelemetryQueueTask",
+            STACK_SIZE*2,                  
+            NULL,                       
+            1,
+            NULL,
+            app_id
+        );
+
+    if(th == pdPASS) {
+        debugln("clearTelemetryQueueTask task created");
+    } else {
+        debugln("Failed to create clearTelemetryQueueTask task");
     }
 
     #if DEBUG_TO_TERMINAL   // set SEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor

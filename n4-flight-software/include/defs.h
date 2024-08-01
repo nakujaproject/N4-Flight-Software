@@ -53,16 +53,6 @@
 // const char* SSID = "Galaxy";
 // const char* PASSWORD = "luwa2131";
 
-/* ROCKET FLIGHT STATES */
-#define PRE_FLIGHT          0
-#define POWERED_FLIGHT      1
-#define COASTING            2
-#define APOGEE              3
-#define BALLISTIC_DESCENT   4
-#define PARACHUTE_DESCENT   5
-#define POST_FLIGHT         6
-#define UNDEFINED_STATE     7
-
 #define EJECTION_PIN 12
 /* LEDs for testing - remove on production */
 #define PRE_FLIGHT_LED 4
