@@ -26,6 +26,10 @@
 #include "custom-time.h"
 #include "states.h"
 
+/* function prototyopes definition */
+void drogueChuteDeploy();
+void mainChuteDeploy();
+
 /* state machine variables*/
 uint8_t operation_mode = 0;     /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
 uint8_t current_state = FLIGHT_STATE::PRE_FLIGHT_GROUND;	    /*!< The starting state - we start at PRE_FLIGHT_GROUND state */
@@ -466,50 +470,55 @@ void flightStateCallback(void* pvParameters) {
     while(1) {
         switch (current_state) {
             // PRE_FLIGHT_GROUND
-            case :
-                
+            case FLIGHT_STATE::PRE_FLIGHT_GROUND:
+                debugln("PRE-FLIGHT STATE");
                 break;
 
             // POWERED_FLIGHT
-            case :
-                
+            case FLIGHT_STATE::POWERED_FLIGHT:
+                debugln("POWERED FLIGHT STATE");
                 break;
 
             // COASTING
-            case :
-                
+            case FLIGHT_STATE::COASTING:
+                debugln("COASTING");
                 break;
 
             // APOGEE
-            case :
+            case FLIGHT_STATE::APOGEE:
+                debugln("APOGEE");
                 break;
 
             // DROGUE_DEPLOY
-            case :
+            case FLIGHT_STATE::DROGUE_DEPLOY:
+                debugln("DROGUE DEPLOY");
                 drogueChuteDeploy();
                 break;
 
             // DROGUE_DESCENT
-            case : 
+            case FLIGHT_STATE::DROGUE_DESCENT: 
+                debugln("DROGUE DESCENT");
                 break;
 
             // MAIN_DEPLOY
-            case :
+            case FLIGHT_STATE::MAIN_DEPLOY:
+                debugln("MAIN CHUTE DEPLOY");
                 mainChuteDeploy();
                 break;
 
             // MAIN_DESCENT
-            case :
-                
+            case FLIGHT_STATE::MAIN_DESCENT:
+                debugln("MAIN CHUTE DESCENT");
                 break;
 
             // POST_FLIGHT_GROUND
-            case :
-                
+            case FLIGHT_STATE::POST_FLIGHT_GROUND:
+                debugln("POST FLIGHT GROUND");
                 break;
             
             // MAINTAIN AT PRE_FLIGHT_GROUND IF NO STATE IS SPECIFIED - NOT GONNA HAPPEN BUT BETTER SAFE THAN SORRY
             default:
+                debugln(current_state);
                 break;
 
         }
@@ -705,6 +714,30 @@ void logToMemory(void* pvParameter) {
 // }
 
 
+
+/*!****************************************************************************
+ * @brief fires the pyro-charge to deploy the drogue chute
+ * Turn on the drogue chute ejection circuit by running the GPIO 
+ * HIGH for a preset No. of seconds.  
+ * Default no. of seconds to remain HIGH is 5 
+ * 
+ *******************************************************************************/
+void drogueChuteDeploy() {
+    Serial.println("DROGUE CHUTE DEPLOYED");
+}
+
+/*!****************************************************************************
+ * @brief fires the pyro-charge to deploy the main chute
+ * Turn on the main chute ejection circuit by running the GPIO 
+ * HIGH for a preset No. of seconds.  
+ * Default no. of seconds to remain HIGH is 5 
+ * 
+ *******************************************************************************/
+void mainChuteDeploy() {
+    Serial.println("MAIN CHUTE DEPLOYED");
+}
+
+
 /*!****************************************************************************
  * @brief Setup - perfom initialization of all hardware subsystems, create queues, create queue handles 
  * initialize system check table
@@ -894,6 +927,7 @@ void setup(){
                 NULL
         ) != pdPASS){
             debugln("[-]logToMemory task failed to create");
+  
         }else{
             debugln("[+]logToMemory task created success");
         }
@@ -915,7 +949,6 @@ void setup(){
     // create  event group to sync flight data consumption 
     // see N4 flight software docs for more info
     tasksDataReceiveEventGroup = xEventGroupCreate();
-
 }
 
 
