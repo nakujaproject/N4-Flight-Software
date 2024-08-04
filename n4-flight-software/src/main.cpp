@@ -384,7 +384,7 @@ void readGPSTask(void* pvParameters){
 void clearTelemetryQueueTask(void* pvParameters) {
     telemetry_type_t data_item; // data item to dequeue
 
-    const EventBits_t xBitsToWaitFor = (TRANSMIT_TELEMETRY_BIT | CHECK_FLIGHT_STATE_BIT | LOG_TO_MEMORY_BIT); // todo: ADD  TRANSMIT_TTO_XBEE AND DEBUG TO_TERMINAL
+    const EventBits_t xBitsToWaitFor = (TRANSMIT_TELEMETRY_BIT | CHECK_FLIGHT_STATE_BIT | LOG_TO_MEMORY_BIT); // todo: ADD  TRANSMIT_TO_XBEE AND DEBUG TO_TERMINAL
     EventBits_t xEventGroupValue;
     
     while (1) {
@@ -434,37 +434,87 @@ void clearTelemetryQueueTask(void* pvParameters) {
  *******************************************************************************/
 void checkFlightState(void* pvParameters) {
     // get the flight state from the telemetry task
-    telemetry_type_t data; 
+    telemetry_type_t sensor_data; 
     
     while (1) {
-        uint8_t s = xQueuePeek(telemetry_data_qHandle, &data, portMAX_DELAY);
+        uint8_t s = xQueuePeek(telemetry_data_qHandle, &sensor_data, portMAX_DELAY);
         xEventGroupSetBits(tasksDataReceiveEventGroup, CHECK_FLIGHT_STATE_BIT); // signal that we have received flight data
         
-        // extract the flight state
-        flight_state = data.state;
 
-        // check the flight state 
-        if()
+        // check the flight state based on the conditions 
+        // this is a dummy condition
+        if(sensor_data.acc_data.ax < 5 && sensor_data.acc_data.ay > 2){
+            // change flight state to POWERED FLIGHT
+            current_state = FLIGHT_STATE::POWERED_FLIGHT;
+        } 
+        // else if() {}
+    }
 
-        // activate actions based on the current flight state
-	    switch(s) {
-            case FLIGHT_STATE::PRE_FLIGHT_GROUND:
-                // do sth
+}
+
+/*!****************************************************************************
+ * @brief performs flight actions based on the current flight state
+ * If the flight state neccessisates an operation, we perfom it here
+ * For example if the flight state is apogee, we perfom MAIN_CHUTE ejection
+ * 
+ * @param pvParameter - A value that is passed as the paramater to the created task.
+ * If pvParameter is set to the address of a variable then the variable must still exist when the created task executes - 
+ * so it is not valid to pass the address of a stack variable.
+ * 
+ *******************************************************************************/
+void flightStateCallback(void* pvParameters) {
+    while(1) {
+        switch (current_state) {
+            // PRE_FLIGHT_GROUND
+            case :
+                
                 break;
-            case 1:
-                // do sth
+
+            // POWERED_FLIGHT
+            case :
+                
                 break;
-            case 0:
-                // do sth
+
+            // COASTING
+            case :
+                
                 break;
+
+            // APOGEE
+            case :
+                break;
+
+            // DROGUE_DEPLOY
+            case :
+                drogueChuteDeploy();
+                break;
+
+            // DROGUE_DESCENT
+            case : 
+                break;
+
+            // MAIN_DEPLOY
+            case :
+                mainChuteDeploy();
+                break;
+
+            // MAIN_DESCENT
+            case :
+                
+                break;
+
+            // POST_FLIGHT_GROUND
+            case :
+                
+                break;
+            
+            // MAINTAIN AT PRE_FLIGHT_GROUND IF NO STATE IS SPECIFIED - NOT GONNA HAPPEN BUT BETTER SAFE THAN SORRY
             default:
-                // do sth
                 break;
+
         }
     }
 }
-
-
 
 
 /*!****************************************************************************
@@ -721,9 +771,9 @@ void setup(){
     }
 
     if(telemetry_data_qHandle == NULL) {
-        debugln("Telemetry queue created");
+        debugln("[-]Telemetry queue creation failed");
     } else {
-        debugln("Failed to create telemetry queue");
+        debugln("[+]Telemetry queue creation success");
     }
 
     // if(filtered_data_queue == NULL){
@@ -743,99 +793,83 @@ void setup(){
      * All tasks have a stack size of 1024 words - not bytes!
      * ESP32 is 32 bit, therefore 32bits x 1024 = 4096 bytes
      * So the stack size is 4096 bytes
-     * */
+     * 
+     * TASK CREATION PARAMETERS
+     * function that executes this task
+     * Function name - for debugging 
+     * Stack depth in words 
+     * parameter to be passed to the task 
+     * Task priority - in this case 1 
+     * task handle that can be passed to other tasks to reference the task 
+     *
+     * /
     debugln("==============Creating tasks==============");
 
     /* TASK 1: READ ACCELERATION DATA */
-   th = xTaskCreatePinnedToCore(
-        readAccelerationTask,         
-        "readGyroscope",
-        STACK_SIZE*2,                  
-        NULL,                       
-        1,
-        NULL,
-        app_id
-   );
-
-   if(th == pdPASS) {
-    Serial.println("Read acceleration task created");
-   } else {
-    Serial.println("Read acceleration task creation failed");
-   }
+    th = xTaskCreatePinnedToCore(readAccelerationTask, "readGyroscope", STACK_SIZE*2, NULL, 1, NULL,app_id);
+    if(th == pdPASS) {
+        Serial.println("[+]Read acceleration task created]");
+    } else {
+        Serial.println("[-]Read acceleration task creation failed");
+    }
 
     /* TASK 2: READ ALTIMETER DATA */
-   th = xTaskCreatePinnedToCore(
-           readAltimeterTask,           /* function that executes this task*/
-           "readAltimeter",             /* Function name - for debugging */
-           STACK_SIZE*2,                /* Stack depth in words */
-           NULL,                        /* parameter to be passed to the task */
-           2,                           /* Task priority - in this case 1 */
-           NULL,                        /* task handle that can be passed to other tasks to reference the task */
-           app_id
-        );
-
+    th = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*2,NULL,2,NULL,app_id);
     if(th == pdPASS) {
-        debugln("Read altimeter task created successfully");
+        debugln("[+]Read altimeter task created successfully");
     } else {
-        debugln("Failed to create read altimeter task");
+        debugln("[-]Failed to create read altimeter task");
     }
 
     /* TASK 3: READ GPS DATA */
-    th = xTaskCreatePinnedToCore(
-            readGPSTask,         
-            "readGPS",
-            STACK_SIZE*2,                  
-            NULL,                       
-            1,
-            NULL,
-            app_id
-        );
+    th = xTaskCreatePinnedToCore(readGPSTask, "readGPS", STACK_SIZE*2, NULL,1,NULL, app_id);
 
     if(th == pdPASS) {
-        debugln("GPS task created");
+        debugln("[+]GPS task created");
     } else {
-        debugln("Failed to create GPS task");
+        debugln("[-]Failed to create GPS task");
     }
 
     /* TASK 4: CLEAR TELEMETRY QUEUE ITEM */
-    th = xTaskCreatePinnedToCore(
-            clearTelemetryQueueTask,         
-            "clearTelemetryQueueTask",
-            STACK_SIZE*2,                  
-            NULL,                       
-            1,
-            NULL,
-            app_id
-        );
+    th = xTaskCreatePinnedToCore(clearTelemetryQueueTask,"clearTelemetryQueueTask",STACK_SIZE*2,NULL,1, NULL,app_id);
 
     if(th == pdPASS) {
-        debugln("clearTelemetryQueueTask task created");
+        debugln("[+]clearTelemetryQueueTask task created");
     } else {
-        debugln("Failed to create clearTelemetryQueueTask task");
+        debugln("[-]Failed to create clearTelemetryQueueTask task");
+    }
+
+    /* TASK 5: CHECK FLIGHT STATE TASK */
+    th = xTaskCreatePinnedToCore(checkFlightState,"checkFlightState",STACK_SIZE*2,NULL,1, NULL,app_id);
+    if(th == pdPASS) {
+        debugln("[+]checkFlightState task created");
+    } else {
+        debugln("[-}Failed to create checkFlightState task");
+    }
+
+    /* TASK 6: FLIGHT STATE CALLBACK TASK */    
+    th = xTaskCreatePinnedToCore(flightStateCallback,"flightStateCallback",STACK_SIZE*2,NULL,1, NULL,app_id);
+    if(th == pdPASS) {
+        debugln("[+]flightStateCallback task created");
+    } else {
+        debugln("[-}Failed to create flightStateCallback task");
     }
 
     #if DEBUG_TO_TERMINAL   // set SEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
-    /* TASK 4: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
-    th = xTaskCreatePinnedToCore(
-            debugToTerminalTask,
-            "displayData",
-            STACK_SIZE,
-            NULL,
-            1,
-            NULL,
-            app_id
-        );
+
+    /* TASK 7: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
+    th = xTaskCreatePinnedToCore(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE,NULL,1,NULL,app_id);
         
     if(th == pdPASS) {
-        Serial.println("Task created");
+        Serial.println("[+}debugToTerminalTaskTask created");
     } else {
-        Serial.println("Task not created");
+        Serial.println("[-}Task not created");
     }
 
     #endif // DEBUG_TO_TERMINAL_TASK
 
 
-    /* TASK 4: TRANSMIT TELEMETRY DATA */
+    /* TASK 8: TRANSMIT TELEMETRY DATA */
     // if(xTaskCreate(
     //         transmitTelemetry,
     //         "transmit_telemetry",
@@ -849,8 +883,8 @@ void setup(){
     //     debugln("[+]Transmit task created success");
     // }
 
-    #if LOG_TO_MEMORY   // set LOG_TO_MEMORY to 1 to allow loggin to memory 
-        /* TASK 4: LOG DATA TO MEMORY */
+    #if LOG_TO_MEMORY   // set LOG_TO_MEMORY to 1 to allow logging to memory 
+        /* TASK 9: LOG DATA TO MEMORY */
         if(xTaskCreate(
                 logToMemory,
                 "logToMemory",
@@ -878,7 +912,8 @@ void setup(){
     //     debugln("[+]FSM task created success");
     // }
 
-    // create task data receive event group 
+    // create  event group to sync flight data consumption 
+    // see N4 flight software docs for more info
     tasksDataReceiveEventGroup = xEventGroupCreate();
 
 }
