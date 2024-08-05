@@ -1,6 +1,8 @@
 #ifndef DEFS_H
 #define DEFS_H
 
+#include <Arduino.h>
+
 // to select the telemetry transfer method used 
 #define MQTT 1 // set this to 1 if using MQTT for telemetry transfer
 #define XBEE 1  // set to 1 if using XBEE for telemetry transfer
@@ -13,7 +15,7 @@
 #define LOG_TO_MEMORY 0 // set to 1 during live testing
 #define DEBUG_TO_TERMINAL 1 // set to 0 for production
 
-#if DEBUG // DEBUG
+#if DEBUG
 #define debug(x) Serial.print(x)
 #define debugln(x) Serial.println(x)
 #define debugf(x, y) Serial.printf(x, y)

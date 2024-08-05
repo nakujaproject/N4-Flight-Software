@@ -51,35 +51,35 @@
 
 class MPU6050 {
     private:
-    uint8_t _address;
-    uint32_t _accel_fs_range;
-    uint32_t _gyro_fs_range;
-    
+        uint8_t _address;
+        uint32_t _accel_fs_range;
+        uint32_t _gyro_fs_range;
+
     public:
-    // sensor data
-    int16_t acc_x, acc_y, acc_z; // raw acceleration values  
-    float acc_x_real, acc_y_real, acc_z_real; // converted aceleration values 
-    int16_t ang_vel_x, ang_vel_y, ang_vel_z;
-    float ang_vel_x_real, ang_vel_y_real, ang_vel_z_real; // converted angular velocity values 
-    int16_t temp;
-    float temp_real;
+        // sensor data
+        int16_t acc_x, acc_y, acc_z; // raw acceleration values
+        float acc_x_real, acc_y_real, acc_z_real; // converted acceleration values
+        int16_t ang_vel_x, ang_vel_y, ang_vel_z;
+        float ang_vel_x_real, ang_vel_y_real, ang_vel_z_real; // converted angular velocity values
+        int16_t temp;
+        float temp_real;
 
-    float pitch_angle, roll_angle;
-    float acc_x_ms, acc_y_ms, acc_z_ms; // acceleration in m/s^2
+        float pitch_angle, roll_angle;
+        float acc_x_ms, acc_y_ms, acc_z_ms; // acceleration in m/s^2
 
 
-    MPU6050(uint8_t address, uint32_t accel_fs_range, uint32_t gyro_fs_range);
-    void init();
-    float readXAcceleration();
-    float readYAcceleration();
-    float readZAcceleration();
-    float readXAngularVelocity();
-    float readYAngularVelocity();
-    float readZAngularVelocity();
-    float readTemperature();
-    void filterImu();
-    float getRoll();
-    float getPitch();
+        MPU6050(uint8_t address, uint32_t accel_fs_range, uint32_t gyro_fs_range);
+        void init();
+        float readXAcceleration();
+        float readYAcceleration();
+        float readZAcceleration();
+        float readXAngularVelocity();
+        float readYAngularVelocity();
+        float readZAngularVelocity();
+        float readTemperature();
+        void filterImu();
+        float getRoll();
+        float getPitch();
 
 };
 
