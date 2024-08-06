@@ -1,0 +1,40 @@
+/*! @mainpage
+ *
+ * @section intro_sec Introduction
+ *
+ * This documetation describes in detail the code used for N4 flight computers, with complete file resolution, variables description, functions definitions and include files description. 
+ Discalimer: If you discover any unresolved bug you can submit a pull request by following our contribution guidelines on []()
+ *
+ * @section install_sec Running the example
+ * 
+ * This example was created using Fedora 33 (x86/64).
+ *
+ * @subsection step1 System requirements
+ *
+ * In order to compile this example, the build essentials must be installed.
+ * 
+ * - Debian derivates
+ * @code{.sh}
+ * sudo apt install build-essential
+ * @endcode
+ * 
+ * - RHEL derivates
+ * @code{.sh}
+ * sudo dnf install make cmake gcc gcc-c++
+ * @endcode
+ *
+ * @subsection step2 Building the code
+ *
+ * 1. Generate the build environment
+ * @code{.sh}
+ * cmake -S <path-to-source-directory> -B <path-to-build-directory>
+ * @endcode
+ *
+ * 2. Start compilation
+ * @code{.sh}
+ * cmake --build <path-to-build-directory>
+ * @endcode
+ *
+ * 3. The binary can now be found here\n
+ * <tt><path-to-build-directory>/DoxygenSample/DoxygenSample</tt>
+ */
