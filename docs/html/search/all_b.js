@@ -1,9 +1,15 @@
 var searchData=
 [
-  ['blink_5f200ms_0',['blink_200ms',['../src_2main_8cpp.html#a4139203bf745c4d38fd73bab228d571e',1,'main.cpp']]],
-  ['bmpinit_1',['BMPInit',['../src_2main_8cpp.html#a80d57b1ee5cb9d474465d3f8485f5bbc',1,'main.cpp']]],
-  ['brown_20m_20m_20s_20a_2',['&lt;a href=&quot;https://en.wikipedia.org/wiki/Van_Halen#Contract_riders&quot; &gt;No Brown M&amp;M&apos;s&lt;/a&gt;',['../md_contributing.html#autotoc_md14',1,'']]],
-  ['budget_20calculation_3',['Link budget calculation',['../F:/5th-year/project/N4-Flight-Software/README.md#autotoc_md37',1,'']]],
-  ['bug_20reports_20and_20other_20issues_4',[':beetle: Bug Reports and Other Issues',['../md_contributing.html#autotoc_md6',1,'']]],
-  ['buzz_5',['buzz',['../src_2main_8cpp.html#a28b1eb955e6e2f5e83599536f6bf4d2f',1,'main.cpp']]]
+  ['calculating_20acceleration_20from_20accelerometer_0',['Calculating acceleration from accelerometer',['../index.html#autotoc_md40',1,'']]],
+  ['calculating_20velocity_20from_20accelerometer_1',['Calculating velocity from accelerometer',['../index.html#autotoc_md41',1,'']]],
+  ['calculation_2',['Link budget calculation',['../index.html#autotoc_md21',1,'']]],
+  ['capture_20and_20streaming_3',['10. Video capture and streaming**',['../index.html#autotoc_md13',1,'']]],
+  ['chip_20hardware_20tests_4',['Flash chip hardware tests',['../index.html#autotoc_md25',1,'']]],
+  ['code_20documentation_5',['Code documentation',['../index.html#autotoc_md1',1,'']]],
+  ['command_20and_20data_20handling_6',['8. Command and data handling',['../index.html#autotoc_md11',1,'']]],
+  ['communication_7',['Data queues and task communication',['../index.html#autotoc_md17',1,'']]],
+  ['complementary_20filter_8',['Complementary filter',['../index.html#autotoc_md44',1,'']]],
+  ['conditions_9',['State transition conditions',['../index.html#autotoc_md37',1,'']]],
+  ['converter_10',['1. HEX converter',['../index.html#autotoc_md46',1,'']]],
+  ['creation_11',['Tasks and task creation',['../index.html#autotoc_md14',1,'']]]
 ];

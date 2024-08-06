@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['contributing_20guidelines_0',['Contributing Guidelines',['../md_contributing.html',1,'']]]
+  ['flight_20software_20documentation_0',['N4 Flight Software Documentation',['../index.html',1,'']]]
 ];
