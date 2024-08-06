@@ -1352,6 +1352,7 @@ void setup(){
     } else {
         debugln("[-}Failed to create checkFlightState task");
     }
+    //
 
     /* TASK 6: FLIGHT STATE CALLBACK TASK */    
     th = xTaskCreatePinnedToCore(flightStateCallback,"flightStateCallback",STACK_SIZE*2,NULL,1, NULL,app_id);
