@@ -949,7 +949,8 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = README.md /
+INPUT                  =
+INPUT                   += README.md
 USE_MDFILE_AS_MAINPAGE = README.md
 
 # This tag can be used to specify the character encoding of the source files
@@ -1040,7 +1041,8 @@ FILE_PATTERNS          = *.c \
                          *.vhdl \
                          *.ucf \
                          *.qsf \
-                         *.ice
+                         *.ice \
+                         *.md 
 
 # The RECURSIVE tag can be used to specify whether or not subdirectories should
 # be searched for input files as well.
