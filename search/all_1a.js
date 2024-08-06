@@ -1,0 +1,26 @@
+var searchData=
+[
+  ['scripts_0',['Utility scripts',['../md_README.html#autotoc_md45',1,'']]],
+  ['sd_5fcs_5fpin_1',['SD_CS_PIN',['../src_2main_8cpp.html#adcf3e4d2276ee4d10b23c05e4e7da0c3',1,'main.cpp']]],
+  ['set_5frun_5fmode_5fpin_2',['SET_RUN_MODE_PIN',['../src_2main_8cpp.html#abea45f8bc016d99f82b468ae77916e64',1,'main.cpp']]],
+  ['set_5ftest_5fmode_5fpin_3',['SET_TEST_MODE_PIN',['../src_2main_8cpp.html#ac0121f71eae2488320c2cd36a4843976',1,'main.cpp']]],
+  ['setup_4',['setup',['../src_2main_8cpp.html#a4fc01d736fe50cf5b977f755b675f11d',1,'main.cpp']]],
+  ['software_20documentation_5',['N4 Flight Software Documentation',['../md_README.html',1,'']]],
+  ['software_20requirements_6',['N4 Flight software requirements',['../md_README.html#autotoc_md2',1,'']]],
+  ['soh_7',['SOH',['../src_2main_8cpp.html#ab3796cca360697d3658162dba5965e28',1,'main.cpp']]],
+  ['soh_5frecvd_5fflag_8',['SOH_recvd_flag',['../src_2main_8cpp.html#a6a02e76e786465c8d2fe8ba9ad3393da',1,'main.cpp']]],
+  ['state_20functions_20handling_9',['State functions handling',['../md_README.html#autotoc_md38',1,'']]],
+  ['state_20machine_20logic_20and_20operation_10',['State machine logic and operation',['../md_README.html#autotoc_md34',1,'']]],
+  ['state_20transition_20conditions_11',['State transition conditions',['../md_README.html#autotoc_md37',1,'']]],
+  ['state_20transitions_12',['3. Flight state transitions',['../md_README.html#autotoc_md6',1,'']]],
+  ['state_5fmachine_13',['State_machine',['../classState__machine.html',1,'']]],
+  ['state_5fmachine_2ecpp_14',['state_machine.cpp',['../include_2state__machine_8cpp.html',1,'(Global Namespace)'],['../test_2state__machine_8cpp.html',1,'(Global Namespace)']]],
+  ['states_15',['States',['../md_README.html#autotoc_md36',1,'']]],
+  ['states_2eh_16',['states.h',['../states_8h.html',1,'']]],
+  ['storage_17',['storage',['../md_README.html#autotoc_md7',1,'4. Data logging and storage'],['../md_README.html#autotoc_md23',1,'Data Logging and storage']]],
+  ['streaming_18',['10. Video capture and streaming**',['../md_README.html#autotoc_md13',1,'']]],
+  ['structure_19',['Telemetry packet structure',['../md_README.html#autotoc_md22',1,'']]],
+  ['switchleds_20',['SwitchLEDs',['../src_2main_8cpp.html#a5f3e40ff0b3b6f2c247fadc41b0a5896',1,'main.cpp']]],
+  ['systemlogger_21',['SystemLogger',['../classSystemLogger.html',1,'']]],
+  ['systems_20diagnostics_22',['5. Onboard systems diagnostics',['../md_README.html#autotoc_md8',1,'']]]
+];

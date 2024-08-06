@@ -1,0 +1,26 @@
+var searchData=
+[
+  ['file_0',['file',['../src_2main_8cpp.html#ada14cbbf98490eb3cb49b5d1cb0c0056',1,'main.cpp']]],
+  ['file_5fsize_5f1m_1',['FILE_SIZE_1M',['../src_2main_8cpp.html#a1ba4fed8e0dad7fbe3e7de830a2e9f6c',1,'main.cpp']]],
+  ['file_5fsize_5f4m_2',['FILE_SIZE_4M',['../src_2main_8cpp.html#aef692c53edfa11997d3470f8ed1d6a26',1,'main.cpp']]],
+  ['file_5fsize_5f512k_3',['FILE_SIZE_512K',['../src_2main_8cpp.html#aa9614a793fcf876f8e55a118d21d2d77',1,'main.cpp']]],
+  ['filename_4',['filename',['../src_2main_8cpp.html#a6c2affe0788e6ba12dce7a51e1bd35c3',1,'main.cpp']]],
+  ['filter_5',['Complementary filter',['../md_README.html#autotoc_md44',1,'']]],
+  ['filtered_5fdata_6',['Filtered_Data',['../structFiltered__Data.html',1,'']]],
+  ['filterimu_7',['filterImu',['../classMPU6050.html#aed4696b264b467844771ef28b274541b',1,'MPU6050']]],
+  ['filtering_8',['Data Filtering',['../md_README.html#autotoc_md42',1,'']]],
+  ['fix_20time_20issues_9',['GPS  fix time issues',['../md_README.html#autotoc_md31',1,'']]],
+  ['fixes_10',['References and Error fixes',['../md_README.html#autotoc_md49',1,'']]],
+  ['flash_20chip_20hardware_20tests_11',['Flash chip hardware tests',['../md_README.html#autotoc_md25',1,'']]],
+  ['flash_20memory_12',['PCB layout for the flash memory',['../md_README.html#autotoc_md26',1,'']]],
+  ['flash_5fcs_5fpin_13',['flash_cs_pin',['../src_2main_8cpp.html#a974c70ac5c2f6156bf0e7fafd973d803',1,'main.cpp']]],
+  ['flash_5fled_5fpin_14',['flash_led_pin',['../src_2main_8cpp.html#ab506410443108766020e011a3c9293af',1,'main.cpp']]],
+  ['flight_20software_20documentation_15',['N4 Flight Software Documentation',['../md_README.html',1,'']]],
+  ['flight_20software_20requirements_16',['N4 Flight software requirements',['../md_README.html#autotoc_md2',1,'']]],
+  ['flight_20state_20transitions_17',['3. Flight state transitions',['../md_README.html#autotoc_md6',1,'']]],
+  ['flightstatecallback_18',['flightStateCallback',['../src_2main_8cpp.html#a6648d201a9f47aa836d36e5339e78ef3',1,'main.cpp']]],
+  ['flowchart_19',['Flowchart',['../md_README.html#autotoc_md32',1,'']]],
+  ['for_20the_20flash_20memory_20',['PCB layout for the flash memory',['../md_README.html#autotoc_md26',1,'']]],
+  ['from_20accelerometer_21',['from accelerometer',['../md_README.html#autotoc_md40',1,'Calculating acceleration from accelerometer'],['../md_README.html#autotoc_md41',1,'Calculating velocity from accelerometer']]],
+  ['functions_20handling_22',['State functions handling',['../md_README.html#autotoc_md38',1,'']]]
+];
