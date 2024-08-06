@@ -3,7 +3,7 @@
 name: Doxygen Action
 
 # Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the main branch
+# events but only for the master branch
 on:
   push:
     branches: [ main ]
@@ -21,14 +21,12 @@ jobs:
     - uses: actions/checkout@v2
         
     - name: Doxygen Action
-    - uses: mattnotmitt/doxygen-action@v1.1.0
+      uses: mattnotmitt/doxygen-action@v1.1.0
       with:
         # Path to Doxyfile
-        doxyfile-path: "Doxyfile" # default is ./Doxyfile
+        doxyfile-path: "./Doxyfile" # default is ./Doxyfile
         # Working directory
-        working-directory: "n4-flight-software" # default is .
-    - run: pwd
-    - run: ls -l
+        working-directory: "." # default is .
     
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
@@ -36,17 +34,4 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         # Default Doxyfile build documentation to html directory. 
         # Change the directory if changes in Doxyfile
-        publish_dir: docs/html
-
-
-
-          # deploy:
-  #   runs-on: ubuntu0latest
-  #   steps:
-  #     - uses: DenverCoder1/doxygen-github-pages-action@v1.3.1
-  #       with:
-  #         github_token: ${{ secrets.GITHUB_TOKEN }}
-  #         branch: gh-pages
-  #         folder: docs/html
-  #         config_file: Doxyfile
-
+        publish_dir: ./docs/html

@@ -1255,19 +1255,19 @@ void setup(){
 
     /* check if the queues were created successfully */
     if(accel_data_qHandle == NULL){
-        debugln("[-]accel data queue creation failed!");
+        debugln("[-]accel data queue creation failed");
     } else{
         debugln("[+]Acceleration data queue creation OK.");
     }
     
     if(altimeter_data_qHandle == NULL){
-        debugln("[-]Altimeter data queue creation failed!");
+        debugln("[-]Altimeter data queue creation failed");
     } else{
         debugln("[+]Altimeter data queue creation OK.");
     }
 
     if(gps_data_qHandle == NULL){
-        debugln("[-]GPS data queue creation failed!");
+        debugln("[-]GPS data queue creation failed");
     } else{
         debugln("[+]GPS data queue creation OK.");
     }
@@ -1361,7 +1361,7 @@ void setup(){
         debugln("[-}Failed to create flightStateCallback task");
     }
 
-    #if DEBUG_TO_TERMINAL   // set SEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
+    #if DEBUG_TO_TERMINAL   // set DEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
 
     /* TASK 7: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
     th = xTaskCreatePinnedToCore(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE,NULL,1,NULL,app_id);
