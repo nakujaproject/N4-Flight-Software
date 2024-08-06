@@ -1,29 +1,4 @@
 var searchData=
 [
-  ['a_0',['&lt;a href=&quot;https://en.wikipedia.org/wiki/Van_Halen#Contract_riders&quot; &gt;No Brown M&amp;M&apos;s&lt;/a&gt;',['../md_contributing.html#autotoc_md14',1,'']]],
-  ['a_20href_20https_3a_20en_20wikipedia_20org_20wiki_20van_5fhalen_20contract_5friders_20no_20brown_20m_20m_20s_20a_1',['&lt;a href=&quot;https://en.wikipedia.org/wiki/Van_Halen#Contract_riders&quot; &gt;No Brown M&amp;M&apos;s&lt;/a&gt;',['../md_contributing.html#autotoc_md14',1,'']]],
-  ['above_20ground_20level_20agl_2',['2. Rocket altitude above ground level (AGL)',['../md__r_e_a_d_m_e.html#autotoc_md21',1,'']]],
-  ['acc_5fdata_3',['acc_data',['../src_2main_8cpp.html#a5db507f1ef37ed2d76f24c064e4e6a85',1,'main.cpp']]],
-  ['acceleration_20from_20accelerometer_4',['Calculating acceleration from accelerometer',['../md__r_e_a_d_m_e.html#autotoc_md56',1,'']]],
-  ['acceleration_20velocity_5',['1. Rocket kinematics (acceleration, velocity)',['../md__r_e_a_d_m_e.html#autotoc_md20',1,'']]],
-  ['acceleration_5fdata_6',['Acceleration_Data',['../struct_acceleration___data.html',1,'']]],
-  ['accelerometer_7',['accelerometer',['../md__r_e_a_d_m_e.html#autotoc_md56',1,'Calculating acceleration from accelerometer'],['../md__r_e_a_d_m_e.html#autotoc_md57',1,'Calculating velocity from accelerometer']]],
-  ['ack_8',['ACK',['../src_2main_8cpp.html#a6f6489887e08bff4887d0bc5dcf214d8',1,'main.cpp']]],
-  ['agl_9',['2. Rocket altitude above ground level (AGL)',['../md__r_e_a_d_m_e.html#autotoc_md21',1,'']]],
-  ['algorithm_10',['Reading GPS data algorithm',['../md__r_e_a_d_m_e.html#autotoc_md46',1,'']]],
-  ['altimeter_5fdata_11',['Altimeter_Data',['../struct_altimeter___data.html',1,'']]],
-  ['altitude_20above_20ground_20level_20agl_12',['2. Rocket altitude above ground level (AGL)',['../md__r_e_a_d_m_e.html#autotoc_md21',1,'']]],
-  ['an_20issue_13',[':inbox_tray: Opening an Issue',['../md_contributing.html#autotoc_md4',1,'']]],
-  ['and_20data_20handling_14',['8. Command and data handling',['../md__r_e_a_d_m_e.html#autotoc_md27',1,'']]],
-  ['and_20error_20fixes_15',['References and Error fixes',['../md__r_e_a_d_m_e.html#autotoc_md65',1,'']]],
-  ['and_20operation_16',['State machine logic and operation',['../md__r_e_a_d_m_e.html#autotoc_md50',1,'']]],
-  ['and_20other_20issues_17',[':beetle: Bug Reports and Other Issues',['../md_contributing.html#autotoc_md6',1,'']]],
-  ['and_20storage_18',['and storage',['../md__r_e_a_d_m_e.html#autotoc_md23',1,'4. Data logging and storage'],['../md__r_e_a_d_m_e.html#autotoc_md39',1,'Data Logging and storage']]],
-  ['and_20streaming_19',['10. Video capture and streaming**',['../md__r_e_a_d_m_e.html#autotoc_md29',1,'']]],
-  ['and_20task_20communication_20',['Data queues and task communication',['../md__r_e_a_d_m_e.html#autotoc_md33',1,'']]],
-  ['and_20task_20creation_21',['Tasks and task creation',['../md__r_e_a_d_m_e.html#autotoc_md30',1,'']]],
-  ['and_20transmission_20to_20ground_22',['Telemetry and transmission to ground',['../md__r_e_a_d_m_e.html#autotoc_md35',1,'']]],
-  ['asking_20questions_23',[':bulb: Asking Questions',['../md_contributing.html#autotoc_md3',1,'']]],
-  ['assignment_24',['pin-assignment',['../md_n4-flight-software_2src_2pin-assignment.html',1,'']]],
-  ['attitude_20orientation_20determination_25',['7. Rocket attitude (orientation ) determination',['../md__r_e_a_d_m_e.html#autotoc_md26',1,'']]]
+  ['budget_20calculation_0',['Link budget calculation',['../md__r_e_a_d_m_e.html#autotoc_md21',1,'']]]
 ];
