@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['documentation_0',['N4 Flight Software Documentation',['../md_README.html',1,'']]]
+  ['contributing_20guidelines_0',['Contributing Guidelines',['../md_contributing.html',1,'']]]
 ];

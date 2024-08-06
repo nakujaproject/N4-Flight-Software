@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['readme_0',['README',['../md_n4-flight-software_2README.html',1,'']]]
+  ['guidelines_0',['Contributing Guidelines',['../md_contributing.html',1,'']]]
 ];

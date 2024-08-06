@@ -1,25 +1,9 @@
 var searchData=
 [
-  ['calculating_20acceleration_20from_20accelerometer_0',['Calculating acceleration from accelerometer',['../md_README.html#autotoc_md40',1,'']]],
-  ['calculating_20velocity_20from_20accelerometer_1',['Calculating velocity from accelerometer',['../md_README.html#autotoc_md41',1,'']]],
-  ['calculation_2',['Link budget calculation',['../md_README.html#autotoc_md21',1,'']]],
-  ['can_3',['CAN',['../src_2main_8cpp.html#a427a40e102258055c72607bf7b604549',1,'main.cpp']]],
-  ['capture_20and_20streaming_4',['10. Video capture and streaming**',['../md_README.html#autotoc_md13',1,'']]],
-  ['checkflightstate_5',['checkFlightState',['../src_2main_8cpp.html#a152aa3ad3c21993eb70968de75219174',1,'main.cpp']]],
-  ['checkruntesttoggle_6',['checkRunTestToggle',['../src_2main_8cpp.html#a36d26be00724540c08411ce54b01a49b',1,'main.cpp']]],
-  ['chip_20hardware_20tests_7',['Flash chip hardware tests',['../md_README.html#autotoc_md25',1,'']]],
-  ['cleartelemetryqueuetask_8',['clearTelemetryQueueTask',['../src_2main_8cpp.html#a2eee545cf4af91a694e63ac4940276a4',1,'main.cpp']]],
-  ['code_20documentation_9',['Code documentation',['../md_README.html#autotoc_md1',1,'']]],
-  ['command_20and_20data_20handling_10',['8. Command and data handling',['../md_README.html#autotoc_md11',1,'']]],
-  ['communication_11',['Data queues and task communication',['../md_README.html#autotoc_md17',1,'']]],
-  ['complementary_20filter_12',['Complementary filter',['../md_README.html#autotoc_md44',1,'']]],
-  ['conditions_13',['State transition conditions',['../md_README.html#autotoc_md37',1,'']]],
-  ['converter_14',['1. HEX converter',['../md_README.html#autotoc_md46',1,'']]],
-  ['converttimestamp_15',['convertTimestamp',['../custom-time_8h.html#a3e93bbd5d89dde887f93f6264db8a49f',1,'custom-time.cpp']]],
-  ['creation_16',['Tasks and task creation',['../md_README.html#autotoc_md14',1,'']]],
-  ['current_5flog_5ftime_17',['current_log_time',['../src_2main_8cpp.html#a318b23db9cedde5ea8466af114f0c203',1,'main.cpp']]],
-  ['current_5fstate_18',['current_state',['../src_2main_8cpp.html#ac559654865b2d48ea0b77b1a1f4a097b',1,'main.cpp']]],
-  ['current_5ftest_5fstate_19',['current_test_state',['../src_2main_8cpp.html#a9dc783a2c139e60a49e643aed8b741b9',1,'main.cpp']]],
-  ['custom_2dtime_2eh_20',['custom-time.h',['../custom-time_8h.html',1,'']]],
-  ['customgps_21',['CustomGPS',['../classCustomGPS.html',1,'']]]
+  ['blink_5f200ms_0',['blink_200ms',['../src_2main_8cpp.html#a4139203bf745c4d38fd73bab228d571e',1,'main.cpp']]],
+  ['bmpinit_1',['BMPInit',['../src_2main_8cpp.html#a80d57b1ee5cb9d474465d3f8485f5bbc',1,'main.cpp']]],
+  ['brown_20m_20m_20s_20a_2',['&lt;a href=&quot;https://en.wikipedia.org/wiki/Van_Halen#Contract_riders&quot; &gt;No Brown M&amp;M&apos;s&lt;/a&gt;',['../md_contributing.html#autotoc_md14',1,'']]],
+  ['budget_20calculation_3',['Link budget calculation',['../md_README.html#autotoc_md37',1,'']]],
+  ['bug_20reports_20and_20other_20issues_4',[':beetle: Bug Reports and Other Issues',['../md_contributing.html#autotoc_md6',1,'']]],
+  ['buzz_5',['buzz',['../src_2main_8cpp.html#a28b1eb955e6e2f5e83599536f6bf4d2f',1,'main.cpp']]]
 ];

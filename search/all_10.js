@@ -1,9 +1,18 @@
 var searchData=
 [
-  ['handling_0',['handling',['../md_README.html#autotoc_md11',1,'8. Command and data handling'],['../md_README.html#autotoc_md38',1,'State functions handling']]],
-  ['handshake_1',['HANDSHAKE',['../src_2main_8cpp.html#a7010bdd588d627529b5948acb89dc09dacc6ddcaa36bd57e5aec12749cb5ce29c',1,'main.cpp']]],
-  ['handshakeserialevent_2',['handshakeSerialEvent',['../src_2main_8cpp.html#a41453ccb33ef6b57e513b16e92dd130e',1,'main.cpp']]],
-  ['hardware_20tests_3',['Flash chip hardware tests',['../md_README.html#autotoc_md25',1,'']]],
-  ['hex_20converter_4',['1. HEX converter',['../md_README.html#autotoc_md46',1,'']]],
-  ['how_20to_20recover_20the_20data_5',['How to recover the data',['../md_README.html#autotoc_md28',1,'']]]
+  ['getloglevelstring_0',['getLogLevelString',['../classSystemLogger.html#ad6feeadde357832516761347ff4cf25c',1,'SystemLogger']]],
+  ['getpitch_1',['getPitch',['../classMPU6050.html#aa8d0edd31d2892d6703b4dce77d4dfc7',1,'MPU6050']]],
+  ['getroll_2',['getRoll',['../classMPU6050.html#adcecd29f4445b6670aafa2452a26f197',1,'MPU6050']]],
+  ['gps_20data_20algorithm_3',['Reading GPS data algorithm',['../md_README.html#autotoc_md46',1,'']]],
+  ['gps_20fix_20time_20issues_4',['GPS  fix time issues',['../md_README.html#autotoc_md47',1,'']]],
+  ['gps_20location_5',['6. GPS location',['../md_README.html#autotoc_md25',1,'']]],
+  ['gps_20operations_6',['GPS Operations',['../md_README.html#autotoc_md45',1,'']]],
+  ['gps_20tests_7',['GPS tests',['../md_README.html#autotoc_md49',1,'']]],
+  ['gps_5fdata_8',['GPS_Data',['../structGPS__Data.html',1,'']]],
+  ['gpsinit_9',['GPSInit',['../src_2main_8cpp.html#a6f220446b54026b1217f93a3a9c04c1f',1,'main.cpp']]],
+  ['green_5fled_10',['green_led',['../src_2main_8cpp.html#ac4026e93b77dbb4130e8114a3ce0f669',1,'main.cpp']]],
+  ['ground_11',['Telemetry and transmission to ground',['../md_README.html#autotoc_md35',1,'']]],
+  ['ground_20level_20agl_12',['2. Rocket altitude above ground level (AGL)',['../md_README.html#autotoc_md21',1,'']]],
+  ['guidelines_13',['Contributing Guidelines',['../md_contributing.html',1,'']]],
+  ['gyroscope_5fdata_14',['Gyroscope_Data',['../structGyroscope__Data.html',1,'']]]
 ];
