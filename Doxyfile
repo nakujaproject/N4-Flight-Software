@@ -2901,7 +2901,4 @@ MSCGEN_TOOL            =
 
 MSCFILE_DIRS           =
 
-
-INPUT += README.md
-FILE_PATTERNS += *.md *.markdown
 USE_MDFILE_AS_MAINPAGE = README.md
