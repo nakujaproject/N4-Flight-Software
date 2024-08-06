@@ -1,19 +1,16 @@
 var searchData=
 [
-  ['above_20ground_20level_20agl_0',['2. Rocket altitude above ground level (AGL)',['../index.html#autotoc_md5',1,'']]],
-  ['acceleration_20from_20accelerometer_1',['Calculating acceleration from accelerometer',['../index.html#autotoc_md40',1,'']]],
-  ['acceleration_20velocity_2',['1. Rocket kinematics (acceleration, velocity)',['../index.html#autotoc_md4',1,'']]],
-  ['accelerometer_3',['accelerometer',['../index.html#autotoc_md40',1,'Calculating acceleration from accelerometer'],['../index.html#autotoc_md41',1,'Calculating velocity from accelerometer']]],
-  ['agl_4',['2. Rocket altitude above ground level (AGL)',['../index.html#autotoc_md5',1,'']]],
-  ['algorithm_5',['Reading GPS data algorithm',['../index.html#autotoc_md30',1,'']]],
-  ['altitude_20above_20ground_20level_20agl_6',['2. Rocket altitude above ground level (AGL)',['../index.html#autotoc_md5',1,'']]],
-  ['and_20data_20handling_7',['8. Command and data handling',['../index.html#autotoc_md11',1,'']]],
-  ['and_20error_20fixes_8',['References and Error fixes',['../index.html#autotoc_md49',1,'']]],
-  ['and_20operation_9',['State machine logic and operation',['../index.html#autotoc_md34',1,'']]],
-  ['and_20storage_10',['and storage',['../index.html#autotoc_md7',1,'4. Data logging and storage'],['../index.html#autotoc_md23',1,'Data Logging and storage']]],
-  ['and_20streaming_11',['10. Video capture and streaming**',['../index.html#autotoc_md13',1,'']]],
-  ['and_20task_20communication_12',['Data queues and task communication',['../index.html#autotoc_md17',1,'']]],
-  ['and_20task_20creation_13',['Tasks and task creation',['../index.html#autotoc_md14',1,'']]],
-  ['and_20transmission_20to_20ground_14',['Telemetry and transmission to ground',['../index.html#autotoc_md19',1,'']]],
-  ['attitude_20orientation_20determination_15',['7. Rocket attitude (orientation ) determination',['../index.html#autotoc_md10',1,'']]]
+  ['_3abeetle_3a_20bug_20reports_20and_20other_20issues_0',[':beetle: Bug Reports and Other Issues',['../md_contributing.html#autotoc_md6',1,'']]],
+  ['_3abook_3a_20code_20of_20conduct_1',[':book: Code of Conduct',['../md_contributing.html#autotoc_md2',1,'']]],
+  ['_3abulb_3a_20asking_20questions_2',[':bulb: Asking Questions',['../md_contributing.html#autotoc_md3',1,'']]],
+  ['_3ainbox_5ftray_3a_20opening_20an_20issue_3',[':inbox_tray: Opening an Issue',['../md_contributing.html#autotoc_md4',1,'']]],
+  ['_3alock_3a_20reporting_20security_20issues_4',[':lock: Reporting Security Issues',['../md_contributing.html#autotoc_md5',1,'']]],
+  ['_3alove_5fletter_3a_20feature_20requests_5',[':love_letter: Feature Requests',['../md_contributing.html#autotoc_md7',1,'']]],
+  ['_3amag_3a_20triaging_20issues_6',[':mag: Triaging Issues',['../md_contributing.html#autotoc_md8',1,'']]],
+  ['_3amedal_5fsports_3a_20certificate_20of_20origin_7',[':medal_sports: Certificate of Origin',['../md_contributing.html#autotoc_md13',1,'']]],
+  ['_3amemo_3a_20writing_20commit_20messages_8',[':memo: Writing Commit Messages',['../md_contributing.html#autotoc_md10',1,'']]],
+  ['_3anail_5fcare_3a_20coding_20style_9',[':nail_care: Coding Style',['../md_contributing.html#autotoc_md12',1,'']]],
+  ['_3apray_3a_20credits_10',[':pray: Credits',['../md_contributing.html#autotoc_md15',1,'']]],
+  ['_3arepeat_3a_20submitting_20pull_20requests_11',[':repeat: Submitting Pull Requests',['../md_contributing.html#autotoc_md9',1,'']]],
+  ['_3awhite_5fcheck_5fmark_3a_20code_20review_12',[':white_check_mark: Code Review',['../md_contributing.html#autotoc_md11',1,'']]]
 ];
