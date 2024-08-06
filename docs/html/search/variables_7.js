@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['telemetry_5fdata_5fqhandle_0',['telemetry_data_qHandle',['../src_2main_8cpp.html#a0ed5ea94df7417ea494d69ca56aab490',1,'main.cpp']]]
+  ['previous_5flog_5ftime_0',['previous_log_time',['../src_2main_8cpp.html#ac03f1f50d9e1452593353033c5b2b1b0',1,'main.cpp']]]
 ];

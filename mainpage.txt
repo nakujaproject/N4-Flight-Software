@@ -2,26 +2,18 @@
  *
  * @section intro_sec Introduction
  *
- * This documetation describes in detail the code used for N4 flight computers, with complete file resolution, variables description, functions definitions and include files description. 
- Discalimer: If you discover any unresolved bug you can submit a pull request by following our contribution guidelines on []()
+ * This documentation describes in detail the code used for N4 flight computers, with complete file resolution, variables description, functions definitions and include files description. 
+ Disclaimer: If you discover any unresolved bug you can submit a pull request by following our contribution guidelines on []()
  *
- * @section install_sec Running the example
+ * @section install_sec Building, Compilation and Running  
  * 
- * This example was created using Fedora 33 (x86/64).
+ * Follow the commands below to build and run this flight software
  *
  * @subsection step1 System requirements
  *
- * In order to compile this example, the build essentials must be installed.
+ * - Download and install VS-Code [VS Code download](https://code.visualstudio.com/download)
+ * - Download and install PlatformIO Core using the procedure listed on this page [PlatformIO CORE](https://docs.platformio.org/en/latest/core/installation/index.html) (See install methods for other OSs)
  * 
- * - Debian derivates
- * @code{.sh}
- * sudo apt install build-essential
- * @endcode
- * 
- * - RHEL derivates
- * @code{.sh}
- * sudo dnf install make cmake gcc gcc-c++
- * @endcode
  *
  * @subsection step2 Building the code
  *
