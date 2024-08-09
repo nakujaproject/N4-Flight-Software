@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['kinematics_20acceleration_20velocity_0',['1. Rocket kinematics (acceleration, velocity)',['../md__r_e_a_d_m_e.html#autotoc_md20',1,'']]],
-  ['known_20issue_1',['Known issue',['../md__r_e_a_d_m_e.html#autotoc_md43',1,'']]]
+  ['xbee_20mqtt_20lora_20wifi_20telemetry_20selection_0',['XBEE, MQTT, LORA, WIFI telemetry selection',['../index.html#step8',1,'']]]
 ];

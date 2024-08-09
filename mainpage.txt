@@ -1,32 +1,122 @@
+
 /*! @mainpage
  *
  * @section intro_sec Introduction
  *
- * This documentation describes in detail the code used for N4 flight computers, with complete file resolution, variables description, functions definitions and include files description. 
- Disclaimer: If you discover any unresolved bug you can submit a pull request by following our contribution guidelines on []()
- *
- * @section install_sec Building, Compilation and Running  
+ * Welcome to N4 Flight software docs.
+ * N4 Flight software is the code used to run N4 rockets at Nakuja Rocket Project. This code is built using FreeRTOS on the Arduino-ESP32 framework. It is designed to run either on AI-Thinker NodeMCU-ESP32 boards or ESP32-DOIT-DEVKIT V1. 
+
+ * @section step1 Major features
+ * - This firmare has been improved tremendously from the previous versions and includes the following features:
+
+ * @subsection step2 Modularity 
+ * - Most of the code is now contained in separate files each perfoming its own singular task to ensure code maintainability and testing. 
+
+ * @subsection step3 System Logging
+ * - We have built a system logger to keep track of each and every operation that the flight computer undertakes. This can be be retrieved later and reviewed for post-flight analysis
+
+* @subsection step4 HIL Testing Engine
+* - A hardware-in-the-loop testing engine has been built into the flight software to allow us to "Test Like We Fly". This allows the flight computer to be tested and debugged way before flight day. Using an improvised XMODEM algorithm, we are able to upload test flight data and run necessary integration tests. 
+* @note See Integration and Testing Procedures for more info
+
+* @subsection step5 Flight data logging
+* - Flight data logging has been improved. Using an onboard SPI Flash memory, we are able log sensor data and flight states. 
+*
+* @subsection step6 Data dump interface
+* - A data dumping hardware interface has been added to ease the retrieval of data post flight data. 
+* 
+* @subsection step7 SAFE and FLIGHT modes
+* - To prevent misfires during intergration and testing, this firmware implements SAFE_MODE that among others operations, disables the pyro-charges before POWERED_FLIGHT.
+*
+* @subsection step8 XBEE, MQTT, LORA, WIFI telemetry selection
+* - For backward and forward compatibility, we implement a method to allow choice of data telemetry protocol being used. 
+*
+* @subsection step9 Double ejection
+* - We implement drogue and main chute ejection algorithms for successful vehicle recovery
+*
+ * @section install_sec Building, Compilation and Downloading.
  * 
- * Follow the commands below to build and run this flight software
  *
- * @subsection step1 System requirements
+ * @subsection step10 System requirements
  *
- * - Download and install VS-Code [VS Code download](https://code.visualstudio.com/download)
- * - Download and install PlatformIO Core using the procedure listed on this page [PlatformIO CORE](https://docs.platformio.org/en/latest/core/installation/index.html) (See install methods for other OSs)
- * 
- *
- * @subsection step2 Building the code
- *
- * 1. Generate the build environment
+ * The following must be installed to build this release:  
+ * 1. PlatformIO Core. Download the core here: [PlatformIO Core](https://docs.platformio.org/en/latest/core/installation/index.html)
+ * 2. PlatformIO IDE (recommended on VS Code but you can use IDE of your choice). To install PlatformIO IDE, follow the steps listed here: [PlatformIO IDE](https://platformio.org/platformio-ide)
+ * 3. Serial Monitor tool e.g. Putty, Ai-Thinker Serial, RealTerm etc
+
+ * @subsection step11 Building the code
+
+ * - Clone the repo on your local machine 
  * @code{.sh}
- * cmake -S <path-to-source-directory> -B <path-to-build-directory>
+ * git clone https://github.com/nakujaproject/N4-Flight-Software.git
+ * @endcode
+
+ * @note You can also download the folder as a zip file and extract it to a folder of your choice. But we recommend cloning it so you can keep up to  date with the remote changes.
+ * 
+
+ * - Change the directory to @code{.sh}N4-Flight-Software\n4-flight-software @endcode. This is the folder containing @code{.sh}platformio.ini @endcode 
+
+ * - Install code dependencies
+ * @code{.sh}
+ * pio pkg install
  * @endcode
  *
- * 2. Start compilation
+ * - Build
  * @code{.sh}
- * cmake --build <path-to-build-directory>
+ * pio run 
  * @endcode
- *
- * 3. The binary can now be found here\n
- * <tt><path-to-build-directory>/DoxygenSample/DoxygenSample</tt>
+
+ * - Connect your flight computer using a USB cable and make sure it is seen by your PC. It should be listed under Device Manager>Ports, if you are on windows
+
+ * @note If your ESP32 is note recognized, you have to install USB-TO-TTL chip driver manually. For ESP32 Boards using CH340 chip, download the driver here [CH340 Driver-SparkFun](https://learn.sparkfun.com/tutorials/how-to-install-ch340-drivers/all). Run the driver and it will be automatically installed on your machine. For ESP32 Boards using CP2102 chip, follow the procedure here [CP2102-driver-POLOLU](https://www.pololu.com/docs/0J7/all). Run the driver and it will be automatically installed on your machine.
+
+ * - Upload and run 
+ * Close any open serial ports connected to that ESP32 and run the command below
+ * @code{.sh}
+ * pio run -t upload 
+ * @endcode
+ * The firmware will be uploaded to the flight computer
+
+ * @section step13 Hardware, pin assignment and peripherals
+ * @note In development
+
+ * @section step14 Integration and Testing Procedures
+ * @note In development
+
+ * @section step15 Contributors
+ * Our thanks go to the following current and previous avionics team members for their contribution:
+1. Edwin Mwiti
+2. Junn Hope 
+3. Jones Kisaka
+4. Ruth 
+5. Safa Osman 
+6. Tabby Achieng
+7. Sharlyn 
+8. Pat
+9. Emmanuel
+10. Fortune
+11. Newton 
+12. Rodney
+13. Sammy 
+14. Michael Kimani
+15. George Bange
+16. Maisha
+17. Naomi Chesang
+18. Brian Munene
+19. Samson Onyambu 
+20. Cate Kabura 
+21. Amos Korir
+22. Graig Kipkorir
+23. Jerry Mumo
+24. Esther Mamai
+25. Martin Simbona 
+36. Jeff Mboya
+37. Washington Kamadi
+38. Ian Muchiri
+39. Kibandi
+40. Emmanuel Obara
+41. Victoria
+
+* Ad Astra!!
+
  */
