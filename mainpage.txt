@@ -7,7 +7,7 @@
  * N4 Flight software is the code used to run N4 rockets at Nakuja Rocket Project. This code is built using FreeRTOS on the Arduino-ESP32 framework. It is designed to run either on AI-Thinker NodeMCU-ESP32 boards or ESP32-DOIT-DEVKIT V1. 
 
  * @section step1 Major features
- * - This firmare has been improved tremendously from the previous versions and includes the following features:
+ * This firmare has been improved tremendously from the previous versions and includes the following features:
 
  * @subsection step2 Modularity 
  * - Most of the code is now contained in separate files each perfoming its own singular task to ensure code maintainability and testing. 
