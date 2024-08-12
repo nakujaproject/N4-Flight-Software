@@ -28,13 +28,15 @@
 #include "data-types.h"
 #include "custom-time.h"
 #include "states.h"
+#include "system_logger.h"
+#include "system_log_levels.h"
 
 /* function prototypes definition */
 void drogueChuteDeploy();
 void mainChuteDeploy();
 
 /* state machine variables*/
-uint8_t operation_mode = 0;     /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
+uint8_t operation_mode = 0;                                     /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
 uint8_t current_state = FLIGHT_STATE::PRE_FLIGHT_GROUND;	    /*!< The starting state - we start at PRE_FLIGHT_GROUND state */
 
 /* create Wi-Fi Client */
@@ -45,6 +47,12 @@ PubSubClient mqtt_client(wifi_client);
 
 /* GPS object */
 TinyGPSPlus gps;
+
+/* system logger */
+SystemLogger system_logger;
+const char* system_log_file = "/sys_log.log";
+LOG_LEVEL level = INFO;
+const char* rocket_ID = "rocket-1";             /*!< Unique ID of the rocket. Change to the needed rocket name before uploading */
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
@@ -1203,7 +1211,7 @@ void mainChuteDeploy() {
 
 
 /*!****************************************************************************
- * @brief Setup - perfom initialization of all hardware subsystems, create queues, create queue handles 
+ * @brief Setup - perform initialization of all hardware subsystems, create queues, create queue handles
  * initialize system check table
  * 
  *******************************************************************************/
@@ -1211,6 +1219,10 @@ void setup(){
     /* initialize serial */
     Serial.begin(BAUDRATE);
     delay(100);
+
+    /* initialize the system logger */
+    InitSPIFFS();
+    system_logger.logToFile(SPIFFS, 0, rocket_ID, level, system_log_file, "Game Time!");
 
     debugln();
     debugln(F("=============================================="));

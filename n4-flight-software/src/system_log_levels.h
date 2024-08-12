@@ -7,15 +7,15 @@
  *
  */
 
-#ifndef LEVELS_H
-#define LEVELS_H
+#ifndef SYSTEM_LOG_LEVELS_H
+#define SYSTEM_LOG_LEVELS_H
 
-enum LOG_LEVEL {
+typedef enum{
 	DEBUG = 0,
 	INFO,
 	WARNING,
 	CRITICAL,
 	ERROR
-};
+} LOG_LEVEL;
 
 #endif

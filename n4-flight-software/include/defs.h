@@ -8,14 +8,14 @@
 #define XBEE 1  // set to 1 if using XBEE for telemetry transfer
 
 #define GPS_BAUD_RATE 9600
-#define XBEE_BAUD_RATE  // TODO: set to XBEE baud rate
+#define XBEE_BAUD_RATE  9600    // TODO: set to XBEE baud rate
 
 /* debug parameters for use during testing - set to 0 for production */
-#define DEBUG 1
-#define LOG_TO_MEMORY 0 // set to 1 during live testing
+#define DEBUGGING 1
+#define LOG_TO_MEMORY 0     // set to 1 during live testing
 #define DEBUG_TO_TERMINAL 1 // set to 0 for production
 
-#if DEBUG
+#if DEBUGGING
 #define debug(x) Serial.print(x)
 #define debugln(x) Serial.println(x)
 #define debugf(x, y) Serial.printf(x, y)

@@ -83,7 +83,17 @@
  * @section step14 Integration and Testing Procedures
  * @note In development
 
- * @section step15 Contributors
+ * @section step15 Pre-flight software checks
+ * The following checks MUST be performed pre-flight to ensure the software operates as designed:
+ 1. test mode pin toggle
+ 2. telemetry protocol selection
+ 3. clientID (rocket ID)
+ 4. arming check 
+ 5. DEBUG_to_terminal check - defs.h
+ 6. LOG_TO_MEMORY - defs.h
+
+
+ * @section step16 Contributors
  * Our thanks go to the following current and previous avionics team members for their contribution:
 1. Edwin Mwiti
 2. Junn Hope 
