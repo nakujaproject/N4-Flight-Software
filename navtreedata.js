@@ -42,7 +42,8 @@ var NAVTREE =
     ] ],
     [ "Hardware, pin assignment and peripherals", "index.html#step13", null ],
     [ "Integration and Testing Procedures", "index.html#step14", null ],
-    [ "Contributors", "index.html#step15", null ],
+    [ "Pre-flight software checks", "index.html#step15", null ],
+    [ "Contributors", "index.html#step16", null ],
     [ "README", "md_n4-flight-software_2README.html", null ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
@@ -69,7 +70,7 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"SystemLogLevels_8h_source.html"
+"annotated.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

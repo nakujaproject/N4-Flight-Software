@@ -7,13 +7,14 @@ var searchData=
   ['set_5ftest_5fmode_5fpin_4',['SET_TEST_MODE_PIN',['../src_2main_8cpp.html#ac0121f71eae2488320c2cd36a4843976',1,'main.cpp']]],
   ['setup_5',['setup',['../src_2main_8cpp.html#a4fc01d736fe50cf5b977f755b675f11d',1,'main.cpp']]],
   ['software_6',['N4 Flight Software',['../index.html',1,'']]],
-  ['soh_7',['SOH',['../src_2main_8cpp.html#ab3796cca360697d3658162dba5965e28',1,'main.cpp']]],
-  ['soh_5frecvd_5fflag_8',['SOH_recvd_flag',['../src_2main_8cpp.html#a6a02e76e786465c8d2fe8ba9ad3393da',1,'main.cpp']]],
-  ['state_5fmachine_9',['State_machine',['../classState__machine.html',1,'']]],
-  ['state_5fmachine_2ecpp_10',['state_machine.cpp',['../include_2state__machine_8cpp.html',1,'(Global Namespace)'],['../test_2state__machine_8cpp.html',1,'(Global Namespace)']]],
-  ['states_2eh_11',['states.h',['../states_8h.html',1,'']]],
-  ['switchleds_12',['SwitchLEDs',['../src_2main_8cpp.html#a5f3e40ff0b3b6f2c247fadc41b0a5896',1,'main.cpp']]],
-  ['system_20logging_13',['System Logging',['../index.html#step3',1,'']]],
-  ['system_20requirements_14',['System requirements',['../index.html#step10',1,'']]],
-  ['systemlogger_15',['SystemLogger',['../classSystemLogger.html',1,'']]]
+  ['software_20checks_7',['Pre-flight software checks',['../index.html#step15',1,'']]],
+  ['soh_8',['SOH',['../src_2main_8cpp.html#ab3796cca360697d3658162dba5965e28',1,'main.cpp']]],
+  ['soh_5frecvd_5fflag_9',['SOH_recvd_flag',['../src_2main_8cpp.html#a6a02e76e786465c8d2fe8ba9ad3393da',1,'main.cpp']]],
+  ['state_5fmachine_10',['State_machine',['../classState__machine.html',1,'']]],
+  ['state_5fmachine_2ecpp_11',['state_machine.cpp',['../include_2state__machine_8cpp.html',1,'(Global Namespace)'],['../test_2state__machine_8cpp.html',1,'(Global Namespace)']]],
+  ['states_2eh_12',['states.h',['../states_8h.html',1,'']]],
+  ['switchleds_13',['SwitchLEDs',['../src_2main_8cpp.html#a5f3e40ff0b3b6f2c247fadc41b0a5896',1,'main.cpp']]],
+  ['system_20logging_14',['System Logging',['../index.html#step3',1,'']]],
+  ['system_20requirements_15',['System requirements',['../index.html#step10',1,'']]],
+  ['systemlogger_16',['SystemLogger',['../classSystemLogger.html',1,'']]]
 ];

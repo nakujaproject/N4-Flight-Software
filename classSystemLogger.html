@@ -104,29 +104,27 @@ $(function(){initNavTree('classSystemLogger.html',''); initResizable(true); });
   <div class="headertitle"><div class="title">SystemLogger Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="dynheader">
-Inheritance diagram for SystemLogger:</div>
-<div class="dyncontent">
- <div class="center">
-  <img src="classSystemLogger.png" usemap="#SystemLogger_map" alt=""/>
-  <map id="SystemLogger_map" name="SystemLogger_map">
-<area href="classLoggerConsole.html" alt="LoggerConsole" shape="rect" coords="0,56,98,80"/>
-  </map>
-</div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a05edc500fc82cfb810327ae8204cb31a" id="r_a05edc500fc82cfb810327ae8204cb31a"><td class="memItemLeft" align="right" valign="top"><a id="a05edc500fc82cfb810327ae8204cb31a" name="a05edc500fc82cfb810327ae8204cb31a"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>writeToConsole</b> (const uint32_t timestamp, const char *client, uint8_t log_level, const char *msg)</td></tr>
-<tr class="separator:a05edc500fc82cfb810327ae8204cb31a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad6feeadde357832516761347ff4cf25c" id="r_ad6feeadde357832516761347ff4cf25c"><td class="memItemLeft" align="right" valign="top"><a id="ad6feeadde357832516761347ff4cf25c" name="ad6feeadde357832516761347ff4cf25c"></a>
 const char *&#160;</td><td class="memItemRight" valign="bottom"><b>getLogLevelString</b> (uint8_t log_level)</td></tr>
 <tr class="memdesc:ad6feeadde357832516761347ff4cf25c"><td class="mdescLeft">&#160;</td><td class="mdescRight">convert the log level to string <br /></td></tr>
 <tr class="separator:ad6feeadde357832516761347ff4cf25c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6450f92cb0c7ec55ce13ad68e6e47add" id="r_a6450f92cb0c7ec55ce13ad68e6e47add"><td class="memItemLeft" align="right" valign="top"><a id="a6450f92cb0c7ec55ce13ad68e6e47add" name="a6450f92cb0c7ec55ce13ad68e6e47add"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>logToConsole</b> (const uint32_t timestamp, const char *client, uint8_t log_level, const char *msg)</td></tr>
+<tr class="separator:a6450f92cb0c7ec55ce13ad68e6e47add"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac2ec03f175633189362a08955a29a5ad" id="r_ac2ec03f175633189362a08955a29a5ad"><td class="memItemLeft" align="right" valign="top"><a id="ac2ec03f175633189362a08955a29a5ad" name="ac2ec03f175633189362a08955a29a5ad"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>logToFile</b> (fs::FS &amp;fs, uint8_t mode, const char *client, uint8_t log_level, const char *<a class="el" href="src_2main_8cpp.html#ada14cbbf98490eb3cb49b5d1cb0c0056">file</a>, const char *msg)</td></tr>
+<tr class="separator:ac2ec03f175633189362a08955a29a5ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0755dee42eafc8a8f7a6a6d027b880f2" id="r_a0755dee42eafc8a8f7a6a6d027b880f2"><td class="memItemLeft" align="right" valign="top"><a id="a0755dee42eafc8a8f7a6a6d027b880f2" name="a0755dee42eafc8a8f7a6a6d027b880f2"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>readLogFile</b> (fs::FS &amp;fs, const char *<a class="el" href="src_2main_8cpp.html#ada14cbbf98490eb3cb49b5d1cb0c0056">file</a>)</td></tr>
+<tr class="memdesc:a0755dee42eafc8a8f7a6a6d027b880f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">read log file to console <br /></td></tr>
+<tr class="separator:a0755dee42eafc8a8f7a6a6d027b880f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>n4-flight-software/system-logger/<a class="el" href="SystemLogger_8h_source.html">SystemLogger.h</a></li>
-<li>n4-flight-software/system-logger/<b>SystemLogger.cpp</b></li>
+<li>n4-flight-software/src/<a class="el" href="system__logger_8h_source.html">system_logger.h</a></li>
+<li>n4-flight-software/src/<b>system_logger.cpp</b></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

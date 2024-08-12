@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['loggerconsole_0',['LoggerConsole',['../classLoggerConsole.html',1,'']]]
+  ['mpu6050_0',['MPU6050',['../classMPU6050.html',1,'']]]
 ];

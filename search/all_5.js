@@ -13,5 +13,6 @@ var searchData=
   ['flight_20data_20logging_10',['Flight data logging',['../index.html#step5',1,'']]],
   ['flight_20modes_11',['SAFE and FLIGHT modes',['../index.html#step7',1,'']]],
   ['flight_20software_12',['N4 Flight Software',['../index.html',1,'']]],
-  ['flightstatecallback_13',['flightStateCallback',['../src_2main_8cpp.html#a6648d201a9f47aa836d36e5339e78ef3',1,'main.cpp']]]
+  ['flight_20software_20checks_13',['Pre-flight software checks',['../index.html#step15',1,'']]],
+  ['flightstatecallback_14',['flightStateCallback',['../src_2main_8cpp.html#a6648d201a9f47aa836d36e5339e78ef3',1,'main.cpp']]]
 ];

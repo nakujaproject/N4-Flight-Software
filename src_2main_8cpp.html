@@ -126,6 +126,8 @@ $(function(){initNavTree('src_2main_8cpp.html',''); initResizable(true); });
 <code>#include &quot;data-types.h&quot;</code><br />
 <code>#include &quot;<a class="el" href="custom-time_8h_source.html">custom-time.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="states_8h_source.html">states.h</a>&quot;</code><br />
+<code>#include &quot;system_logger.h&quot;</code><br />
+<code>#include &quot;system_log_levels.h&quot;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
@@ -281,7 +283,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>ParseSerialBuffer</b>
 <tr class="memdesc:a7df146b43e503e23146e698154d5096d"><td class="mdescLeft">&#160;</td><td class="mdescRight">log the data to the external flash memory  <br /></td></tr>
 <tr class="separator:a7df146b43e503e23146e698154d5096d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4fc01d736fe50cf5b977f755b675f11d" id="r_a4fc01d736fe50cf5b977f755b675f11d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4fc01d736fe50cf5b977f755b675f11d">setup</a> ()</td></tr>
-<tr class="memdesc:a4fc01d736fe50cf5b977f755b675f11d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup - perfom initialization of all hardware subsystems, create queues, create queue handles initialize system check table.  <br /></td></tr>
+<tr class="memdesc:a4fc01d736fe50cf5b977f755b675f11d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup - perform initialization of all hardware subsystems, create queues, create queue handles initialize system check table.  <br /></td></tr>
 <tr class="separator:a4fc01d736fe50cf5b977f755b675f11d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe461d27b9c48d5921c00d521181f12f" id="r_afe461d27b9c48d5921c00d521181f12f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afe461d27b9c48d5921c00d521181f12f">loop</a> ()</td></tr>
 <tr class="memdesc:afe461d27b9c48d5921c00d521181f12f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main loop.  <br /></td></tr>
@@ -299,6 +301,17 @@ WiFiClient&#160;</td><td class="memItemRight" valign="bottom"><b>wifi_client</b>
 <tr class="memitem:a169c53997a7da1d0fb99aec1b4675ce8" id="r_a169c53997a7da1d0fb99aec1b4675ce8"><td class="memItemLeft" align="right" valign="top"><a id="a169c53997a7da1d0fb99aec1b4675ce8" name="a169c53997a7da1d0fb99aec1b4675ce8"></a>
 TinyGPSPlus&#160;</td><td class="memItemRight" valign="bottom"><b>gps</b></td></tr>
 <tr class="separator:a169c53997a7da1d0fb99aec1b4675ce8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4591a82d6df23b62ed33717b89cf9bb8" id="r_a4591a82d6df23b62ed33717b89cf9bb8"><td class="memItemLeft" align="right" valign="top"><a id="a4591a82d6df23b62ed33717b89cf9bb8" name="a4591a82d6df23b62ed33717b89cf9bb8"></a>
+<a class="el" href="classSystemLogger.html">SystemLogger</a>&#160;</td><td class="memItemRight" valign="bottom"><b>system_logger</b></td></tr>
+<tr class="separator:a4591a82d6df23b62ed33717b89cf9bb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a613c837c91f4cf1b8f9faa07cf95115b" id="r_a613c837c91f4cf1b8f9faa07cf95115b"><td class="memItemLeft" align="right" valign="top"><a id="a613c837c91f4cf1b8f9faa07cf95115b" name="a613c837c91f4cf1b8f9faa07cf95115b"></a>
+const char *&#160;</td><td class="memItemRight" valign="bottom"><b>system_log_file</b> = &quot;/sys_log.log&quot;</td></tr>
+<tr class="separator:a613c837c91f4cf1b8f9faa07cf95115b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a77f7159081bd39a76d8b86af56256201" id="r_a77f7159081bd39a76d8b86af56256201"><td class="memItemLeft" align="right" valign="top"><a id="a77f7159081bd39a76d8b86af56256201" name="a77f7159081bd39a76d8b86af56256201"></a>
+LOG_LEVEL&#160;</td><td class="memItemRight" valign="bottom"><b>level</b> = INFO</td></tr>
+<tr class="separator:a77f7159081bd39a76d8b86af56256201"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5bef7886537f878149917a29939a5cb0" id="r_a5bef7886537f878149917a29939a5cb0"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5bef7886537f878149917a29939a5cb0">rocket_ID</a> = &quot;rocket-1&quot;</td></tr>
+<tr class="separator:a5bef7886537f878149917a29939a5cb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a703e0d9679428f7c9e0a24e766ba4489" id="r_a703e0d9679428f7c9e0a24e766ba4489"><td class="memItemLeft" align="right" valign="top"><a id="a703e0d9679428f7c9e0a24e766ba4489" name="a703e0d9679428f7c9e0a24e766ba4489"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>RUN_MODE</b> = 0</td></tr>
 <tr class="separator:a703e0d9679428f7c9e0a24e766ba4489"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1154,7 +1167,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
       </table>
 </div><div class="memdoc">
 
-<p>Setup - perfom initialization of all hardware subsystems, create queues, create queue handles initialize system check table. </p>
+<p>Setup - perform initialization of all hardware subsystems, create queues, create queue handles initialize system check table. </p>
 <hr  />
   
 </div>
@@ -1464,6 +1477,21 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
       </table>
 </div><div class="memdoc">
 <p>Red LED pin </p>
+
+</div>
+</div>
+<a id="a5bef7886537f878149917a29939a5cb0" name="a5bef7886537f878149917a29939a5cb0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5bef7886537f878149917a29939a5cb0">&#9670;&#160;</a></span>rocket_ID</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char* rocket_ID = &quot;rocket-1&quot;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Unique ID of the rocket. Change to the needed rocket name before uploading </p>
 
 </div>
 </div>
