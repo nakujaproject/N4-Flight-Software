@@ -9,6 +9,6 @@
 
 #include <Arduino.h>
 
-char* convertTimestamp(unsigned long);
-
+void convertTimestamp(unsigned long);
+ma
 #endif

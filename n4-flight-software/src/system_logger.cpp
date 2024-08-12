@@ -3,13 +3,16 @@
 void SystemLogger::logToFile (fs::FS &fs, uint8_t mode, const char* client, uint8_t log_level, const char* file,  const char* msg) {
     char log_buffer[100];
     // get the timestamp
-    uint32_t timestamp = millis();
+    unsigned long raw_timestamp = millis();
+
+    // convert the timestamp to human readable format
+    convertTimestamp(raw_timestamp);
 
     // construct the log message
     // timestamp clientID log_level msg
     sprintf(log_buffer,
-            "%d %s %s %s\n",
-            timestamp,
+            "%c %d %s %s %s\n",
+            tstamp,
             client,
             this->getLogLevelString(log_level),
             msg

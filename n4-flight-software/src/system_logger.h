@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <FS.h>
 #include <SPIFFS.h>
+#include "custom_time.h"
 
 class SystemLogger {
 	public:

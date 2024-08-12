@@ -25,8 +25,8 @@
 #include "mpu.h"
 #include "SerialFlash.h"
 #include "logger.h"
-#include "data-types.h"
-#include "custom-time.h"
+#include "data_types.h"
+#include "custom_time.h"
 #include "states.h"
 #include "system_logger.h"
 #include "system_log_levels.h"
@@ -1222,6 +1222,8 @@ void setup(){
 
     /* initialize the system logger */
     InitSPIFFS();
+
+    /* mode 0 resets the system log file by clearing all the current contents */
     system_logger.logToFile(SPIFFS, 0, rocket_ID, level, system_log_file, "Game Time!");
 
     debugln();
