@@ -229,7 +229,7 @@ void InitSPIFFS() {
         debugln("SPIFFS mount failed"); // TODO: Set a flag for test GUI
         return;
     } else {
-        debugln("<SPIFFS init success>");
+        debugln("SPIFFS init success");
     }
 }
 
@@ -1224,7 +1224,7 @@ void setup(){
     InitSPIFFS();
 
     /* mode 0 resets the system log file by clearing all the current contents */
-    system_logger.logToFile(SPIFFS, 0, rocket_ID, level, system_log_file, "Game Time!");
+//    system_logger.logToFile(SPIFFS, 0, rocket_ID, level, system_log_file, "Game Time!"); // TODO: DEBUG
 
     debugln();
     debugln(F("=============================================="));

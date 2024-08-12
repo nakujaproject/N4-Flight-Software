@@ -7,8 +7,6 @@ import numpy as np
 import csv
 
 import atexit
-
-
 port = "COM4"
 baud_rate = 115200
 

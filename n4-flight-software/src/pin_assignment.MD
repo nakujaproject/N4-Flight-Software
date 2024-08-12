@@ -1,0 +1,2 @@
+## Flight computer pin assignment  
+
