@@ -15,17 +15,29 @@
 #include <Wire.h>
 #include <WiFi.h>
 #include <PubSubClient.h> // TODO: ADD A MQTT SWITCH - TO USE MQTT OR NOT
+#include <TinyGPSPlus.h>
+#include <SFE_BMP180.h>
+#include <FS.h>
+#include <SD.h>
+#include <SPIFFS.h>
 #include "sensors.h"
 #include "defs.h"
 #include "mpu.h"
-#include <SFE_BMP180.h>
 #include "SerialFlash.h"
 #include "logger.h"
-#include "data-types.h"
-#include "custom-time.h"
-#include <TinyGPSPlus.h>
+#include "data_types.h"
+#include "custom_time.h"
+#include "states.h"
+#include "system_logger.h"
+#include "system_log_levels.h"
 
-uint8_t operation_mode = 0;     /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
+/* function prototypes definition */
+void drogueChuteDeploy();
+void mainChuteDeploy();
+
+/* state machine variables*/
+uint8_t operation_mode = 0;                                     /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
+uint8_t current_state = FLIGHT_STATE::PRE_FLIGHT_GROUND;	    /*!< The starting state - we start at PRE_FLIGHT_GROUND state */
 
 /* create Wi-Fi Client */
 WiFiClient wifi_client;
@@ -36,9 +48,481 @@ PubSubClient mqtt_client(wifi_client);
 /* GPS object */
 TinyGPSPlus gps;
 
+/* system logger */
+SystemLogger system_logger;
+const char* system_log_file = "/sys_log.log";
+LOG_LEVEL level = INFO;
+const char* rocket_ID = "rocket-1";             /*!< Unique ID of the rocket. Change to the needed rocket name before uploading */
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+uint8_t RUN_MODE = 0;
+uint8_t TEST_MODE = 0;
+
+#define BAUDRATE        115200
+#define NAK_INTERVAL    4000 /*!< Interval in which to send the NAK command to the transmitter */
+
+//  Flags
+uint8_t SOH_recvd_flag = 0; /*!< Transmitter acknowledged?  */
+
+unsigned long last_NAK_time = 0;
+unsigned long current_NAK_time = 0;
+char SOH_CHR[6] = "SOH";
+
+/* define XMODEM commands in HEX */
+#define SOH     0x01    /*!< start of header */
+#define EOT     0x04    /*!< end of transmission */
+#define ACK     0x06    /*!< positive acknowledgement */
+#define NAK     0x15    /*!< negative acknowledgement */
+#define CAN     0x18    /*!< cancel */
+
+#define MAX_CMD_LENGTH 10 /*!< Maximum length of the XMODEM command string that can be received */
+#define MAX_CSV_LENGTH 256 /*!< Maximum length of the csv string that can be received */
+
+// buffer to store the XMODEM commands
+char serial_buffer[MAX_CMD_LENGTH];
+int16_t serial_index = 0;
+
+// buffer to store the CSV test data
+char test_data_buffer[MAX_CSV_LENGTH];
+int16_t test_data_serial_index = 0;
+
+// pin definitions
+uint8_t recv_data_led = 2;          /*!< External flash memory chip select pin */
+uint8_t red_led = 15;               /*!< Red LED pin */
+uint8_t green_led = 4;              /*!< Green LED pin */
+uint8_t buzzer = 33;
+uint8_t SET_TEST_MODE_PIN = 14;     /*!< Pin to set the flight computer to TEST mode */
+uint8_t SET_RUN_MODE_PIN = 13;      /*!< Pin to set the flight computer to RUN mode */
+uint8_t SD_CS_PIN = 26;             /*!< Chip select pin for SD card */
+
+
+/*!*****************************************************************************
+ * @brief This enum holds the states during flight computer test mode
+ *******************************************************************************/
+enum TEST_STATE {
+    HANDSHAKE = 0,      /*!< state to establish initial communication with transmitter */
+    RECEIVE_TEST_DATA,  /*!< sets the flight computer to receive test data over serial */
+    CONFIRM_TEST_DATA
+};
+
+uint8_t current_test_state = TEST_STATE::HANDSHAKE; /*!< Define current state the flight computer is in */
+
+/**
+ * XMODEM serial function prototypes
+ *
+ */
+void listDir(fs::FS &fs, const char * dirname, uint8_t levels);
+void initGPIO();
+void InitSPIFFS();
+void initSD(); // TODO: return a bool
+void SwitchLEDs(uint8_t, uint8_t);
+void InitXMODEM();
+void SerialEvent();
+void ParseSerial(char*);
+void checkRunTestToggle();
+
+//////////////////// SPIFFS FILE OPERATIONS ///////////////////////////
+
+#define FORMAT_SPIFFS_IF_FAILED 1
+const char* test_data_file = "/data.csv";
+
+void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
+    Serial.printf("Listing directory: %s\r\n", dirname);
+    File root = fs.open(dirname);
+    if(!root){
+        debugln("- failed to open directory");
+        return;
+    }
+    if(!root.isDirectory()){
+        debugln(" - not a directory");
+        return;
+    }
+    File file = root.openNextFile();
+    while(file){
+        if(file.isDirectory()){
+            debug("  DIR : ");
+            debugln(file.name());
+            if(levels){
+                listDir(fs, file.name(), levels -1);
+            }
+        } else {
+            debug("  FILE: ");
+            debug(file.name());
+            debug("\tSIZE: ");
+            debugln(file.size());
+        }
+        file = root.openNextFile();
+    }
+}
+
+void readFile(fs::FS &fs, const char * path){
+    Serial.printf("Reading file: %s\r\n", path);
+    File file = fs.open(path);
+    if(!file || file.isDirectory()){
+        debugln("- failed to open file for reading");
+        return;
+    }
+    debugln("- read from file:");
+    while(file.available()){
+        Serial.write(file.read());
+    }
+    file.close();
+}
+
+void writeFile(fs::FS &fs, const char * path, const char * message){
+    Serial.printf("Writing file: %s\r\n", path);
+    File file = fs.open(path, FILE_WRITE);
+    if(!file){
+        debugln("- failed to open file for writing");
+        return;
+    }
+    if(file.print(message)){
+        debugln("- file written");
+    } else {
+        debugln("- write failed");
+    }
+    file.close();
+}
+
+void appendFile(fs::FS &fs, const char * path, const char * message){
+    Serial.printf("Appending to file: %s\r\n", path);
+    File file = fs.open(path, FILE_APPEND);
+    if(!file){
+        debugln("- failed to open file for appending");
+        return;
+    }
+    if(file.print(message)){
+        debugln("- message appended");
+    } else {
+        debugln("- append failed");
+    }
+    file.close();
+}
+
+void deleteFile(fs::FS &fs, const char * path){
+    Serial.printf("Deleting file: %s\r\n", path);
+    if(fs.remove(path)){
+        debugln("- file deleted");
+    } else {
+        debugln("- delete failed");
+    }
+}
+
+void readTestDataFile() {
+    File logFile = SPIFFS.open(test_data_file, "r");
+    if (logFile) {
+        debugln("Log file contents:");
+        while (logFile.available()) {
+            Serial.write(logFile.read());
+        }
+        logFile.close();
+    } else {
+        debugln("Failed to open log file for reading.");
+    }
+}
+
+void InitSPIFFS() {
+    if(!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
+        debugln("SPIFFS mount failed"); // TODO: Set a flag for test GUI
+        return;
+    } else {
+        debugln("SPIFFS init success");
+    }
+}
+
+void initSD() {
+    if(!SD.begin(SD_CS_PIN)) {
+        delay(100);
+        debugln(F("[SD Card mounting failed]"));
+        return;
+    } else {
+        debugln(F("[SD card Init OK!"));
+    }
+
+    uint8_t cardType = SD.cardType();
+    if(cardType == CARD_NONE) {
+        debugln("[No SD card attached]");
+        return;
+    }
+
+    // initialize test data file
+    File file = SD.open("/data.csv", FILE_WRITE); // TODO: change file name to const char*
+
+    if(!file) {
+        debugln("[File does not exist. Creating file]");
+        writeFile(SD, "/data.csv", "SSID, SECURITY, CHANNEL, LAT, LONG, TIME \r\n");
+    } else {
+        debugln("[Data file already exists]");
+    }
+
+    file.close();
+
+}
+
+//////////////////// END OF SPIFFS FILE OPERATIONS ///////////////////////////
+
+/*!****************************************************************************
+ * @brief Inititialize the GPIOs
+ *******************************************************************************/
+void initGPIO() {
+    pinMode(red_led, OUTPUT);
+    pinMode(green_led, OUTPUT);
+    pinMode(SET_TEST_MODE_PIN, INPUT);
+    pinMode(SET_RUN_MODE_PIN, INPUT);
+    pinMode(buzzer, OUTPUT);
+
+    // set LEDs to a known starting state
+    digitalWrite(red_led, LOW);
+    digitalWrite(green_led, LOW);
+}
+
+/*!****************************************************************************
+ * @brief Switch the LEDS states
+ *******************************************************************************/
+void SwitchLEDs(uint8_t red_state, uint8_t green_state) {
+    digitalWrite(red_led, red_state);
+    digitalWrite(green_led, green_state);
+}
+
+// non blocking timings
+unsigned long last_buzz = 0;
+unsigned long current_buzz = 0;
+unsigned long buzz_interval = 200;
+uint8_t buzzer_state = LOW;
+
+unsigned long last_blink = 0;
+unsigned long current_blink = 0;
+unsigned long blink_interval = 200;
+uint8_t led_state = LOW;
+
+/*!****************************************************************************
+ * @brief Buzz the buzzer for a given buzz_interval
+ * This function is non-blocking
+ *******************************************************************************/
+void buzz() {
+    current_buzz = millis();
+    if((current_buzz - last_buzz) > buzz_interval) {
+        if(buzzer_state == LOW) {
+            buzzer_state = HIGH;
+        } else {
+            buzzer_state = LOW;
+        }
+
+        digitalWrite(buzzer, buzzer_state);
+
+        last_buzz = current_buzz;
+    }
+
+}
+
+/*!****************************************************************************
+ * @brief implements non-blocking blink
+ *******************************************************************************/
+void blink_200ms(uint8_t led_pin) {
+    current_blink = millis();
+    if((current_blink - last_blink) > blink_interval) {
+        if(led_state == LOW) {
+            led_state = HIGH;
+        } else if(led_state == HIGH) {
+            led_state = LOW;
+        }
+
+        digitalWrite(led_pin, led_state);
+        last_blink = current_blink;
+    }
+}
+
+/*!****************************************************************************
+ * @brief Sample the RUN/TEST toggle pins to check whether the fligh tcomputer is in test mode
+ * or run mode.
+ * If in TEST mode, define the TEST flag
+ * If in RUN mode, define the RUN flag
+ * TEST_MODE Pin and RUN_MODE pin are both pulled HIGH. When you set the jumper, you pull that pin to
+ * LOW.
+ *******************************************************************************/
+void checkRunTestToggle() {
+
+    if( (digitalRead(SET_RUN_MODE_PIN) == 0) && (digitalRead(SET_TEST_MODE_PIN) == 1) ) {
+        // run mode
+        RUN_MODE = 1;
+        TEST_MODE = 0;
+        SwitchLEDs(TEST_MODE, RUN_MODE);
+    }
+
+    if((digitalRead(SET_RUN_MODE_PIN) == 1) && (digitalRead(SET_TEST_MODE_PIN) == 0)){
+        // test mode
+        RUN_MODE = 0;
+        TEST_MODE = 1;
+
+        SwitchLEDs(TEST_MODE, RUN_MODE);
+    }
+
+    // here the jumper has been removed. we are neither in the TEST or RUN mode
+    // INVALID STATE
+    if((digitalRead(SET_RUN_MODE_PIN) == 1) && (digitalRead(SET_TEST_MODE_PIN) == 1)) {
+        TEST_MODE = 0;
+        RUN_MODE = 0;
+        SwitchLEDs(!TEST_MODE, !RUN_MODE);
+    }
+
+}
+
+
+
+/**
+ * XMODEM serial function definition
+ */
+
+/*!****************************************************************************
+ * @brief Initiate XMODEM protocol by sending a NAK command every 4 seconds until the transmitter returns an ACK signal
+ * @param none
+ *******************************************************************************/
+void InitXMODEM() {
+
+    // call the trasmitter
+    Serial.begin(BAUDRATE);
+    debug(NAK);
+    debug("\n");
+    Serial.flush();
+
+}
+
+/*!****************************************************************************
+ * @brief Parse the received serial command if it is a string
+ *******************************************************************************/
+int value = 0;
+void ParseSerialBuffer(char* buffer) {
+
+    if(strcmp(buffer, SOH_CHR) == 0) {
+        // if(buffer == SOH){
+
+        debugln(F("<Start of transmission>"));
+        SOH_recvd_flag = 1;
+        digitalWrite(red_led, HIGH);
+        debugln(F("<SOH rcvd from receiver> Waiting for data..."));
+
+        // put the MCU in data receive state
+        current_test_state = TEST_STATE::RECEIVE_TEST_DATA;
+        SwitchLEDs(0, 1);
+
+    } else {
+        debugln("Unknown");
+    }
+
+}
+
+/*!****************************************************************************
+ * @brief Parse the received serial command if it is a digit
+ We are only interested in numeric values being sent by the transmitter to us, the receiver
+ *******************************************************************************/
+void ParseSerialNumeric(int value) {
+    debug("Receive val: ");
+    debugln(value);
+
+    if(value == 1) // SOH: numeric 1
+    {
+        debugln("<Start of transmission>");
+        SOH_recvd_flag = 1;
+        debugln("<SOH rcvd> Waiting for data");
+
+        // put the MCU in data receive state
+        // any serial data after this will be the actual test data being received
+        SwitchLEDs(0, 1); // red off, green on
+        current_test_state = TEST_STATE::RECEIVE_TEST_DATA;
+
+    } else if(value == 4) {
+        // EOT: numeric 4
+        debugln("Unknown");
+    }
+}
+
+/*!****************************************************************************
+ * @brief Receive serial message during handshake
+ *******************************************************************************/
+void handshakeSerialEvent() {
+    SwitchLEDs(1,0);
+    while (Serial.available()) {
+        char ch = Serial.read();
+
+        if(isDigit(ch)) { // character between 0 an 9
+            // accumulate value
+            value = value*ch + (ch - '0');
+        } else if (ch == '\n') {
+            debug("SerEvent: ");
+            debugln(value);
+            ParseSerialNumeric(value);
+            value = 0; // reset value for the next transmission burst
+        }
+
+
+        // if(serial_index < MAX_CMD_LENGTH && (ch != '\n') ) { // use newline to signal end of command
+        //     serial_buffer[serial_index++] = ch;
+        // } else {
+        //     // here when buffer is full or a newline is received
+        //     debugln(serial_buffer);
+        //     ParseSerial(serial_buffer);
+        //     serial_buffer[serial_index] = 0; // terminate the string with a 0
+        //     serial_index = 0;
+
+        // }
+
+    }
+}
+
+/*!****************************************************************************
+ * @brief Receive serial message during RECEIVE_TEST_DATA state
+ * Data received in this state is the actual test data. It is saved into the test flash memory
+ *
+ *******************************************************************************/
+void receiveTestDataSerialEvent() {
+    while(Serial.available()) {
+        char ch = Serial.read();
+        Serial.write(ch);
+
+        // each CSV string ends with a newline
+        if(test_data_serial_index < MAX_CSV_LENGTH && (ch != '\n') ) {
+            test_data_buffer[test_data_serial_index++] = ch;
+
+        } else {
+            // buffer is full or newline is received
+            test_data_buffer[test_data_serial_index] = 0; // NUL terminator
+            test_data_serial_index = 0;
+
+            // HERE - LOG THE CSV STRING TO EXTERNAL FLASH MEMORY
+            //debugln(test_data_buffer);
+            // open file in append mode
+            File data_file = SPIFFS.open(test_data_file, "a");
+            if(data_file) {
+                data_file.print(test_data_buffer);
+                data_file.println(); // start a new line
+                data_file.close();
+            } else {
+                debugln("<Failed to write to file>");
+            }
+        }
+
+    }
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  //////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+//=================== MAIN SYSTEM =================
+uint8_t drogue_pyro = 25;
+uint8_t main_pyro = 12;
+uint8_t flash_cs_pin = 5;           /*!< External flash memory chip select pin */
+uint8_t remote_switch = 27;
+
+
 /* Flight data logging */
-uint8_t cs_pin = 5;                         /*!< External flash memory chip select pin */
-uint8_t flash_led_pin = 4;                  /*!< LED pin connected to indicate flash memory formatting  */
+uint8_t flash_led_pin = 39;                  /*!< LED pin connected to indicate flash memory formatting  */
 char filename[] = "flight.bin";             /*!< data log filename - Filename must be less than 20 chars, including the file extension */
 uint32_t FILE_SIZE_512K = 524288L;          /*!< 512KB */
 uint32_t FILE_SIZE_1M  = 1048576L;          /*!< 1MB */
@@ -48,16 +532,28 @@ unsigned long long previous_log_time = 0;   /*!< The last time we logged data to
 unsigned long long current_log_time = 0;    /*!< What is the processor time right now? */
 uint16_t log_sample_interval = 10;          /*!< After how long should we sample and log data to flash memory? */
 
-DataLogger data_logger(cs_pin, flash_led_pin, filename, file,  FILE_SIZE_4M);
+DataLogger data_logger(flash_cs_pin, flash_led_pin, filename, file,  FILE_SIZE_4M);
 
 /* position integration variables */
 long long current_time = 0;
 long long previous_time = 0;
 
 /**
- * ///////////////////////// DATA VARIABLES /////////////////////////
-*/
+ * Task synchronization variables
+ */
+// event group bits 
+#define TRANSMIT_TELEMETRY_BIT  ((EventBits_t) 0x01 << 0)   // for bit 0
+#define CHECK_FLIGHT_STATE_BIT  ((EventBits_t) 0x01 << 1)   // for bit 1
+#define LOG_TO_MEMORY_BIT       ((EventBits_t) 0x01 << 2)   // for bit 2
+#define TRANSMIT_XBEE_BIT       ((EventBits_t) 0x01 << 3)   // for bit 3
+#define DEBUG_TO_TERM_BIT       ((EventBits_t) 0x01 << 4)   // for bit 4
 
+// event group type for task syncronization
+EventGroupHandle_t tasksDataReceiveEventGroup;
+
+/**
+ * ///////////////////////// DATA TYPES /////////////////////////
+*/
 accel_type_t acc_data;
 gyro_type_t gyro_data;
 gps_type_t gps_data;
@@ -69,10 +565,13 @@ telemetry_type_t telemetry_packet;
 */
 
 
-///////////////////////// PERIPHERALS INIT /////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////// PERIPHERALS INIT                              /////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * create an MPU6050 object
+ * 0x68 is the address of the MPU
  * set gyro to max deg to 1000 deg/sec
  * set accel fs reading to 16g
 */
@@ -82,7 +581,7 @@ MPU6050 imu(0x68, 16, 1000);
 SFE_BMP180 altimeter;
 char status;
 double T, P, p0, a;
-#define ALTITUDE 1525.0 // altitude of iPIC building, JKUAT, Juja.
+#define ALTITUDE 1525.0 // altitude of iPIC building, JKUAT, Juja. TODO: Change to launch site altitude
 
 /*!****************************************************************************
  * @brief Initialize BMP180 barometric sensor
@@ -91,13 +590,12 @@ double T, P, p0, a;
  *******************************************************************************/
 void BMPInit() {
     if(altimeter.begin()) {
-        Serial.println("BMP init success");
+        debugln("[+]BMP init OK.");
         // TODO: update system table
     } else {
-        Serial.println("BMP init failed");
+        debugln("[+]BMP init failed");
     }
 }
-
 
 /*!****************************************************************************
  * @brief Initialize the GPS connected on Serial2
@@ -105,19 +603,15 @@ void BMPInit() {
  * 
  *******************************************************************************/
 void GPSInit() {
-    // create the GPS object 
-    debugln("Initializing the GPS..."); // TODO: log to system logger
     Serial2.begin(GPS_BAUD_RATE);
     delay(100); // wait for GPS to init
+
+    debugln("[+]GPS init OK!"); // TODO: Proper GPS init check
 }
 
 /**
  * ///////////////////////// END OF PERIPHERALS INIT /////////////////////////
  */
-
-
-// create data types to hold the sensor data 
-
 
 /* create queue to store altimeter data
  * store pressure and altitude
@@ -153,10 +647,13 @@ QueueHandle_t gps_data_qHandle;
 //     mqtt_client.setServer(MQTT_SERVER, MQTT_PORT);
 // }
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////// ACCELERATION AND ROCKET ATTITUDE DETERMINATION /////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!****************************************************************************
- * @brief Read aceleration data from the accelerometer
+ * @brief Read acceleration data from the accelerometer
  * @param pvParameters - A value that is passed as the paramater to the created task.
  * If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - 
  * so it is not valid to pass the address of a stack variable.
@@ -186,7 +683,9 @@ void readAccelerationTask(void* pvParameter) {
 }
 
 
-///////////////////////// ALTITUDE AND VELOCITY DETERMINATION /////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////// ALTITUDE AND VELOCITY DETERMINATION /////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!****************************************************************************
  * @brief Read ar pressure data from the barometric sensor onboard
@@ -218,9 +717,9 @@ void readAltimeterTask(void* pvParameters){
             status = altimeter.getTemperature(T);
             if(status != 0) {
                 // print out the measurement 
-                // Serial.print("temperature: ");
-                // Serial.print(T, 2);
-                // Serial.print(" \xB0 C, ");
+                // debug("temperature: ");
+                // debug(T, 2);
+                // debug(" \xB0 C, ");
 
                 // start pressure measurement 
                 // The parameter is the oversampling setting, from 0 to 3 (highest res, longest wait).
@@ -240,9 +739,9 @@ void readAltimeterTask(void* pvParameters){
                     status = altimeter.getPressure(P, T);
                     if(status != 0) {
                         // print out the measurement
-                        // Serial.print("absolute pressure: ");
-                        // Serial.print(P, 2);
-                        // Serial.print(" mb, "); // in millibars
+                        // debug("absolute pressure: ");
+                        // debug(P, 2);
+                        // debug(" mb, "); // in millibars
 
                         p0 = altimeter.sealevel(P,ALTITUDE);
                         // If you want to determine your altitude from the pressure reading,
@@ -251,24 +750,24 @@ void readAltimeterTask(void* pvParameters){
                         // Result: a = altitude in m.
 
                         a = altimeter.altitude(P, p0);
-                        // Serial.print("computed altitude: ");
-                        // Serial.print(a, 0);
-                        // Serial.print(" meters, ");
+                        // debug("computed altitude: ");
+                        // debug(a, 0);
+                        // debug(" meters, ");
 
                     } else {
-                        Serial.println("error retrieving pressure measurement\n");
+                        debugln("error retrieving pressure measurement\n");
                     } 
                 
                 } else {
-                    Serial.println("error starting pressure measurement\n");
+                    debugln("error starting pressure measurement\n");
                 }
 
             } else {
-                Serial.println("error retrieving temperature measurement\n");
+                debugln("error retrieving temperature measurement\n");
             }
 
         } else {
-            Serial.println("error starting temperature measurement\n");
+            debugln("error starting temperature measurement\n");
         }
 
         // delay(2000);
@@ -350,6 +849,154 @@ void readGPSTask(void* pvParameters){
 
 }
 
+/*!****************************************************************************
+ * @brief dequeue data from telemetry queue after all the tasks have consumed the data
+ * @param pvParameters - A value that is passed as the paramater to the created task.
+ * If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - 
+ * so it is not valid to pass the address of a stack variable.
+ * @return none
+ * 
+ *******************************************************************************/
+void clearTelemetryQueueTask(void* pvParameters) {
+    telemetry_type_t data_item; // data item to dequeue
+
+    const EventBits_t xBitsToWaitFor = (TRANSMIT_TELEMETRY_BIT | CHECK_FLIGHT_STATE_BIT | LOG_TO_MEMORY_BIT); // todo: ADD  TRANSMIT_TO_XBEE AND DEBUG TO_TERMINAL
+    EventBits_t xEventGroupValue;
+    
+    while (1) {
+        xEventGroupValue = xEventGroupWaitBits(
+                tasksDataReceiveEventGroup, 		// event group to use
+                xBitsToWaitFor, 	                // bit combo to wait for 
+                pdTRUE,				                // clear all bits on exit
+                pdTRUE, 			                // Wait for all bits (AND)
+                portMAX_DELAY		                // wait indefinitely
+        );
+
+        // Clear the data item from telemetry queue
+        xQueueReceive(telemetry_data_qHandle, &data_item, portMAX_DELAY);
+
+        // check if all data consuming tasks have received the data
+        // check TRANSMIT_TELEMETRY TASK
+        if(xEventGroupValue & TRANSMIT_TELEMETRY_BIT != 0) {
+            // TODO: MUST LOG TO SYSTEM LOGGER
+            debugln("[transmit telemetry task receive data OK!]");
+        }
+
+        // check CHECK_FLIGHT_STATE_TASK
+        if(xEventGroupValue & CHECK_FLIGHT_STATE_BIT != 0) {
+            // TODO: MUST LOG TO SYSTEM LOGGER
+            debugln("[check state task receive data OK!]");
+        }
+
+        // check LOG_TO_MEMORY task 
+        if(xEventGroupValue & LOG_TO_MEMORY_BIT != 0) {
+            // TODO: MUST LOG TO SYSTEM LOGGER
+            debugln("[log to memory task receive data OK!]");
+        }
+
+        //TODO: XBEE, DEBUG TO TERM
+
+    }
+	
+}
+
+/*!****************************************************************************
+ * @brief Check and update the current state of flight - refer to states.h
+ * @param pvParameters - A value that is passed as the paramater to the created task.
+ * If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - 
+ * so it is not valid to pass the address of a stack variable.
+ * @return Updates the telemetry data flight state value
+ * 
+ *******************************************************************************/
+void checkFlightState(void* pvParameters) {
+    // get the flight state from the telemetry task
+    telemetry_type_t sensor_data; 
+    
+    while (1) {
+        uint8_t s = xQueuePeek(telemetry_data_qHandle, &sensor_data, portMAX_DELAY);
+        xEventGroupSetBits(tasksDataReceiveEventGroup, CHECK_FLIGHT_STATE_BIT); // signal that we have received flight data
+        
+
+        // check the flight state based on the conditions 
+        // this is a dummy condition
+        if(sensor_data.acc_data.ax < 5 && sensor_data.acc_data.ay > 2){
+            // change flight state to POWERED FLIGHT
+            current_state = FLIGHT_STATE::POWERED_FLIGHT;
+        } 
+        // else if() {}
+    }
+
+}
+
+/*!****************************************************************************
+ * @brief performs flight actions based on the current flight state
+ * If the flight state neccessisates an operation, we perfom it here
+ * For example if the flight state is apogee, we perfom MAIN_CHUTE ejection
+ * 
+ * @param pvParameter - A value that is passed as the paramater to the created task.
+ * If pvParameter is set to the address of a variable then the variable must still exist when the created task executes - 
+ * so it is not valid to pass the address of a stack variable.
+ * 
+ *******************************************************************************/
+void flightStateCallback(void* pvParameters) {
+    while(1) {
+        switch (current_state) {
+            // PRE_FLIGHT_GROUND
+            case FLIGHT_STATE::PRE_FLIGHT_GROUND:
+                debugln("PRE-FLIGHT STATE");
+                break;
+
+            // POWERED_FLIGHT
+            case FLIGHT_STATE::POWERED_FLIGHT:
+                debugln("POWERED FLIGHT STATE");
+                break;
+
+            // COASTING
+            case FLIGHT_STATE::COASTING:
+                debugln("COASTING");
+                break;
+
+            // APOGEE
+            case FLIGHT_STATE::APOGEE:
+                debugln("APOGEE");
+                break;
+
+            // DROGUE_DEPLOY
+            case FLIGHT_STATE::DROGUE_DEPLOY:
+                debugln("DROGUE DEPLOY");
+                drogueChuteDeploy();
+                break;
+
+            // DROGUE_DESCENT
+            case FLIGHT_STATE::DROGUE_DESCENT: 
+                debugln("DROGUE DESCENT");
+                break;
+
+            // MAIN_DEPLOY
+            case FLIGHT_STATE::MAIN_DEPLOY:
+                debugln("MAIN CHUTE DEPLOY");
+                mainChuteDeploy();
+                break;
+
+            // MAIN_DESCENT
+            case FLIGHT_STATE::MAIN_DESCENT:
+                debugln("MAIN CHUTE DESCENT");
+                break;
+
+            // POST_FLIGHT_GROUND
+            case FLIGHT_STATE::POST_FLIGHT_GROUND:
+                debugln("POST FLIGHT GROUND");
+                break;
+            
+            // MAINTAIN AT PRE_FLIGHT_GROUND IF NO STATE IS SPECIFIED - NOT GONNA HAPPEN BUT BETTER SAFE THAN SORRY
+            default:
+                debugln(current_state);
+                break;
+
+        }
+    }
+}
+
 
 /*!****************************************************************************
  * @brief debug flight/test data to terminal, this task is called if the DEBUG_TO_TERMINAL is set to 1 (see defs.h)
@@ -362,7 +1009,7 @@ void debugToTerminalTask(void* pvParameters){
     telemetry_type_t rcvd_data; // accelration received from acceleration_queue
 
     while(true){
-        if(xQueueReceive(telemetry_data_qHandle, &rcvd_data, portMAX_DELAY) == pdPASS){
+        if(xQueuePeek(telemetry_data_qHandle, &rcvd_data, portMAX_DELAY) == pdPASS){
             // debug CSV to terminal 
             // debug(rcvd_data.acc_data.ax); debug(","); 
             // debug(rcvd_data.acc_data.ay); debug(","); 
@@ -403,6 +1050,9 @@ void debugToTerminalTask(void* pvParameters){
         // }else{
         //     /* no queue */
         // }
+
+        xEventGroupSetBits(tasksDataReceiveEventGroup, DEBUG_TO_TERM_BIT); // signal that we have received flight data
+
     }
 }
 
@@ -418,7 +1068,9 @@ void logToMemory(void* pvParameter) {
     telemetry_type_t received_packet;
 
     while(1) {
-        xQueueReceive(telemetry_data_qHandle, &received_packet, portMAX_DELAY);
+        xQueuePeek(telemetry_data_qHandle, &received_packet, portMAX_DELAY);
+        xEventGroupSetBits(tasksDataReceiveEventGroup, LOG_TO_MEMORY_BIT); // signal that we have received flight data
+
         // received_packet.record_number++; 
 
         // is it time to record?
@@ -534,37 +1186,72 @@ void logToMemory(void* pvParameter) {
 // }
 
 
+
 /*!****************************************************************************
- * @brief Setup - perfom initialization of all hardware subsystems, create queues, create queue handles 
+ * @brief fires the pyro-charge to deploy the drogue chute
+ * Turn on the drogue chute ejection circuit by running the GPIO 
+ * HIGH for a preset No. of seconds.  
+ * Default no. of seconds to remain HIGH is 5 
+ * 
+ *******************************************************************************/
+void drogueChuteDeploy() {
+    debugln("DROGUE CHUTE DEPLOYED");
+}
+
+/*!****************************************************************************
+ * @brief fires the pyro-charge to deploy the main chute
+ * Turn on the main chute ejection circuit by running the GPIO 
+ * HIGH for a preset No. of seconds.  
+ * Default no. of seconds to remain HIGH is 5 
+ * 
+ *******************************************************************************/
+void mainChuteDeploy() {
+    debugln("MAIN CHUTE DEPLOYED");
+}
+
+
+/*!****************************************************************************
+ * @brief Setup - perform initialization of all hardware subsystems, create queues, create queue handles
  * initialize system check table
  * 
  *******************************************************************************/
 void setup(){
     /* initialize serial */
-    Serial.begin(115200);
+    Serial.begin(BAUDRATE);
+    delay(100);
 
-    uint8_t app_id = xPortGetCoreID();
-    BaseType_t th; // task creation handle
+    /* initialize the system logger */
+    InitSPIFFS();
 
-    /* initialize the data logging system - logs to flash memory */
-    data_logger.loggerInit();
+    /* mode 0 resets the system log file by clearing all the current contents */
+//    system_logger.logToFile(SPIFFS, 0, rocket_ID, level, system_log_file, "Game Time!"); // TODO: DEBUG
 
-    /* connect to WiFi*/
-    // connectToWifi();
-
-    ///////////////////////// PERIPHERALS INIT /////////////////////////
+    debugln();
+    debugln(F("=============================================="));
+    debugln(F("========= INITIALIZING PERIPHERALS ==========="));
+    debugln(F("=============================================="));
     imu.init();
     BMPInit();
     GPSInit();
+    initGPIO();
 
-    //==============================================================
+    debugln();
+    debugln(F("=============================================="));
+    debugln(F("===== INITIALIZING DATA LOGGING SYSTEM ======="));
+    debugln(F("=============================================="));
+    initSD();
+    data_logger.loggerInit();
 
+    uint8_t app_id = xPortGetCoreID();
+    BaseType_t th; // task creation handle
     // mqtt_client.setBufferSize(MQTT_BUFFER_SIZE);
     // mqtt_client.setServer(MQTT_SERVER, MQTT_PORT);
 
-    debugln("==============Creating queues=============="); // TODO: LOG TO SYSTEM LOGGER
+    debugln();
+    debugln(F("=============================================="));
+    debugln(F("============== CREATING QUEUES ==============="));
+    debugln(F("=============================================="));
 
-    ///////////////////// create data queues ////////////////////
     // this queue holds the data from MPU 6050 - this data is filtered already
     accel_data_qHandle = xQueueCreate(GYROSCOPE_QUEUE_LENGTH, sizeof(accel_type_t)); 
 
@@ -582,122 +1269,128 @@ void setup(){
 
     /* check if the queues were created successfully */
     if(accel_data_qHandle == NULL){
-        debugln("[-]accel data queue creation failed!");
+        debugln("[-]accel data queue creation failed");
     } else{
-        debugln("[+]Accelleration data queue creation success");
+        debugln("[+]Acceleration data queue creation OK.");
     }
     
     if(altimeter_data_qHandle == NULL){
-        debugln("[-]Altimeter data queue creation failed!");
+        debugln("[-]Altimeter data queue creation failed");
     } else{
-        debugln("[+]Altimeter data queue creation success");
+        debugln("[+]Altimeter data queue creation OK.");
     }
 
     if(gps_data_qHandle == NULL){
-        debugln("[-]GPS data queue creation failed!");
+        debugln("[-]GPS data queue creation failed");
     } else{
-        debugln("[+]GPS data queue creation success");
+        debugln("[+]GPS data queue creation OK.");
     }
 
     if(telemetry_data_qHandle == NULL) {
-        debugln("Telemetry queue created");
+        debugln("[-]Telemetry data queue creation failed");
     } else {
-        debugln("Failed to create telemetry queue");
+        debugln("[+]Telemetry data queue creation OK.");
     }
 
     // if(filtered_data_queue == NULL){
     //     debugln("[-]Filtered data queue creation failed!");
     // } else{
-    //     debugln("[+]Filtered data queue creation success");
+    //     debugln("[+]Filtered data queue creation OK.");
     // }
 
     // if(flight_states_queue == NULL){
     //     debugln("[-]Flight states queue creation failed!");
     // } else{
-    //     debugln("[+]Flight states queue creation success");
+    //     debugln("[+]Flight states queue creation OK.");
     // }
 
-    //====================== TASK CREATION ==========================
+    debugln();
+    debugln(F("=============================================="));
+    debugln(F("============== CREATING TASKS ==============="));
+    debugln(F("=============================================="));
+
     /* Create tasks
      * All tasks have a stack size of 1024 words - not bytes!
      * ESP32 is 32 bit, therefore 32bits x 1024 = 4096 bytes
      * So the stack size is 4096 bytes
-     * */
+     * 
+     * TASK CREATION PARAMETERS
+     * function that executes this task
+     * Function name - for debugging 
+     * Stack depth in words 
+     * parameter to be passed to the task 
+     * Task priority - in this case 1 
+     * task handle that can be passed to other tasks to reference the task 
+     *
+     * /
     debugln("==============Creating tasks==============");
 
     /* TASK 1: READ ACCELERATION DATA */
-   th = xTaskCreatePinnedToCore(
-        readAccelerationTask,         
-        "readGyroscope",
-        STACK_SIZE*2,                  
-        NULL,                       
-        1,
-        NULL,
-        app_id
-   );
-
-   if(th == pdPASS) {
-    Serial.println("Read acceleration task created");
-   } else {
-    Serial.println("Read acceleration task creation failed");
-   }
+    th = xTaskCreatePinnedToCore(readAccelerationTask, "readGyroscope", STACK_SIZE*2, NULL, 1, NULL,app_id);
+    if(th == pdPASS) {
+        debugln("[+]Read acceleration task created");
+    } else {
+        debugln("[-]Read acceleration task creation failed");
+    }
 
     /* TASK 2: READ ALTIMETER DATA */
-   th = xTaskCreatePinnedToCore(
-           readAltimeterTask,           /* function that executes this task*/
-           "readAltimeter",             /* Function name - for debugging */
-           STACK_SIZE*2,                /* Stack depth in words */
-           NULL,                        /* parameter to be passed to the task */
-           2,                           /* Task priority - in this case 1 */
-           NULL,                        /* task handle that can be passed to other tasks to reference the task */
-           app_id
-        );
-
+    th = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*2,NULL,2,NULL,app_id);
     if(th == pdPASS) {
-        debugln("Read altimeter task created successfully");
+        debugln("[+]Read altimeter task created OK.");
     } else {
-        debugln("Failed to create read altimeter task");
+        debugln("[-]Failed to create read altimeter task");
     }
 
     /* TASK 3: READ GPS DATA */
-    th = xTaskCreatePinnedToCore(
-            readGPSTask,         
-            "readGPS",
-            STACK_SIZE*2,                  
-            NULL,                       
-            1,
-            NULL,
-            app_id
-        );
+    th = xTaskCreatePinnedToCore(readGPSTask, "readGPS", STACK_SIZE*2, NULL,1,NULL, app_id);
 
     if(th == pdPASS) {
-        debugln("GPS task created");
+        debugln("[+]GPS task created OK.");
     } else {
-        debugln("Failed to create GPS task");
+        debugln("[-]Failed to create GPS task");
     }
 
-    #if DEBUG_TO_TERMINAL   // set SEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
-    /* TASK 4: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
-    th = xTaskCreatePinnedToCore(
-            debugToTerminalTask,
-            "displayData",
-            STACK_SIZE,
-            NULL,
-            1,
-            NULL,
-            app_id
-        );
+    /* TASK 4: CLEAR TELEMETRY QUEUE ITEM */
+    th = xTaskCreatePinnedToCore(clearTelemetryQueueTask,"clearTelemetryQueueTask",STACK_SIZE*2,NULL,1, NULL,app_id);
+
+    if(th == pdPASS) {
+        debugln("[+]clearTelemetryQueueTask task created OK.");
+    } else {
+        debugln("[-]Failed to create clearTelemetryQueueTask task");
+    }
+
+    /* TASK 5: CHECK FLIGHT STATE TASK */
+    th = xTaskCreatePinnedToCore(checkFlightState,"checkFlightState",STACK_SIZE*2,NULL,1, NULL,app_id);
+    if(th == pdPASS) {
+        debugln("[+]checkFlightState task created OK.");
+    } else {
+        debugln("[-}Failed to create checkFlightState task");
+    }
+    ////
+
+    /* TASK 6: FLIGHT STATE CALLBACK TASK */    
+    th = xTaskCreatePinnedToCore(flightStateCallback,"flightStateCallback",STACK_SIZE*2,NULL,1, NULL,app_id);
+    if(th == pdPASS) {
+        debugln("[+]flightStateCallback task created OK.");
+    } else {
+        debugln("[-}Failed to create flightStateCallback task");
+    }
+
+    #if DEBUG_TO_TERMINAL   // set DEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
+
+    /* TASK 7: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
+    th = xTaskCreatePinnedToCore(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE,NULL,1,NULL,app_id);
         
     if(th == pdPASS) {
-        Serial.println("Task created");
+        debugln("[+}debugToTerminalTaskTask created");
     } else {
-        Serial.println("Task not created");
+        debugln("[-}Task not created");
     }
 
     #endif // DEBUG_TO_TERMINAL_TASK
 
 
-    /* TASK 4: TRANSMIT TELEMETRY DATA */
+    /* TASK 8: TRANSMIT TELEMETRY DATA */
     // if(xTaskCreate(
     //         transmitTelemetry,
     //         "transmit_telemetry",
@@ -708,11 +1401,11 @@ void setup(){
     // ) != pdPASS){
     //     debugln("[-]Transmit task failed to create");
     // }else{
-    //     debugln("[+]Transmit task created success");
+    //     debugln("[+]Transmit task created OK.");
     // }
 
-    #if LOG_TO_MEMORY   // set LOG_TO_MEMORY to 1 to allow loggin to memory 
-        /* TASK 4: LOG DATA TO MEMORY */
+    #if LOG_TO_MEMORY   // set LOG_TO_MEMORY to 1 to allow logging to memory 
+        /* TASK 9: LOG DATA TO MEMORY */
         if(xTaskCreate(
                 logToMemory,
                 "logToMemory",
@@ -722,8 +1415,9 @@ void setup(){
                 NULL
         ) != pdPASS){
             debugln("[-]logToMemory task failed to create");
+  
         }else{
-            debugln("[+]logToMemory task created success");
+            debugln("[+]logToMemory task created OK.");
         }
     #endif // LOG_TO_MEMORY
 
@@ -737,9 +1431,31 @@ void setup(){
     // ) != pdPASS){
     //     debugln("[-]FSM task failed to create");
     // }else{
-    //     debugln("[+]FSM task created success");
+    //     debugln("[+]FSM task created OK.");
     // }
 
+    // create  event group to sync flight data consumption 
+    // see N4 flight software docs for more info
+    debugln();
+    debugln(F("=============================================="));
+    debugln(F("===== CREATING DATA CONSUMER EVENT GROUP ===="));
+    debugln(F("=============================================="));
+
+    tasksDataReceiveEventGroup = xEventGroupCreate();
+    if(tasksDataReceiveEventGroup == NULL) {
+        debugln("[-] data consumer event group failed to create");
+    } else {
+        debugln("[+] data consumer event group created OK.");
+    }
+
+    // check whether we are in test mode or running mode
+    checkRunTestToggle();
+    if(TEST_MODE) {
+        debugln();
+        debugln(F("=============================================="));
+        debugln(F("=========FLIGHT COMPUTER TESTING MODE========="));
+        debugln(F("=============================================="));
+    }
 }
 
 

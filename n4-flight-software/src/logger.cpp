@@ -3,7 +3,7 @@
 */
 
 #include "logger.h"
-#include "data-types.h"
+#include "data_types.h"
 
 telemetry_type_t t;
 char pckt_buff[50];

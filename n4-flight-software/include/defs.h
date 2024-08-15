@@ -53,10 +53,23 @@
 // const char* SSID = "Galaxy";
 // const char* PASSWORD = "luwa2131";
 
+<<<<<<< Updated upstream
+=======
+// defines the various thresholds  that need to be achieved in the state machine
+#define APOGEE_ALTITUDE 0.0f // meters
+#define DROGUE_DEPLOY_MIN_ALTITUDE 200.0f // meters
+#define MAIN_CHUTE_DEPLOY_ALTITUDE 450.0f // meters
+#define DECELERATION_CHECK_DURATION 100 // milliseconds
+
+/*Defines safe mode and flight mode*/
+#define FLIGHT_MODE 1
+#define SAFE_MODE   0
+
+>>>>>>> Stashed changes
 /* ROCKET FLIGHT STATES */
 #define PRE_FLIGHT          0
-#define POWERED_FLIGHT      1
-#define COASTING            2
+#define FLIGHT_MODE_POWERED      1
+#define COASTING_STATE           2
 #define APOGEE              3
 #define BALLISTIC_DESCENT   4
 #define PARACHUTE_DESCENT   5

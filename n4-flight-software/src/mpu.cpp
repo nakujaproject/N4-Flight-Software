@@ -1,4 +1,5 @@
 #include "mpu.h"
+#include <Arduino.h>
 
 // constructor
 MPU6050::MPU6050(uint8_t address, uint32_t accel_fs_range, uint32_t gyro_fs_range) {
@@ -46,10 +47,12 @@ void MPU6050::init() {
          Wire.write(SET_ACCEL_FS_16G);
     }
     Wire.endTransmission(true);
+
+    Serial.println(F("[+]MPU6050 init OK."));
 }
 
 /**
- * Read X axix acceleration
+ * Read X axiS acceleration
 */
 float MPU6050::readXAcceleration() {
     Wire.beginTransmission(this->_address);

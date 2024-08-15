@@ -2,7 +2,17 @@
 #include "functions.h"
 #include "defs.h"
 #include "sensors.h"
+<<<<<<< Updated upstream
 #include "elapsedMillis.h"
+=======
+#include "mpu.h"
+#include <elapsedMillis.h>
+
+
+int PREVIOUS_STATE = 0;
+ 
+int Mode;
+>>>>>>> Stashed changes
 
 const int DROGUE_PIN = 3;
 const int MAIN_PIN = 5;
@@ -12,7 +22,11 @@ elapsedMillis decelerationTimer; // Timer to track deceleration duration
 bool isDeceleratingContinuously(){
   static float previousAltitude = 0.0f; // Store previous altitude
   float currentAltitude = getAltitude(); // Read current altitude
+<<<<<<< Updated upstream
   float verticalAccel = getAcceleration(MPU_SENSOR_Z_AXIS) - 9.81f; // Calculate vertical acceleration
+=======
+  float verticalAccel = readZAcceleration(); // Calculate vertical acceleration
+>>>>>>> Stashed changes
 
   // Check for deceleration event
   bool isDecelerating = verticalAccel < 0
@@ -36,11 +50,19 @@ State currentState = State::PRE_FLIGHT_GROUND;
 
 //State machine transition conditions
 
-//checks if altitude is greater than 50m to determine powered flight
+//checks if altitude displacement is greater than 50m to determine powered flight
 State isInPoweredFlight(float altitude) {
+<<<<<<< Updated upstream
   if (altitude > 50.0f) { 
     return State::POWERED_FLIGHT;
   }
+=======
+   float displacement = altitude - BASE_ALTITUDE;
+    if (displacement > 5) {
+     return POWERED_FLIGHT;
+    }
+    return currentState; 
+>>>>>>> Stashed changes
 }
 // Checks for continuous deceleration to determine coasting
 State isInCoasting(bool isDecelerating) {
@@ -75,7 +97,7 @@ void loop() {
   float velocity = getVelocity(); 
   bool isDecelerating = isDeceleratingContinuously();
 
-  if(modf == FLIGHT_MODE) {
+  if(Mode == FLIGHT_MODE) {
     
     // Call state transition functions
    currentState = isInPoweredFlight(currentAltitude);
@@ -83,7 +105,11 @@ void loop() {
    currentState = isInApogee(velocity,currentAltitude);
    currentState = isInMainChuteDeploy(currentAltitude);
 
+<<<<<<< Updated upstream
    } else {
+=======
+   } else if (Mode == SAFE_MODE) {
+>>>>>>> Stashed changes
     currentState = PRE_FLIGHT_GROUND;
   }
   

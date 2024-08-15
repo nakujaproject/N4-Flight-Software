@@ -16,7 +16,7 @@
 
 #include <Arduino.h>
 #include <SerialFlash.h>
-#include "data-types.h"
+#include "data_types.h"
 
 class DataLogger {
     private:

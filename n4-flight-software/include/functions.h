@@ -22,5 +22,7 @@ float getAcceleration();
 float getVelocity();
 
 
+void readAltimeterTask();
+
 
 #endif
