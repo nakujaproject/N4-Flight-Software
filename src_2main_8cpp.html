@@ -119,12 +119,12 @@ $(function(){initNavTree('src_2main_8cpp.html',''); initResizable(true); });
 <code>#include &lt;SD.h&gt;</code><br />
 <code>#include &lt;SPIFFS.h&gt;</code><br />
 <code>#include &quot;sensors.h&quot;</code><br />
-<code>#include &quot;defs.h&quot;</code><br />
+<code>#include &quot;<a class="el" href="defs_8h_source.html">defs.h</a>&quot;</code><br />
 <code>#include &quot;mpu.h&quot;</code><br />
 <code>#include &quot;SerialFlash.h&quot;</code><br />
-<code>#include &quot;logger.h&quot;</code><br />
-<code>#include &quot;data_types.h&quot;</code><br />
-<code>#include &quot;custom_time.h&quot;</code><br />
+<code>#include &quot;<a class="el" href="logger_8h_source.html">logger.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="data__types_8h_source.html">data_types.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="custom__time_8h_source.html">custom_time.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="states_8h_source.html">states.h</a>&quot;</code><br />
 <code>#include &quot;system_logger.h&quot;</code><br />
 <code>#include &quot;system_log_levels.h&quot;</code><br />
@@ -277,7 +277,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>ParseSerialBuffer</b>
 <tr class="memdesc:a6648d201a9f47aa836d36e5339e78ef3"><td class="mdescLeft">&#160;</td><td class="mdescRight">performs flight actions based on the current flight state If the flight state neccessisates an operation, we perfom it here For example if the flight state is apogee, we perfom MAIN_CHUTE ejection  <br /></td></tr>
 <tr class="separator:a6648d201a9f47aa836d36e5339e78ef3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaa1a5716bd567e8c37465dabe33e6396" id="r_aaa1a5716bd567e8c37465dabe33e6396"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aaa1a5716bd567e8c37465dabe33e6396">debugToTerminalTask</a> (void *pvParameters)</td></tr>
-<tr class="memdesc:aaa1a5716bd567e8c37465dabe33e6396"><td class="mdescLeft">&#160;</td><td class="mdescRight">debug flight/test data to terminal, this task is called if the DEBUG_TO_TERMINAL is set to 1 (see <a class="el" href="defs_8h_source.html">defs.h</a>)  <br /></td></tr>
+<tr class="memdesc:aaa1a5716bd567e8c37465dabe33e6396"><td class="mdescLeft">&#160;</td><td class="mdescRight">debug flight/test data to terminal, this task is called if the DEBUG_TO_TERMINAL is set to 1 (see <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a>)  <br /></td></tr>
 <tr class="separator:aaa1a5716bd567e8c37465dabe33e6396"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7df146b43e503e23146e698154d5096d" id="r_a7df146b43e503e23146e698154d5096d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7df146b43e503e23146e698154d5096d">logToMemory</a> (void *pvParameter)</td></tr>
 <tr class="memdesc:a7df146b43e503e23146e698154d5096d"><td class="mdescLeft">&#160;</td><td class="mdescRight">log the data to the external flash memory  <br /></td></tr>
@@ -429,19 +429,19 @@ long long&#160;</td><td class="memItemRight" valign="bottom"><b>previous_time</b
 <tr class="memitem:a1067333ef3d05fdb37de74977a972c61" id="r_a1067333ef3d05fdb37de74977a972c61"><td class="memItemLeft" align="right" valign="top"><a id="a1067333ef3d05fdb37de74977a972c61" name="a1067333ef3d05fdb37de74977a972c61"></a>
 EventGroupHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>tasksDataReceiveEventGroup</b></td></tr>
 <tr class="separator:a1067333ef3d05fdb37de74977a972c61"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5db507f1ef37ed2d76f24c064e4e6a85" id="r_a5db507f1ef37ed2d76f24c064e4e6a85"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structAcceleration__Data.html">accel_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5db507f1ef37ed2d76f24c064e4e6a85">acc_data</a></td></tr>
+<tr class="memitem:a5db507f1ef37ed2d76f24c064e4e6a85" id="r_a5db507f1ef37ed2d76f24c064e4e6a85"><td class="memItemLeft" align="right" valign="top"><a class="el" href="data__types_8h.html#a610a63dae0c8ed502103c93c5aa63db0">accel_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5db507f1ef37ed2d76f24c064e4e6a85">acc_data</a></td></tr>
 <tr class="separator:a5db507f1ef37ed2d76f24c064e4e6a85"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af91b409a7eb60f99def9aa1515c3d33c" id="r_af91b409a7eb60f99def9aa1515c3d33c"><td class="memItemLeft" align="right" valign="top"><a id="af91b409a7eb60f99def9aa1515c3d33c" name="af91b409a7eb60f99def9aa1515c3d33c"></a>
-<a class="el" href="structGyroscope__Data.html">gyro_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>gyro_data</b></td></tr>
+<a class="el" href="data__types_8h.html#a29ecea45ce162ac46f9e03b4ef231fde">gyro_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>gyro_data</b></td></tr>
 <tr class="separator:af91b409a7eb60f99def9aa1515c3d33c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a77c86b0218234417b206fe8620c48e3d" id="r_a77c86b0218234417b206fe8620c48e3d"><td class="memItemLeft" align="right" valign="top"><a id="a77c86b0218234417b206fe8620c48e3d" name="a77c86b0218234417b206fe8620c48e3d"></a>
-<a class="el" href="structGPS__Data.html">gps_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data</b></td></tr>
+<a class="el" href="data__types_8h.html#a876d9394b51566660d43cc1747ae7ac3">gps_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data</b></td></tr>
 <tr class="separator:a77c86b0218234417b206fe8620c48e3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a67d8b5a814cddd8d2c103b64967b30fd" id="r_a67d8b5a814cddd8d2c103b64967b30fd"><td class="memItemLeft" align="right" valign="top"><a id="a67d8b5a814cddd8d2c103b64967b30fd" name="a67d8b5a814cddd8d2c103b64967b30fd"></a>
-<a class="el" href="structAltimeter__Data.html">altimeter_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>altimeter_data</b></td></tr>
+<a class="el" href="data__types_8h.html#a0e0b67dddbfb6f7c8688db7f0bce572a">altimeter_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>altimeter_data</b></td></tr>
 <tr class="separator:a67d8b5a814cddd8d2c103b64967b30fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9edc35747917fc5adc75ffd154a3152d" id="r_a9edc35747917fc5adc75ffd154a3152d"><td class="memItemLeft" align="right" valign="top"><a id="a9edc35747917fc5adc75ffd154a3152d" name="a9edc35747917fc5adc75ffd154a3152d"></a>
-<a class="el" href="structTelemetry__Data.html">telemetry_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>telemetry_packet</b></td></tr>
+<a class="el" href="data__types_8h.html#adc7b66063723aee121d344a8e8952878">telemetry_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>telemetry_packet</b></td></tr>
 <tr class="separator:a9edc35747917fc5adc75ffd154a3152d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea39bb6bc24075cef46a6b4d55071082" id="r_aea39bb6bc24075cef46a6b4d55071082"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classMPU6050.html">MPU6050</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aea39bb6bc24075cef46a6b4d55071082">imu</a> (0x68, 16, 1000)</td></tr>
 <tr class="separator:aea39bb6bc24075cef46a6b4d55071082"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -792,7 +792,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
       </table>
 </div><div class="memdoc">
 
-<p>debug flight/test data to terminal, this task is called if the DEBUG_TO_TERMINAL is set to 1 (see <a class="el" href="defs_8h_source.html">defs.h</a>) </p>
+<p>debug flight/test data to terminal, this task is called if the DEBUG_TO_TERMINAL is set to 1 (see <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a>) </p>
 <hr  />
  <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -1204,7 +1204,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structAcceleration__Data.html">accel_type_t</a> acc_data</td>
+          <td class="memname"><a class="el" href="data__types_8h.html#a610a63dae0c8ed502103c93c5aa63db0">accel_type_t</a> acc_data</td>
         </tr>
       </table>
 </div><div class="memdoc">

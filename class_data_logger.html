@@ -104,8 +104,6 @@ $(function(){initNavTree('class_data_logger.html',''); initResizable(true); });
   <div class="headertitle"><div class="title">DataLogger Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
-
-<p><code>#include &lt;<a class="el" href="logger_8h_source.html">logger.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -125,7 +123,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>loggerInfo</b> ()</td
 <tr class="memitem:ae8a69bf0cc965365057e93a164ca9239" id="r_ae8a69bf0cc965365057e93a164ca9239"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae8a69bf0cc965365057e93a164ca9239">loggerTest</a> ()</td></tr>
 <tr class="memdesc:ae8a69bf0cc965365057e93a164ca9239"><td class="mdescLeft">&#160;</td><td class="mdescRight">test the flash memory write and read function by reading and writing a variable to it  <br /></td></tr>
 <tr class="separator:ae8a69bf0cc965365057e93a164ca9239"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a411ac6fd751d3a87cef0375fccaad028" id="r_a411ac6fd751d3a87cef0375fccaad028"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a411ac6fd751d3a87cef0375fccaad028">loggerWrite</a> (<a class="el" href="struct_telemetry___data.html">telemetry_type_t</a>)</td></tr>
+<tr class="memitem:a411ac6fd751d3a87cef0375fccaad028" id="r_a411ac6fd751d3a87cef0375fccaad028"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a411ac6fd751d3a87cef0375fccaad028">loggerWrite</a> (<a class="el" href="data__types_8h.html#adc7b66063723aee121d344a8e8952878">telemetry_type_t</a>)</td></tr>
 <tr class="memdesc:a411ac6fd751d3a87cef0375fccaad028"><td class="mdescLeft">&#160;</td><td class="mdescRight">write the provided data to the file created  <br /></td></tr>
 <tr class="separator:a411ac6fd751d3a87cef0375fccaad028"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a0deefb9372f1577636014a59025e6f" id="r_a5a0deefb9372f1577636014a59025e6f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5a0deefb9372f1577636014a59025e6f">loggerRead</a> (uint8_t file_pointer, char buffer)</td></tr>
@@ -140,11 +138,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>loggerEquals</b> ()</
 <tr class="memdesc:acb9bf3c62db1f28016d68d51efe25d43"><td class="mdescLeft">&#160;</td><td class="mdescRight">helper function to print = for data formatting <br /></td></tr>
 <tr class="separator:acb9bf3c62db1f28016d68d51efe25d43"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Author: Edwin Mwiti Email: <a href="#" onclick="location.href='mai'+'lto:'+'emw'+'it'+'i65'+'8@'+'gma'+'il'+'.co'+'m'; return false;">emwit<span class="obfuscator">.nosp@m.</span>i658<span class="obfuscator">.nosp@m.</span>@gmai<span class="obfuscator">.nosp@m.</span>l.co<span class="obfuscator">.nosp@m.</span>m</a> Date: 7/6/2024</p>
-<p>This file implements the onboard logging functions for the flight computer We use the SerialFlash library by Paul, link to the library is provided in the references section</p>
-<p>If you are using more than one SPI flash memory, create an instance for each SPI flash memory </p>
-</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a9ddfc501b4bd4f004f11854c3552d574" name="a9ddfc501b4bd4f004f11854c3552d574"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9ddfc501b4bd4f004f11854c3552d574">&#9670;&#160;</a></span>DataLogger()</h2>
 
@@ -303,7 +297,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>loggerEquals</b> ()</
         <tr>
           <td class="memname">void DataLogger::loggerWrite </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="struct_telemetry___data.html">telemetry_type_t</a></td>          <td class="paramname"><span class="paramname"><em>packet</em></span></td><td>)</td>
+          <td class="paramtype"><a class="el" href="data__types_8h.html#adc7b66063723aee121d344a8e8952878">telemetry_type_t</a></td>          <td class="paramname"><span class="paramname"><em>packet</em></span></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -321,7 +315,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>loggerEquals</b> ()</
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>n4-flight-software/src/<a class="el" href="logger_8h_source.html">logger.h</a></li>
-<li>n4-flight-software/src/<b>logger.cpp</b></li>
+<li>n4-flight-software/src/<a class="el" href="logger_8cpp.html">logger.cpp</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

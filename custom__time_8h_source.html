@@ -101,27 +101,28 @@ $(function(){initNavTree('custom__time_8h_source.html',''); initResizable(true);
   <div class="headertitle"><div class="title">custom_time.h</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">/*!****************************************************************************</span></div>
-<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="comment"> * @file custom-time.h</span></div>
-<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="comment"> * @brief This file defines functions needed for time conversions</span></div>
-<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="comment"> * for data logging </span></div>
-<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="comment"> *******************************************************************************/</span></div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#ifndef CUSTOM_TIME_H</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#define CUSTOM_TIME_H</span></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;Arduino.h&gt;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keyword">extern</span> <span class="keywordtype">char</span> tstamp[]; <span class="comment">// to hold a human readable timestamp</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="keywordtype">void</span> convertTimestamp(<span class="keywordtype">unsigned</span> <span class="keywordtype">long</span>);</div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#endif</span></div>
+<a href="custom__time_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">/*!****************************************************************************</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="comment"> * @file custom_time.h</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="comment"> * @brief This file defines functions needed for human readable time conversion for data logging</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="comment"> *******************************************************************************/</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#ifndef CUSTOM_TIME_H</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#define CUSTOM_TIME_H</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;Arduino.h&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="keyword">extern</span> <span class="keywordtype">char</span> <a class="code hl_variable" href="custom__time_8h.html#af763bb4748c9c0460eab15663d0472bb">tstamp</a>[]; </div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="keywordtype">void</span> <a class="code hl_function" href="custom__time_8h.html#a742a45ab1cba3ca3717085198ec6d2a9">convertTimestamp</a>(<span class="keywordtype">unsigned</span> <span class="keywordtype">long</span>);</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#endif</span></div>
+<div class="ttc" id="acustom__time_8h_html_a742a45ab1cba3ca3717085198ec6d2a9"><div class="ttname"><a href="custom__time_8h.html#a742a45ab1cba3ca3717085198ec6d2a9">convertTimestamp</a></div><div class="ttdeci">void convertTimestamp(unsigned long)</div><div class="ttdoc">convert time in milliseconds to minutes, seconds and time that are human readable,...</div><div class="ttdef"><b>Definition</b> custom_time.cpp:18</div></div>
+<div class="ttc" id="acustom__time_8h_html_af763bb4748c9c0460eab15663d0472bb"><div class="ttname"><a href="custom__time_8h.html#af763bb4748c9c0460eab15663d0472bb">tstamp</a></div><div class="ttdeci">char tstamp[]</div><div class="ttdef"><b>Definition</b> custom_time.cpp:10</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_223c149f86d1b3369d43d9ec6c6d367c.html">n4-flight-software</a></li><li class="navelem"><a class="el" href="dir_d09072d1c94fe000833aa47d92501a74.html">src</a></li><li class="navelem"><b>custom_time.h</b></li>
+    <li class="navelem"><a class="el" href="dir_223c149f86d1b3369d43d9ec6c6d367c.html">n4-flight-software</a></li><li class="navelem"><a class="el" href="dir_d09072d1c94fe000833aa47d92501a74.html">src</a></li><li class="navelem"><a class="el" href="custom__time_8h.html">custom_time.h</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
   </ul>
 </div>

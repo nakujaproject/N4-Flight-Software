@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['gps_5fdata_0',['GPS_Data',['../structGPS__Data.html',1,'']]],
-  ['gyroscope_5fdata_1',['Gyroscope_Data',['../structGyroscope__Data.html',1,'']]]
+  ['mpu6050_0',['MPU6050',['../classMPU6050.html',1,'']]]
 ];
