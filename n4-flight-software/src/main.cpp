@@ -236,15 +236,15 @@ void InitSPIFFS() {
 void initSD() {
     if(!SD.begin(SD_CS_PIN)) {
         delay(100);
-        debugln(F("[SD Card mounting failed]"));
+        debugln(F("[-]SD Card mounting failed"));
         return;
     } else {
-        debugln(F("[SD card Init OK!"));
+        debugln(F("[+]SD card Init OK!"));
     }
 
     uint8_t cardType = SD.cardType();
     if(cardType == CARD_NONE) {
-        debugln("[No SD card attached]");
+        debugln("[-]No SD card attached");
         return;
     }
 
@@ -255,7 +255,7 @@ void initSD() {
         debugln("[File does not exist. Creating file]");
         writeFile(SD, "/data.csv", "SSID, SECURITY, CHANNEL, LAT, LONG, TIME \r\n");
     } else {
-        debugln("[Data file already exists]");
+        debugln("[*]Data file already exists");
     }
 
     file.close();
@@ -522,7 +522,7 @@ uint8_t remote_switch = 27;
 
 
 /* Flight data logging */
-uint8_t flash_led_pin = 39;                  /*!< LED pin connected to indicate flash memory formatting  */
+uint8_t flash_led_pin = 32;                  /*!< LED pin connected to indicate flash memory formatting  */
 char filename[] = "flight.bin";             /*!< data log filename - Filename must be less than 20 chars, including the file extension */
 uint32_t FILE_SIZE_512K = 524288L;          /*!< 512KB */
 uint32_t FILE_SIZE_1M  = 1048576L;          /*!< 1MB */
@@ -873,6 +873,8 @@ void clearTelemetryQueueTask(void* pvParameters) {
         );
 
         // Clear the data item from telemetry queue
+        // receiving pops the item from queue, hence removing it entirely
+        // which is what we want, after the data item has been distributed to other tasks
         xQueueReceive(telemetry_data_qHandle, &data_item, portMAX_DELAY);
 
         // check if all data consuming tasks have received the data
@@ -1304,6 +1306,21 @@ void setup(){
     //     debugln("[+]Flight states queue creation OK.");
     // }
 
+
+    // create  event group to sync flight data consumption
+    // see N4 flight software docs for more info
+    debugln();
+    debugln(F("=============================================="));
+    debugln(F("===== CREATING DATA CONSUMER EVENT GROUP ===="));
+    debugln(F("=============================================="));
+
+    tasksDataReceiveEventGroup = xEventGroupCreate(); // pss! whatever u do, this line must come before creating the tasks!
+    if(tasksDataReceiveEventGroup == NULL) {
+        debugln("[-] data consumer event group failed to create");
+    } else {
+        debugln("[+] data consumer event group created OK.");
+    }
+
     debugln();
     debugln(F("=============================================="));
     debugln(F("============== CREATING TASKS ==============="));
@@ -1433,20 +1450,6 @@ void setup(){
     // }else{
     //     debugln("[+]FSM task created OK.");
     // }
-
-    // create  event group to sync flight data consumption 
-    // see N4 flight software docs for more info
-    debugln();
-    debugln(F("=============================================="));
-    debugln(F("===== CREATING DATA CONSUMER EVENT GROUP ===="));
-    debugln(F("=============================================="));
-
-    tasksDataReceiveEventGroup = xEventGroupCreate();
-    if(tasksDataReceiveEventGroup == NULL) {
-        debugln("[-] data consumer event group failed to create");
-    } else {
-        debugln("[+] data consumer event group created OK.");
-    }
 
     // check whether we are in test mode or running mode
     checkRunTestToggle();
