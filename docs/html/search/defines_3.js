@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['max_5fcmd_5flength_0',['MAX_CMD_LENGTH',['../src_2main_8cpp.html#a2e69b1ee7e19bfbe378c886f88e60fac',1,'main.cpp']]],
-  ['max_5fcsv_5flength_1',['MAX_CSV_LENGTH',['../src_2main_8cpp.html#a3aad00c42368296b28f72f623c446925',1,'main.cpp']]]
+  ['debug_5fto_5fterminal_0',['DEBUG_TO_TERMINAL',['../defs_8h.html#a7f1cb94f830f83d6fd3138bd26891920',1,'defs.h']]],
+  ['debugging_1',['DEBUGGING',['../defs_8h.html#a7180786c98af534f76855fef6f1b97ab',1,'defs.h']]],
+  ['drogue_5fejection_5fheight_2',['DROGUE_EJECTION_HEIGHT',['../defs_8h.html#a616918f37597986c61224c6f25c9af11',1,'defs.h']]]
 ];

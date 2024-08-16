@@ -1,5 +1,7 @@
 /**
- * Implement onboard logger class functions
+ * @file logger.cpp
+ * @brief Implement onboard logger class functions
+ *
 */
 
 #include "logger.h"
@@ -9,7 +11,6 @@ telemetry_type_t t;
 char pckt_buff[50];
 
 /**
- * 
  * @brief class constructor 
  * pass the chip select pin as a parameter for that class instance
  * 

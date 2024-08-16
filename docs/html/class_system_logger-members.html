@@ -105,7 +105,9 @@ $(function(){initNavTree('class_system_logger.html',''); initResizable(true); })
 <p>This is the complete list of members for <a class="el" href="class_system_logger.html">SystemLogger</a>, including all inherited members.</p>
 <table class="directory">
   <tr class="even"><td class="entry"><a class="el" href="class_system_logger.html#ad6feeadde357832516761347ff4cf25c">getLogLevelString</a>(uint8_t log_level)</td><td class="entry"><a class="el" href="class_system_logger.html">SystemLogger</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>writeToConsole</b>(const uint32_t timestamp, const char *client, uint8_t log_level, const char *msg) (defined in <a class="el" href="class_system_logger.html">SystemLogger</a>)</td><td class="entry"><a class="el" href="class_system_logger.html">SystemLogger</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>logToConsole</b>(const uint32_t timestamp, const char *client, uint8_t log_level, const char *msg) (defined in <a class="el" href="class_system_logger.html">SystemLogger</a>)</td><td class="entry"><a class="el" href="class_system_logger.html">SystemLogger</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>logToFile</b>(fs::FS &amp;fs, uint8_t mode, const char *client, uint8_t log_level, const char *file, const char *msg) (defined in <a class="el" href="class_system_logger.html">SystemLogger</a>)</td><td class="entry"><a class="el" href="class_system_logger.html">SystemLogger</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="class_system_logger.html#a0755dee42eafc8a8f7a6a6d027b880f2">readLogFile</a>(fs::FS &amp;fs, const char *file)</td><td class="entry"><a class="el" href="class_system_logger.html">SystemLogger</a></td><td class="entry"></td></tr>
 </table></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

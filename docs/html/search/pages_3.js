@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['pin_20assignment_0',['pin-assignment',['../md_n4-flight-software_2src_2pin-assignment.html',1,'']]]
+  ['n4_20flight_20software_0',['N4 Flight Software',['../index.html',1,'']]]
 ];

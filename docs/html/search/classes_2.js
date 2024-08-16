@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['datalogger_0',['DataLogger',['../class_data_logger.html',1,'']]]
+  ['filtered_5fdata_0',['Filtered_Data',['../struct_filtered___data.html',1,'']]]
 ];

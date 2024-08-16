@@ -7,11 +7,15 @@ var searchData=
   ['file_5fsize_5f512k_4',['FILE_SIZE_512K',['../src_2main_8cpp.html#aa9614a793fcf876f8e55a118d21d2d77',1,'main.cpp']]],
   ['filename_5',['filename',['../src_2main_8cpp.html#a6c2affe0788e6ba12dce7a51e1bd35c3',1,'main.cpp']]],
   ['filtered_5fdata_6',['Filtered_Data',['../struct_filtered___data.html',1,'']]],
-  ['filterimu_7',['filterImu',['../class_m_p_u6050.html#aed4696b264b467844771ef28b274541b',1,'MPU6050']]],
-  ['flash_5fcs_5fpin_8',['flash_cs_pin',['../src_2main_8cpp.html#a974c70ac5c2f6156bf0e7fafd973d803',1,'main.cpp']]],
-  ['flash_5fled_5fpin_9',['flash_led_pin',['../src_2main_8cpp.html#ab506410443108766020e011a3c9293af',1,'main.cpp']]],
-  ['flight_20data_20logging_10',['Flight data logging',['../index.html#step5',1,'']]],
-  ['flight_20modes_11',['SAFE and FLIGHT modes',['../index.html#step7',1,'']]],
-  ['flight_20software_12',['N4 Flight Software',['../index.html',1,'']]],
-  ['flightstatecallback_13',['flightStateCallback',['../src_2main_8cpp.html#a6648d201a9f47aa836d36e5339e78ef3',1,'main.cpp']]]
+  ['filtered_5fdata_5fqueue_5flength_7',['FILTERED_DATA_QUEUE_LENGTH',['../defs_8h.html#a60736460c626c262ff97ed91b0f2a6ba',1,'defs.h']]],
+  ['filterimu_8',['filterImu',['../class_m_p_u6050.html#aed4696b264b467844771ef28b274541b',1,'MPU6050']]],
+  ['flash_5fcs_5fpin_9',['flash_cs_pin',['../src_2main_8cpp.html#a974c70ac5c2f6156bf0e7fafd973d803',1,'main.cpp']]],
+  ['flash_5fled_5fpin_10',['flash_led_pin',['../src_2main_8cpp.html#ab506410443108766020e011a3c9293af',1,'main.cpp']]],
+  ['flight_20computer_20pin_20assignment_11',['Flight computer pin assignment',['../md_n4-flight-software_2src_2pin__assignment.html',1,'']]],
+  ['flight_20data_20logging_12',['Flight data logging',['../index.html#step5',1,'']]],
+  ['flight_20modes_13',['SAFE and FLIGHT modes',['../index.html#step7',1,'']]],
+  ['flight_20software_14',['N4 Flight Software',['../index.html',1,'']]],
+  ['flight_20software_20checks_15',['Pre-flight software checks',['../index.html#step15',1,'']]],
+  ['flight_5fstates_5fqueue_5flength_16',['FLIGHT_STATES_QUEUE_LENGTH',['../defs_8h.html#abd673191f3e9c335b90a35c237a4786f',1,'defs.h']]],
+  ['flightstatecallback_17',['flightStateCallback',['../src_2main_8cpp.html#a6648d201a9f47aa836d36e5339e78ef3',1,'main.cpp']]]
 ];

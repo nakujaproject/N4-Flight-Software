@@ -42,16 +42,17 @@ var NAVTREE =
     ] ],
     [ "Hardware, pin assignment and peripherals", "index.html#step13", null ],
     [ "Integration and Testing Procedures", "index.html#step14", null ],
-    [ "Contributors", "index.html#step15", null ],
+    [ "Pre-flight software checks", "index.html#step15", null ],
+    [ "Contributors", "index.html#step16", null ],
     [ "README", "md_n4-flight-software_2_r_e_a_d_m_e.html", null ],
-    [ "pin-assignment", "md_n4-flight-software_2src_2pin-assignment.html", null ],
+    [ "Flight computer pin assignment", "md_n4-flight-software_2src_2pin__assignment.html", null ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
       [ "Class Index", "classes.html", null ],
-      [ "Class Hierarchy", "hierarchy.html", "hierarchy" ],
       [ "Class Members", "functions.html", [
         [ "All", "functions.html", null ],
-        [ "Functions", "functions_func.html", null ]
+        [ "Functions", "functions_func.html", null ],
+        [ "Variables", "functions_vars.html", null ]
       ] ]
     ] ],
     [ "Files", "files.html", [
@@ -60,6 +61,7 @@ var NAVTREE =
         [ "All", "globals.html", null ],
         [ "Functions", "globals_func.html", null ],
         [ "Variables", "globals_vars.html", null ],
+        [ "Typedefs", "globals_type.html", null ],
         [ "Enumerations", "globals_enum.html", null ],
         [ "Enumerator", "globals_eval.html", null ],
         [ "Macros", "globals_defs.html", null ]
@@ -70,7 +72,7 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"_system_log_levels_8h_source.html"
+"annotated.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

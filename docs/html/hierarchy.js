@@ -8,9 +8,7 @@ var hierarchy =
     [ "Gyroscope_Data", "struct_gyroscope___data.html", null ],
     [ "MPU6050", "class_m_p_u6050.html", null ],
     [ "State_machine", "class_state__machine.html", null ],
-    [ "SystemLogger", "class_system_logger.html", [
-      [ "LoggerConsole", "class_logger_console.html", null ]
-    ] ],
+    [ "SystemLogger", "class_system_logger.html", null ],
     [ "Telemetry_Data", "struct_telemetry___data.html", null ],
     [ "Test", "class_test.html", null ],
     [ "TinyGPSPlus", null, [

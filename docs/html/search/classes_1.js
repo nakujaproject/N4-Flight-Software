@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['customgps_0',['CustomGPS',['../class_custom_g_p_s.html',1,'']]]
+  ['datalogger_0',['DataLogger',['../class_data_logger.html',1,'']]]
 ];

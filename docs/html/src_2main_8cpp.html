@@ -119,13 +119,15 @@ $(function(){initNavTree('src_2main_8cpp.html',''); initResizable(true); });
 <code>#include &lt;SD.h&gt;</code><br />
 <code>#include &lt;SPIFFS.h&gt;</code><br />
 <code>#include &quot;sensors.h&quot;</code><br />
-<code>#include &quot;defs.h&quot;</code><br />
+<code>#include &quot;<a class="el" href="defs_8h_source.html">defs.h</a>&quot;</code><br />
 <code>#include &quot;mpu.h&quot;</code><br />
 <code>#include &quot;SerialFlash.h&quot;</code><br />
-<code>#include &quot;logger.h&quot;</code><br />
-<code>#include &quot;data-types.h&quot;</code><br />
-<code>#include &quot;<a class="el" href="custom-time_8h_source.html">custom-time.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="logger_8h_source.html">logger.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="data__types_8h_source.html">data_types.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="custom__time_8h_source.html">custom_time.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="states_8h_source.html">states.h</a>&quot;</code><br />
+<code>#include &quot;system_logger.h&quot;</code><br />
+<code>#include &quot;system_log_levels.h&quot;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
@@ -275,13 +277,13 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>ParseSerialBuffer</b>
 <tr class="memdesc:a6648d201a9f47aa836d36e5339e78ef3"><td class="mdescLeft">&#160;</td><td class="mdescRight">performs flight actions based on the current flight state If the flight state neccessisates an operation, we perfom it here For example if the flight state is apogee, we perfom MAIN_CHUTE ejection  <br /></td></tr>
 <tr class="separator:a6648d201a9f47aa836d36e5339e78ef3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaa1a5716bd567e8c37465dabe33e6396" id="r_aaa1a5716bd567e8c37465dabe33e6396"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aaa1a5716bd567e8c37465dabe33e6396">debugToTerminalTask</a> (void *pvParameters)</td></tr>
-<tr class="memdesc:aaa1a5716bd567e8c37465dabe33e6396"><td class="mdescLeft">&#160;</td><td class="mdescRight">debug flight/test data to terminal, this task is called if the DEBUG_TO_TERMINAL is set to 1 (see <a class="el" href="defs_8h_source.html">defs.h</a>)  <br /></td></tr>
+<tr class="memdesc:aaa1a5716bd567e8c37465dabe33e6396"><td class="mdescLeft">&#160;</td><td class="mdescRight">debug flight/test data to terminal, this task is called if the DEBUG_TO_TERMINAL is set to 1 (see <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a>)  <br /></td></tr>
 <tr class="separator:aaa1a5716bd567e8c37465dabe33e6396"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7df146b43e503e23146e698154d5096d" id="r_a7df146b43e503e23146e698154d5096d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7df146b43e503e23146e698154d5096d">logToMemory</a> (void *pvParameter)</td></tr>
 <tr class="memdesc:a7df146b43e503e23146e698154d5096d"><td class="mdescLeft">&#160;</td><td class="mdescRight">log the data to the external flash memory  <br /></td></tr>
 <tr class="separator:a7df146b43e503e23146e698154d5096d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4fc01d736fe50cf5b977f755b675f11d" id="r_a4fc01d736fe50cf5b977f755b675f11d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4fc01d736fe50cf5b977f755b675f11d">setup</a> ()</td></tr>
-<tr class="memdesc:a4fc01d736fe50cf5b977f755b675f11d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup - perfom initialization of all hardware subsystems, create queues, create queue handles initialize system check table.  <br /></td></tr>
+<tr class="memdesc:a4fc01d736fe50cf5b977f755b675f11d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup - perform initialization of all hardware subsystems, create queues, create queue handles initialize system check table.  <br /></td></tr>
 <tr class="separator:a4fc01d736fe50cf5b977f755b675f11d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe461d27b9c48d5921c00d521181f12f" id="r_afe461d27b9c48d5921c00d521181f12f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afe461d27b9c48d5921c00d521181f12f">loop</a> ()</td></tr>
 <tr class="memdesc:afe461d27b9c48d5921c00d521181f12f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main loop.  <br /></td></tr>
@@ -299,6 +301,17 @@ WiFiClient&#160;</td><td class="memItemRight" valign="bottom"><b>wifi_client</b>
 <tr class="memitem:a169c53997a7da1d0fb99aec1b4675ce8" id="r_a169c53997a7da1d0fb99aec1b4675ce8"><td class="memItemLeft" align="right" valign="top"><a id="a169c53997a7da1d0fb99aec1b4675ce8" name="a169c53997a7da1d0fb99aec1b4675ce8"></a>
 TinyGPSPlus&#160;</td><td class="memItemRight" valign="bottom"><b>gps</b></td></tr>
 <tr class="separator:a169c53997a7da1d0fb99aec1b4675ce8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4591a82d6df23b62ed33717b89cf9bb8" id="r_a4591a82d6df23b62ed33717b89cf9bb8"><td class="memItemLeft" align="right" valign="top"><a id="a4591a82d6df23b62ed33717b89cf9bb8" name="a4591a82d6df23b62ed33717b89cf9bb8"></a>
+<a class="el" href="class_system_logger.html">SystemLogger</a>&#160;</td><td class="memItemRight" valign="bottom"><b>system_logger</b></td></tr>
+<tr class="separator:a4591a82d6df23b62ed33717b89cf9bb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a613c837c91f4cf1b8f9faa07cf95115b" id="r_a613c837c91f4cf1b8f9faa07cf95115b"><td class="memItemLeft" align="right" valign="top"><a id="a613c837c91f4cf1b8f9faa07cf95115b" name="a613c837c91f4cf1b8f9faa07cf95115b"></a>
+const char *&#160;</td><td class="memItemRight" valign="bottom"><b>system_log_file</b> = &quot;/sys_log.log&quot;</td></tr>
+<tr class="separator:a613c837c91f4cf1b8f9faa07cf95115b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a77f7159081bd39a76d8b86af56256201" id="r_a77f7159081bd39a76d8b86af56256201"><td class="memItemLeft" align="right" valign="top"><a id="a77f7159081bd39a76d8b86af56256201" name="a77f7159081bd39a76d8b86af56256201"></a>
+LOG_LEVEL&#160;</td><td class="memItemRight" valign="bottom"><b>level</b> = INFO</td></tr>
+<tr class="separator:a77f7159081bd39a76d8b86af56256201"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5bef7886537f878149917a29939a5cb0" id="r_a5bef7886537f878149917a29939a5cb0"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5bef7886537f878149917a29939a5cb0">rocket_ID</a> = &quot;rocket-1&quot;</td></tr>
+<tr class="separator:a5bef7886537f878149917a29939a5cb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a703e0d9679428f7c9e0a24e766ba4489" id="r_a703e0d9679428f7c9e0a24e766ba4489"><td class="memItemLeft" align="right" valign="top"><a id="a703e0d9679428f7c9e0a24e766ba4489" name="a703e0d9679428f7c9e0a24e766ba4489"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>RUN_MODE</b> = 0</td></tr>
 <tr class="separator:a703e0d9679428f7c9e0a24e766ba4489"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -386,7 +399,7 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>main_pyro</b> = 12
 <tr class="memitem:abff19a00537098fdfae4316ce9586f08" id="r_abff19a00537098fdfae4316ce9586f08"><td class="memItemLeft" align="right" valign="top"><a id="abff19a00537098fdfae4316ce9586f08" name="abff19a00537098fdfae4316ce9586f08"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>remote_switch</b> = 27</td></tr>
 <tr class="separator:abff19a00537098fdfae4316ce9586f08"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab506410443108766020e011a3c9293af" id="r_ab506410443108766020e011a3c9293af"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab506410443108766020e011a3c9293af">flash_led_pin</a> = 39</td></tr>
+<tr class="memitem:ab506410443108766020e011a3c9293af" id="r_ab506410443108766020e011a3c9293af"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab506410443108766020e011a3c9293af">flash_led_pin</a> = 32</td></tr>
 <tr class="separator:ab506410443108766020e011a3c9293af"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6c2affe0788e6ba12dce7a51e1bd35c3" id="r_a6c2affe0788e6ba12dce7a51e1bd35c3"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6c2affe0788e6ba12dce7a51e1bd35c3">filename</a> [] = &quot;flight.bin&quot;</td></tr>
 <tr class="separator:a6c2affe0788e6ba12dce7a51e1bd35c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -416,19 +429,19 @@ long long&#160;</td><td class="memItemRight" valign="bottom"><b>previous_time</b
 <tr class="memitem:a1067333ef3d05fdb37de74977a972c61" id="r_a1067333ef3d05fdb37de74977a972c61"><td class="memItemLeft" align="right" valign="top"><a id="a1067333ef3d05fdb37de74977a972c61" name="a1067333ef3d05fdb37de74977a972c61"></a>
 EventGroupHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>tasksDataReceiveEventGroup</b></td></tr>
 <tr class="separator:a1067333ef3d05fdb37de74977a972c61"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5db507f1ef37ed2d76f24c064e4e6a85" id="r_a5db507f1ef37ed2d76f24c064e4e6a85"><td class="memItemLeft" align="right" valign="top"><a class="el" href="struct_acceleration___data.html">accel_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5db507f1ef37ed2d76f24c064e4e6a85">acc_data</a></td></tr>
+<tr class="memitem:a5db507f1ef37ed2d76f24c064e4e6a85" id="r_a5db507f1ef37ed2d76f24c064e4e6a85"><td class="memItemLeft" align="right" valign="top"><a class="el" href="data__types_8h.html#a610a63dae0c8ed502103c93c5aa63db0">accel_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5db507f1ef37ed2d76f24c064e4e6a85">acc_data</a></td></tr>
 <tr class="separator:a5db507f1ef37ed2d76f24c064e4e6a85"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af91b409a7eb60f99def9aa1515c3d33c" id="r_af91b409a7eb60f99def9aa1515c3d33c"><td class="memItemLeft" align="right" valign="top"><a id="af91b409a7eb60f99def9aa1515c3d33c" name="af91b409a7eb60f99def9aa1515c3d33c"></a>
-<a class="el" href="struct_gyroscope___data.html">gyro_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>gyro_data</b></td></tr>
+<a class="el" href="data__types_8h.html#a29ecea45ce162ac46f9e03b4ef231fde">gyro_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>gyro_data</b></td></tr>
 <tr class="separator:af91b409a7eb60f99def9aa1515c3d33c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a77c86b0218234417b206fe8620c48e3d" id="r_a77c86b0218234417b206fe8620c48e3d"><td class="memItemLeft" align="right" valign="top"><a id="a77c86b0218234417b206fe8620c48e3d" name="a77c86b0218234417b206fe8620c48e3d"></a>
-<a class="el" href="struct_g_p_s___data.html">gps_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data</b></td></tr>
+<a class="el" href="data__types_8h.html#a876d9394b51566660d43cc1747ae7ac3">gps_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data</b></td></tr>
 <tr class="separator:a77c86b0218234417b206fe8620c48e3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a67d8b5a814cddd8d2c103b64967b30fd" id="r_a67d8b5a814cddd8d2c103b64967b30fd"><td class="memItemLeft" align="right" valign="top"><a id="a67d8b5a814cddd8d2c103b64967b30fd" name="a67d8b5a814cddd8d2c103b64967b30fd"></a>
-<a class="el" href="struct_altimeter___data.html">altimeter_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>altimeter_data</b></td></tr>
+<a class="el" href="data__types_8h.html#a0e0b67dddbfb6f7c8688db7f0bce572a">altimeter_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>altimeter_data</b></td></tr>
 <tr class="separator:a67d8b5a814cddd8d2c103b64967b30fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9edc35747917fc5adc75ffd154a3152d" id="r_a9edc35747917fc5adc75ffd154a3152d"><td class="memItemLeft" align="right" valign="top"><a id="a9edc35747917fc5adc75ffd154a3152d" name="a9edc35747917fc5adc75ffd154a3152d"></a>
-<a class="el" href="struct_telemetry___data.html">telemetry_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>telemetry_packet</b></td></tr>
+<a class="el" href="data__types_8h.html#adc7b66063723aee121d344a8e8952878">telemetry_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>telemetry_packet</b></td></tr>
 <tr class="separator:a9edc35747917fc5adc75ffd154a3152d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea39bb6bc24075cef46a6b4d55071082" id="r_aea39bb6bc24075cef46a6b4d55071082"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_m_p_u6050.html">MPU6050</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aea39bb6bc24075cef46a6b4d55071082">imu</a> (0x68, 16, 1000)</td></tr>
 <tr class="separator:aea39bb6bc24075cef46a6b4d55071082"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -779,7 +792,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
       </table>
 </div><div class="memdoc">
 
-<p>debug flight/test data to terminal, this task is called if the DEBUG_TO_TERMINAL is set to 1 (see <a class="el" href="defs_8h_source.html">defs.h</a>) </p>
+<p>debug flight/test data to terminal, this task is called if the DEBUG_TO_TERMINAL is set to 1 (see <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a>) </p>
 <hr  />
  <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -1154,7 +1167,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
       </table>
 </div><div class="memdoc">
 
-<p>Setup - perfom initialization of all hardware subsystems, create queues, create queue handles initialize system check table. </p>
+<p>Setup - perform initialization of all hardware subsystems, create queues, create queue handles initialize system check table. </p>
 <hr  />
   
 </div>
@@ -1191,7 +1204,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="struct_acceleration___data.html">accel_type_t</a> acc_data</td>
+          <td class="memname"><a class="el" href="data__types_8h.html#a610a63dae0c8ed502103c93c5aa63db0">accel_type_t</a> acc_data</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1341,7 +1354,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">uint8_t flash_led_pin = 39</td>
+          <td class="memname">uint8_t flash_led_pin = 32</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1464,6 +1477,21 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
       </table>
 </div><div class="memdoc">
 <p>Red LED pin </p>
+
+</div>
+</div>
+<a id="a5bef7886537f878149917a29939a5cb0" name="a5bef7886537f878149917a29939a5cb0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5bef7886537f878149917a29939a5cb0">&#9670;&#160;</a></span>rocket_ID</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char* rocket_ID = &quot;rocket-1&quot;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Unique ID of the rocket. Change to the needed rocket name before uploading </p>
 
 </div>
 </div>
