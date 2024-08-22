@@ -54,12 +54,22 @@
 #define FLIGHT_STATES_QUEUE_LENGTH 1        /*!< length of the flight states queue */
 
 /* MQTT constants */
-#define MQTT_SERVER "192.168.78.19"         /*!< MQTT broker IP address */
-#define MQTT_PORT 1882                      /*!< MQTT broker port */
+#define MQTT_SERVER "192.168.1.103"         /*!< MQTT broker IP address */
+#define MQTT_PORT 1885                      /*!< MQTT broker port */
 
 /* WIFI credentials */
-// const char* SSID = "Galaxy";             /*!< WIFi SSID */
-// const char* PASSWORD = "luwa2131";       /*!< WiFi password */
+// const char* SSID = "Nakuja";             /*!< WIFi SSID */
+// const char* PASSWORD = "987654321";       /*!< WiFi password */
+
+
+/* WIFI credentials */
+#define SSID "Nakuja"             /*!< WIFi SSID */
+#define PASSWORD "987654321"       /*!< WiFi password */
+
+/* WIFI credentials */
+// #define SSID "NAME"             /*!< WIFi SSID */
+// #define PASSWORD "PASS"       /*!< WiFi password */
+
 
 #define CALLIBRATION_READINGS   200         /*!< number of readings to take while calibrating the sensor */
 

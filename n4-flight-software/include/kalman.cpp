@@ -24,9 +24,9 @@ BLA::Matrix<2, 2> R = {0.25, 0,
                        0, 0.75};
 
 // Process noise covariance
-BLA::Matrix<3, 3> Q = {q, q, q,
-                       q, q, q,
-                       q, q, q};
+BLA::Matrix<3, 3> Q = {0, 0, 0,
+                       0, 0, 0,
+                       0, 0, q};
 
 // Identity Matrix
 BLA::Matrix<3, 3> I = {1, 0, 0,

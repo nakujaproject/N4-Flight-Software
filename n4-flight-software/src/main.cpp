@@ -71,6 +71,11 @@ unsigned long last_NAK_time = 0;
 unsigned long current_NAK_time = 0;
 char SOH_CHR[6] = "SOH";
 
+//Timer for last recconection timer holder
+long lastReconnectAttempt = 0;
+
+bool wiFiStatus; //Dynamically stores WiFi Status
+
 /* define XMODEM commands in HEX */
 #define SOH     0x01    /*!< start of header */
 #define EOT     0x04    /*!< end of transmission */
@@ -623,29 +628,29 @@ QueueHandle_t gps_data_qHandle;
 // QueueHandle_t filtered_data_queue;
 // QueueHandle_t flight_states_queue;
 
+// function creates a wifi connection initial function
+void connectToWifi(){
+    digitalWrite(LED_BUILTIN, HIGH);
+    /* Connect to a Wi-Fi network */
+    debugln("[..]Scanning for network...");
 
-// void connectToWifi(){
-//     digitalWrite(LED_BUILTIN, HIGH);
-//     /* Connect to a Wi-Fi network */
-//     debugln("[..]Scanning for network...");
+    WiFi.begin(SSID, PASSWORD);
 
-//     WiFi.begin(SSID, PASSWORD);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(500);
+        debugln("[..]Scanning for network...");
+    }
 
-//     while (WiFi.status() != WL_CONNECTED)
-//     {
-//         delay(500);
-//         debugln("[..]Scanning for network...");
-//     }
+    debugln("[+]Network found");debug("[+]My IP address: "); debugln();
+    debugln(WiFi.localIP());
+    digitalWrite(LED_BUILTIN, LOW);
+}
 
-//     debugln("[+]Network found");debug("[+]My IP address: "); debugln();
-//     debugln(WiFi.localIP());
-//     digitalWrite(LED_BUILTIN, LOW);
-// }
-
-// void initializeMQTTParameters(){
-//     /* this functions creates an MQTT client for transmitting telemetry data */;
-//     mqtt_client.setServer(MQTT_SERVER, MQTT_PORT);
-// }
+void initializeMQTTParameters(){
+    /* this functions creates an MQTT client for transmitting telemetry data */;
+    mqtt_client.setServer(MQTT_SERVER, MQTT_PORT);
+}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -1087,81 +1092,118 @@ void logToMemory(void* pvParameter) {
 
 }
 
-// void transmitTelemetry(void* pvParameters){
-//     /* This function sends data to the ground station */
+void transmitTelemetry(void* pvParameters){
+    /* This function sends data to the ground station */
 
-//      /*  create two pointers to the data structures to be transmitted */
+    telemetry_type_t telemetryData;
+
+    while (1) {
+        // Peek data from the telemetry queue without removing it
+        if (xQueuePeek(telemetry_data_qHandle, &telemetryData, portMAX_DELAY) == pdPASS) {
+            // Create a JSON string
+            char jsonBuffer[512]; // Increased size to accommodate additional fields
+            snprintf(jsonBuffer, sizeof(jsonBuffer), 
+                    "{\"ax\":%.2f,\"ay\":%.2f,\"az\":%.2f,\"pitch\":%.2f,\"roll\":%.2f,"
+                    "\"pressure\":%.2f,\"velocity\":%.2f,\"altitude\":%.2f,\"temperature\":%.2f,"
+                    "\"latitude\":%.6f,\"longitude\":%.6f,\"gps_altitude\":%.2f,\"time\":%lu}",
+                    telemetryData.acc_data.ax, telemetryData.acc_data.ay, telemetryData.acc_data.az,
+                    telemetryData.acc_data.pitch, telemetryData.acc_data.roll,
+                    telemetryData.alt_data.pressure, telemetryData.alt_data.velocity,
+                    telemetryData.alt_data.altitude, telemetryData.alt_data.temperature,
+                    telemetryData.gps_data.latitude, telemetryData.gps_data.longitude,
+                    telemetryData.gps_data.gps_altitude, telemetryData.gps_data.time);
+
+            // Publish the JSON string to the MQTT topic
+            if(mqtt_client.publish("n4/0/message", jsonBuffer)){
+              debugln("[+]Data sent");
+            } else{
+            debugln("[-]Data not sent");  
+            };
+
+            // Print the JSON string for debugging purposes
+            debugln(jsonBuffer);
+
+            // Signal that telemetry data has been transmitted
+            xEventGroupSetBits(tasksDataReceiveEventGroup, TRANSMIT_TELEMETRY_BIT);
+        }
+
+        // Add a delay to prevent the task from running too frequently
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
     
-//     char telemetry_data[180];
-//     struct Acceleration_Data gyroscope_data_receive;
-//     struct Altimeter_Data altimeter_data_receive;
-//     struct GPS_Data gps_data_receive;
-//     int32_t flight_state_receive;
-//     int id = 0;
+    
+    // /*  create two pointers to the data structures to be transmitted */
+    
+    // char telemetry_data[180];
+    // struct Acceleration_Data gyroscope_data_receive;
+    // struct Altimeter_Data altimeter_data_receive;
+    // struct GPS_Data gps_data_receive;
+    // int32_t flight_state_receive;
+    // int id = 0;
 
-//     while(true){
-//         file = SPIFFS.open("/log.csv", FILE_APPEND);
-//         if(!file) debugln("[-] Failed to open file for appending");
-//         else debugln("[+] File opened for appending");
+    // while(true){
+    //     file = SPIFFS.open("/log.csv", FILE_APPEND);
+    //     if(!file) debugln("[-] Failed to open file for appending");
+    //     else debugln("[+] File opened for appending");
         
-//         /* receive data into respective queues */
-//         if(xQueueReceive(gyroscope_data_queue, &gyroscope_data_receive, portMAX_DELAY) == pdPASS){
-//             debugln("[+]Gyro data ready for sending ");
-//         }else{
-//             debugln("[-]Failed to receive gyro data");
-//         }
+    //     /* receive data into respective queues */
+    //     if(xQueueReceive(gyroscope_data_queue, &gyroscope_data_receive, portMAX_DELAY) == pdPASS){
+    //         debugln("[+]Gyro data ready for sending ");
+    //     }else{
+    //         debugln("[-]Failed to receive gyro data");
+    //     }
 
-//         if(xQueueReceive(altimeter_data_queue, &altimeter_data_receive, portMAX_DELAY) == pdPASS){
-//             debugln("[+]Altimeter data ready for sending ");
-//         }else{
-//             debugln("[-]Failed to receive altimeter data");
-//         }
+    //     if(xQueueReceive(altimeter_data_queue, &altimeter_data_receive, portMAX_DELAY) == pdPASS){
+    //         debugln("[+]Altimeter data ready for sending ");
+    //     }else{
+    //         debugln("[-]Failed to receive altimeter data");
+    //     }
 
-//         if(xQueueReceive(gps_data_queue, &gps_data_receive, portMAX_DELAY) == pdPASS){
-//             debugln("[+]GPS data ready for sending ");
-//         }else{
-//             debugln("[-]Failed to receive GPS data");
-//         }
+    //     if(xQueueReceive(gps_data_queue, &gps_data_receive, portMAX_DELAY) == pdPASS){
+    //         debugln("[+]GPS data ready for sending ");
+    //     }else{
+    //         debugln("[-]Failed to receive GPS data");
+    //     }
 
-//         if(xQueueReceive(flight_states_queue, &flight_state_receive, portMAX_DELAY) == pdPASS){
-//             debugln("[+]Flight state ready for sending ");
-//         }else{
-//             debugln("[-]Failed to receive Flight state");
-//         }
+    //     if(xQueueReceive(flight_states_queue, &flight_state_receive, portMAX_DELAY) == pdPASS){
+    //         debugln("[+]Flight state ready for sending ");
+    //     }else{
+    //         debugln("[-]Failed to receive Flight state");
+    //     }
 
-//         sprintf(telemetry_data,
-//             "%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%.16f,%.16f,%i,%i\n",
-//             id,//0
-//             gyroscope_data_receive.ax,//1
-//             gyroscope_data_receive.ay,//2
-//             gyroscope_data_receive.az,//3
-//             gyroscope_data_receive.gx,//4
-//             gyroscope_data_receive.gy,//5
-//             gyroscope_data_receive.gz,//6
-//             altimeter_data_receive.AGL,//7
-//             altimeter_data_receive.altitude,//8
-//             altimeter_data_receive.velocity,//9
-//             altimeter_data_receive.pressure,//10
-//             gps_data_receive.latitude,//11
-//             gps_data_receive.longitude,//12
-//             gps_data_receive.time,//13
-//             flight_state_receive//14
-//         );
-//         if(file.print(telemetry_data)){
-//             debugln("[+] Message appended");
-//         } else {
-//             debugln("[-] Append failed");
-//         }
-//         file.close();
-//         id+=1;
+    //     sprintf(telemetry_data,
+    //         "%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%.16f,%.16f,%i,%i\n",
+    //         id,//0
+    //         gyroscope_data_receive.ax,//1
+    //         gyroscope_data_receive.ay,//2
+    //         gyroscope_data_receive.az,//3
+    //         gyroscope_data_receive.gx,//4
+    //         gyroscope_data_receive.gy,//5
+    //         gyroscope_data_receive.gz,//6
+    //         altimeter_data_receive.AGL,//7
+    //         altimeter_data_receive.altitude,//8
+    //         altimeter_data_receive.velocity,//9
+    //         altimeter_data_receive.pressure,//10
+    //         gps_data_receive.latitude,//11
+    //         gps_data_receive.longitude,//12
+    //         gps_data_receive.time,//13
+    //         flight_state_receive//14
+    //     );
+    //     if(file.print(telemetry_data)){
+    //         debugln("[+] Message appended");
+    //     } else {
+    //         debugln("[-] Append failed");
+    //     }
+    //     file.close();
+    //     id+=1;
 
-//         if(mqtt_client.publish("n3/telemetry", telemetry_data)){
-//             debugln("[+]Data sent");
-//         } else{
-//             debugln("[-]Data not sent");
-//         }
-//     }
-// }
+    //     if(mqtt_client.publish("n3/telemetry", telemetry_data)){
+    //         debugln("[+]Data sent");
+    //     } else{
+    //         debugln("[-]Data not sent");
+    //     }
+    // }
+}
 
 // void reconnect(){
 
@@ -1176,16 +1218,60 @@ void logToMemory(void* pvParameter) {
 //     }
 // }
 
-// void testMQTT(void *pvParameters){
-//     while(true){
-//         debugln("Publishing data");
-//         if(mqtt_client.publish("n3/telemetry", "Hello from flight!")){
-//             debugln("Data sent");
-//         }else{
-//             debugln("Unable to send data");
-//         }
-//     }
-// }
+boolean reconnect() {
+  // we use if for it to be non-blocking 
+  if (!mqtt_client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+
+    //create client ID 
+    String client_Id = "ESP32Client";
+    client_Id += String(WiFi.macAddress());
+
+    Serial.printf("The client %s connects to the Base station mqtt broker\n", client_Id.c_str());
+    //Attempt connection
+    if (mqtt_client.connect(client_Id.c_str())) {
+      Serial.println("Basesattion mqtt broker connected");
+      //once connected,resubscribe... 
+      mqtt_client.subscribe("n4/0/output");
+
+    } else {
+      Serial.print("failed with state ");
+      Serial.print(mqtt_client.state());
+      Serial.println(" try again in 5 seconds");
+      delay(5000);
+    }
+  }
+  //return status of reconnection
+  return mqtt_client.connected();
+}
+
+void testMQTT(void *pvParameters){
+    while(true){
+        debugln("Publishing data");
+        if(mqtt_client.publish("n3/telemetry", "Hello from flight!")){
+            debugln("Data sent");
+        }else{
+            debugln("Unable to send data");
+        }
+    }
+}
+
+void mqttTask(void * parameter) {
+  for(;;) {
+    if (!mqtt_client.connected()) {
+      long now = millis();
+      if (now - lastReconnectAttempt > 5000) {
+        lastReconnectAttempt = now;
+        if (reconnect()) {
+          lastReconnectAttempt = 0;
+        }
+      }
+    } else {
+      mqtt_client.loop();
+    }
+    vTaskDelay(10 / portTICK_PERIOD_MS); // Small delay to prevent watchdog timeout
+  }
+}
 
 
 
@@ -1209,6 +1295,53 @@ void drogueChuteDeploy() {
  *******************************************************************************/
 void mainChuteDeploy() {
     debugln("MAIN CHUTE DEPLOYED");
+}
+//function checking on wifi connection status
+boolean wiFiConnection(){
+  
+  
+  if  (WiFi.status() != WL_CONNECTED) {
+    wiFiStatus = false;
+    // WiFi.begin(ssid, password);
+    delay(500);
+    Serial.print("Connecting to wifi ...");
+
+    
+
+  }else{
+    wiFiStatus = true;
+    Serial.println("");
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+  }
+  return wiFiStatus;
+}
+
+//to setup wifi 
+
+
+void setup_wifi() {
+  delay(10);
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(SSID);
+
+  WiFi.begin(SSID, PASSWORD);
+  //call wifi connection function 
+  wiFiConnection();
+
+  
+  
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
 }
 
 
@@ -1246,8 +1379,12 @@ void setup(){
 
     uint8_t app_id = xPortGetCoreID();
     BaseType_t th; // task creation handle
+
+    //Setting up wifi 
+    setup_wifi();
     // mqtt_client.setBufferSize(MQTT_BUFFER_SIZE);
-    // mqtt_client.setServer(MQTT_SERVER, MQTT_PORT);
+    mqtt_client.setServer(MQTT_SERVER, MQTT_PORT);
+    //mqtt_client.setCallback(callback);
 
     debugln();
     debugln(F("=============================================="));
@@ -1408,18 +1545,34 @@ void setup(){
 
 
     /* TASK 8: TRANSMIT TELEMETRY DATA */
-    // if(xTaskCreate(
-    //         transmitTelemetry,
-    //         "transmit_telemetry",
-    //         STACK_SIZE*2,
-    //         NULL,
-    //         2,
-    //         NULL
-    // ) != pdPASS){
-    //     debugln("[-]Transmit task failed to create");
-    // }else{
-    //     debugln("[+]Transmit task created OK.");
-    // }
+    if(xTaskCreate(
+            transmitTelemetry,
+            "transmit_telemetry",
+            STACK_SIZE*2,
+            NULL,
+            2,
+            NULL
+    ) != pdPASS){
+        debugln("[-]Transmit task failed to create");
+    }else{
+        debugln("[+]Transmit task created OK.");
+    }
+
+    //Task 9: Mqtt Connection
+    if(xTaskCreatePinnedToCore(
+    mqttTask,         // Task function
+    "MQTT Task",      // Name of the task
+    4096,             // Stack size (in bytes)
+    NULL,             // Task input parameter
+    2,                // Priority of the task
+    NULL,             // Task handle
+    1                 // Run on core 1
+    ) != pdPASS){
+        debugln("[-]mqtt task failed to create");
+    }else{
+        debugln("[+]mqtt task created OK.");
+    };
+
 
     #if LOG_TO_MEMORY   // set LOG_TO_MEMORY to 1 to allow logging to memory 
         /* TASK 9: LOG DATA TO MEMORY */
