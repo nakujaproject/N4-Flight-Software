@@ -689,7 +689,7 @@ void readAccelerationTask(void* pvParameter) {
 
 /*!****************************************************************************
  * @brief Read ar pressure data from the barometric sensor onboard
- * @param pvParameters - A value that is passed as the paramater to the created task.
+ * @param pvParameters - A value that is passed as the parameter to the created task.
  * If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - 
  * so it is not valid to pass the address of a stack variable.
  * @return Sends altimeter data to altimeter queue
@@ -826,7 +826,7 @@ void readGPSTask(void* pvParameters){
                 }
 
                 if(gps.time.isValid()) {
-                    gps_data_lcl.gps_data.time = gps.time.value(); // decode this time value post flight
+                    gps_data_lcl.gps_data.time = gps.time.value(); // decode this time value post flight - write a script for that
                 } else {
                     debugln("Invalid GPS time");
                 }
@@ -851,7 +851,7 @@ void readGPSTask(void* pvParameters){
 
 /*!****************************************************************************
  * @brief dequeue data from telemetry queue after all the tasks have consumed the data
- * @param pvParameters - A value that is passed as the paramater to the created task.
+ * @param pvParameters - A value that is passed as the parameter to the created task.
  * If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - 
  * so it is not valid to pass the address of a stack variable.
  * @return none
@@ -904,7 +904,7 @@ void clearTelemetryQueueTask(void* pvParameters) {
 
 /*!****************************************************************************
  * @brief Check and update the current state of flight - refer to states.h
- * @param pvParameters - A value that is passed as the paramater to the created task.
+ * @param pvParameters - A value that is passed as the parameter to the created task.
  * If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - 
  * so it is not valid to pass the address of a stack variable.
  * @return Updates the telemetry data flight state value
@@ -932,10 +932,10 @@ void checkFlightState(void* pvParameters) {
 
 /*!****************************************************************************
  * @brief performs flight actions based on the current flight state
- * If the flight state neccessisates an operation, we perfom it here
- * For example if the flight state is apogee, we perfom MAIN_CHUTE ejection
+ * If the flight state neccessisates an operation, we perform it here
+ * For example if the flight state is apogee, we perform MAIN_CHUTE ejection
  * 
- * @param pvParameter - A value that is passed as the paramater to the created task.
+ * @param pvParameter - A value that is passed as the parameter to the created task.
  * If pvParameter is set to the address of a variable then the variable must still exist when the created task executes - 
  * so it is not valid to pass the address of a stack variable.
  * 
@@ -999,16 +999,15 @@ void flightStateCallback(void* pvParameters) {
     }
 }
 
-
 /*!****************************************************************************
  * @brief debug flight/test data to terminal, this task is called if the DEBUG_TO_TERMINAL is set to 1 (see defs.h)
- * @param pvParameter - A value that is passed as the paramater to the created task.
+ * @param pvParameter - A value that is passed as the parameter to the created task.
  * If pvParameter is set to the address of a variable then the variable must still exist when the created task executes - 
  * so it is not valid to pass the address of a stack variable.
  * 
  *******************************************************************************/
 void debugToTerminalTask(void* pvParameters){
-    telemetry_type_t rcvd_data; // accelration received from acceleration_queue
+    telemetry_type_t rcvd_data; // acceleration received from acceleration_queue
 
     while(true){
         if(xQueuePeek(telemetry_data_qHandle, &rcvd_data, portMAX_DELAY) == pdPASS){
@@ -1045,7 +1044,7 @@ void debugToTerminalTask(void* pvParameters){
         // }
 
         // if(xQueueReceive(gps_data_queue, &gps_buffer, portMAX_DELAY) == pdPASS){
-        //     debug("Lattitude: "); debug(gps_buffer.latitude); debugln();
+        //     debug("Latitude: "); debug(gps_buffer.latitude); debugln();
         //     debug("Longitude: "); debug(gps_buffer.longitude); debugln();
         //     debug("Time: "); debug(gps_buffer.time); debugln();
             
