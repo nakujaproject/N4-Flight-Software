@@ -57,6 +57,9 @@
 #define MQTT_SERVER "192.168.78.19"         /*!< MQTT broker IP address */
 #define MQTT_PORT 1882                      /*!< MQTT broker port */
 
+#define BROKER_IP_ADDRESS_LENGTH    20      /*!< length of broker ip address string */
+#define MQTT_TOPIC_LENGTH           10      /*!< length of mqtt topic string */
+
 /* WIFI credentials */
 // const char* SSID = "Galaxy";             /*!< WIFi SSID */
 // const char* PASSWORD = "luwa2131";       /*!< WiFi password */

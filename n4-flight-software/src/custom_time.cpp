@@ -13,7 +13,9 @@ int minute=0, sec=0, msec=0;
 /*!****************************************************************************
  * @brief convert time in milliseconds to minutes, seconds and time that are human readable, to be
  * used for system logging or other data logging tasks
+ *
  * @param msec time in milliseconds, got from millis() function
+ * @return tstamp with time in huma readable format
  *******************************************************************************/
 void convertTimestamp(unsigned long msec) {
     minute = ((msec / 1000) / 60) % 60;

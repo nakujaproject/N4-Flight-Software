@@ -15,21 +15,22 @@
 #include <Wire.h>
 #include <WiFi.h>
 #include <PubSubClient.h> // TODO: ADD A MQTT SWITCH - TO USE MQTT OR NOT
-#include <TinyGPSPlus.h>
-#include <SFE_BMP180.h>
-#include <FS.h>
-#include <SD.h>
-#include <SPIFFS.h>
-#include "sensors.h"
-#include "defs.h"
-#include "mpu.h"
-#include "SerialFlash.h"
-#include "logger.h"
-#include "data_types.h"
-#include "custom_time.h"
-#include "states.h"
-#include "system_logger.h"
-#include "system_log_levels.h"
+#include <TinyGPSPlus.h>  // handle GPS
+#include <SFE_BMP180.h>     // For BMP180
+#include <FS.h>             // File system functions
+#include <SD.h>             // SD card logging function
+#include <SPIFFS.h>         // SPIFFS file system function
+#include "defs.h"           // misc defines
+#include "mpu.h"            // for reading MPU6050
+#include "SerialFlash.h"    // Handling external SPI flash memory
+#include "logger.h"         // system logging
+#include "data_types.h"     // definitions of data types used
+#include "custom_time.h"    // custom time conversions
+#include "states.h"         // state machine states
+#include "system_logger.h"  // system logging functions
+#include "system_log_levels.h"  // system logging log levels
+#include "wifi-config.h"    // handle wifi connection
+#include "mqtt-config.h"    // handle MQTT connection
 
 /* function prototypes definition */
 void drogueChuteDeploy();
@@ -38,12 +39,6 @@ void mainChuteDeploy();
 /* state machine variables*/
 uint8_t operation_mode = 0;                                     /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
 uint8_t current_state = FLIGHT_STATE::PRE_FLIGHT_GROUND;	    /*!< The starting state - we start at PRE_FLIGHT_GROUND state */
-
-/* create Wi-Fi Client */
-WiFiClient wifi_client;
-
-/* create MQTT publish-subscribe client */
-PubSubClient mqtt_client(wifi_client);
 
 /* GPS object */
 TinyGPSPlus gps;
@@ -548,7 +543,7 @@ long long previous_time = 0;
 #define TRANSMIT_XBEE_BIT       ((EventBits_t) 0x01 << 3)   // for bit 3
 #define DEBUG_TO_TERM_BIT       ((EventBits_t) 0x01 << 4)   // for bit 4
 
-// event group type for task syncronization
+// event group type for task synchronization
 EventGroupHandle_t tasksDataReceiveEventGroup;
 
 /**
@@ -897,7 +892,6 @@ void clearTelemetryQueueTask(void* pvParameters) {
         }
 
         //TODO: XBEE, DEBUG TO TERM
-
     }
 	
 }
@@ -911,7 +905,7 @@ void clearTelemetryQueueTask(void* pvParameters) {
  * 
  *******************************************************************************/
 void checkFlightState(void* pvParameters) {
-    // get the flight state from the telemetry task
+    // get the flight state from the telemetry tasi
     telemetry_type_t sensor_data; 
     
     while (1) {
@@ -1086,6 +1080,8 @@ void logToMemory(void* pvParameter) {
 
 }
 
+
+
 // void transmitTelemetry(void* pvParameters){
 //     /* This function sends data to the ground station */
 
@@ -1186,6 +1182,15 @@ void logToMemory(void* pvParameter) {
 //     }
 // }
 
+
+/*!****************************************************************************
+ * @brief Establish connection to MQTT
+ *
+ *
+ *******************************************************************************/
+void MQTTconnect() {
+
+}
 
 
 /*!****************************************************************************
@@ -1382,7 +1387,6 @@ void setup(){
     } else {
         debugln("[-}Failed to create checkFlightState task");
     }
-    ////
 
     /* TASK 6: FLIGHT STATE CALLBACK TASK */    
     th = xTaskCreatePinnedToCore(flightStateCallback,"flightStateCallback",STACK_SIZE*2,NULL,1, NULL,app_id);
@@ -1407,18 +1411,18 @@ void setup(){
 
 
     /* TASK 8: TRANSMIT TELEMETRY DATA */
-    // if(xTaskCreate(
-    //         transmitTelemetry,
-    //         "transmit_telemetry",
-    //         STACK_SIZE*2,
-    //         NULL,
-    //         2,
-    //         NULL
-    // ) != pdPASS){
-    //     debugln("[-]Transmit task failed to create");
-    // }else{
-    //     debugln("[+]Transmit task created OK.");
-    // }
+     if(xTaskCreate(
+             transmitTelemetry,
+             "transmit_telemetry",
+             STACK_SIZE*2,
+             NULL,
+             2,
+             NULL
+     ) != pdPASS){
+         debugln("[-]Transmit task failed to create");
+     }else{
+         debugln("[+]Transmit task created OK.");
+     }
 
     #if LOG_TO_MEMORY   // set LOG_TO_MEMORY to 1 to allow logging to memory 
         /* TASK 9: LOG DATA TO MEMORY */

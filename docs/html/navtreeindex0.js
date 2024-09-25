@@ -23,6 +23,7 @@ var NAVTREEINDEX0 =
 "class_system_logger.html#a0755dee42eafc8a8f7a6a6d027b880f2":[9,0,8,1],
 "class_system_logger.html#ad6feeadde357832516761347ff4cf25c":[9,0,8,0],
 "class_test.html":[9,0,10],
+"class_w_i_f_i_config.html":[9,0,11],
 "classes.html":[9,1],
 "custom-time_8h.html":[10,0,0,2,0,0],
 "custom-time_8h.html#a742a45ab1cba3ca3717085198ec6d2a9":[10,0,0,2,0,0,0],
@@ -206,5 +207,6 @@ var NAVTREEINDEX0 =
 "struct_telemetry___data.html#ab56d1832a9db40699f8944b0ca2db51c":[9,0,9,5],
 "system__log__levels_8h_source.html":[10,0,0,1,7],
 "system__logger_8h_source.html":[10,0,0,1,8],
-"test__class_8h_source.html":[10,0,0,2,1]
+"test__class_8h_source.html":[10,0,0,2,1],
+"wifi-config_8h_source.html":[10,0,0,1,9]
 };
