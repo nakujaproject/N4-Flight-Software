@@ -197,6 +197,17 @@ Pre-flight software checks</h1>
 <li>LOG_TO_MEMORY - <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a></li>
 </ol>
 <h1><a class="anchor" id="step16"></a>
+WIFI network configuration</h1>
+<p>The software is written such that it allows the launch crew to connect to any WIFI they are using, without hardcoding the WIFI credentials into the flight software. Follow the procedure below to connect to the WIFI:</p><ol type="1">
+<li>When powered on, the flight computer will create an open WIFI network called "flight-computer". This network will be visible on any device within range.</li>
+<li>On the ground station computer, connect to "flight-computer".</li>
+<li>Open the browser and go to the following IP address "192.168.4.1". This should open the following window in your browser. [image here]</li>
+<li>Enter the WIFI SSID and password for the network you want to connect to. In this case it is the WIFI network used for telemetry transmission.</li>
+<li>Press save. The flight computer will save the network credentials and auto-reconnect itself to the launch WIFI network. You can now stream telemetry over the network.</li>
+</ol>
+<h1><a class="anchor" id="step17"></a>
+MQTT configuration</h1>
+<h1><a class="anchor" id="step20"></a>
 Contributors</h1>
 <p>Our thanks go to the following current and previous avionics team members for their contribution:</p><ol type="1">
 <li>Edwin Mwiti</li>

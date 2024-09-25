@@ -43,7 +43,9 @@ var NAVTREE =
     [ "Hardware, pin assignment and peripherals", "index.html#step13", null ],
     [ "Integration and Testing Procedures", "index.html#step14", null ],
     [ "Pre-flight software checks", "index.html#step15", null ],
-    [ "Contributors", "index.html#step16", null ],
+    [ "WIFI network configuration", "index.html#step16", null ],
+    [ "MQTT configuration", "index.html#step17", null ],
+    [ "Contributors", "index.html#step20", null ],
     [ "README", "md_n4-flight-software_2README.html", null ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],

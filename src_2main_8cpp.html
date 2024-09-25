@@ -118,7 +118,6 @@ $(function(){initNavTree('src_2main_8cpp.html',''); initResizable(true); });
 <code>#include &lt;FS.h&gt;</code><br />
 <code>#include &lt;SD.h&gt;</code><br />
 <code>#include &lt;SPIFFS.h&gt;</code><br />
-<code>#include &quot;sensors.h&quot;</code><br />
 <code>#include &quot;<a class="el" href="defs_8h_source.html">defs.h</a>&quot;</code><br />
 <code>#include &quot;mpu.h&quot;</code><br />
 <code>#include &quot;SerialFlash.h&quot;</code><br />
@@ -128,6 +127,8 @@ $(function(){initNavTree('src_2main_8cpp.html',''); initResizable(true); });
 <code>#include &quot;<a class="el" href="states_8h_source.html">states.h</a>&quot;</code><br />
 <code>#include &quot;system_logger.h&quot;</code><br />
 <code>#include &quot;system_log_levels.h&quot;</code><br />
+<code>#include &quot;wifi-config.h&quot;</code><br />
+<code>#include &quot;<a class="el" href="mqtt-config_8h_source.html">mqtt-config.h</a>&quot;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
@@ -190,9 +191,6 @@ Functions</h2></td></tr>
 <tr class="memdesc:a9074d493ccf55d0cfa3acd2d173f665a"><td class="mdescLeft">&#160;</td><td class="mdescRight">fires the pyro-charge to deploy the main chute Turn on the main chute ejection circuit by running the GPIO HIGH for a preset No. of seconds. <br  />
  Default no. of seconds to remain HIGH is 5  <br /></td></tr>
 <tr class="separator:a9074d493ccf55d0cfa3acd2d173f665a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4a46279717733648d2fdc69dfa33af50" id="r_a4a46279717733648d2fdc69dfa33af50"><td class="memItemLeft" align="right" valign="top"><a id="a4a46279717733648d2fdc69dfa33af50" name="a4a46279717733648d2fdc69dfa33af50"></a>
-PubSubClient&#160;</td><td class="memItemRight" valign="bottom"><b>mqtt_client</b> (wifi_client)</td></tr>
-<tr class="separator:a4a46279717733648d2fdc69dfa33af50"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8841578fe91cace6206676f0e751cab5" id="r_a8841578fe91cace6206676f0e751cab5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8841578fe91cace6206676f0e751cab5">listDir</a> (fs::FS &amp;fs, const char *dirname, uint8_t levels)</td></tr>
 <tr class="separator:a8841578fe91cace6206676f0e751cab5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae8297bf2b99a2ad67af6f9a421ea4b16" id="r_ae8297bf2b99a2ad67af6f9a421ea4b16"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae8297bf2b99a2ad67af6f9a421ea4b16">initGPIO</a> ()</td></tr>
@@ -282,6 +280,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>ParseSerialBuffer</b>
 <tr class="memitem:a7df146b43e503e23146e698154d5096d" id="r_a7df146b43e503e23146e698154d5096d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7df146b43e503e23146e698154d5096d">logToMemory</a> (void *pvParameter)</td></tr>
 <tr class="memdesc:a7df146b43e503e23146e698154d5096d"><td class="mdescLeft">&#160;</td><td class="mdescRight">log the data to the external flash memory  <br /></td></tr>
 <tr class="separator:a7df146b43e503e23146e698154d5096d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c1f419a50fc1e7a044935338f8f6509" id="r_a3c1f419a50fc1e7a044935338f8f6509"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3c1f419a50fc1e7a044935338f8f6509">MQTTconnect</a> ()</td></tr>
+<tr class="memdesc:a3c1f419a50fc1e7a044935338f8f6509"><td class="mdescLeft">&#160;</td><td class="mdescRight">Establish connection to MQTT.  <br /></td></tr>
+<tr class="separator:a3c1f419a50fc1e7a044935338f8f6509"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4fc01d736fe50cf5b977f755b675f11d" id="r_a4fc01d736fe50cf5b977f755b675f11d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4fc01d736fe50cf5b977f755b675f11d">setup</a> ()</td></tr>
 <tr class="memdesc:a4fc01d736fe50cf5b977f755b675f11d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup - perform initialization of all hardware subsystems, create queues, create queue handles initialize system check table.  <br /></td></tr>
 <tr class="separator:a4fc01d736fe50cf5b977f755b675f11d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -295,9 +296,6 @@ Variables</h2></td></tr>
 <tr class="separator:a59b33f351d47779eaaff510227075be1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac559654865b2d48ea0b77b1a1f4a097b" id="r_ac559654865b2d48ea0b77b1a1f4a097b"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac559654865b2d48ea0b77b1a1f4a097b">current_state</a> = FLIGHT_STATE::PRE_FLIGHT_GROUND</td></tr>
 <tr class="separator:ac559654865b2d48ea0b77b1a1f4a097b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afafd0fc922c17c38235820189e1d9b3b" id="r_afafd0fc922c17c38235820189e1d9b3b"><td class="memItemLeft" align="right" valign="top"><a id="afafd0fc922c17c38235820189e1d9b3b" name="afafd0fc922c17c38235820189e1d9b3b"></a>
-WiFiClient&#160;</td><td class="memItemRight" valign="bottom"><b>wifi_client</b></td></tr>
-<tr class="separator:afafd0fc922c17c38235820189e1d9b3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a169c53997a7da1d0fb99aec1b4675ce8" id="r_a169c53997a7da1d0fb99aec1b4675ce8"><td class="memItemLeft" align="right" valign="top"><a id="a169c53997a7da1d0fb99aec1b4675ce8" name="a169c53997a7da1d0fb99aec1b4675ce8"></a>
 TinyGPSPlus&#160;</td><td class="memItemRight" valign="bottom"><b>gps</b></td></tr>
 <tr class="separator:a169c53997a7da1d0fb99aec1b4675ce8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1028,6 +1026,26 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 
 <p>fires the pyro-charge to deploy the main chute Turn on the main chute ejection circuit by running the GPIO HIGH for a preset No. of seconds. <br  />
  Default no. of seconds to remain HIGH is 5 </p>
+<hr  />
+  
+</div>
+</div>
+<a id="a3c1f419a50fc1e7a044935338f8f6509" name="a3c1f419a50fc1e7a044935338f8f6509"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3c1f419a50fc1e7a044935338f8f6509">&#9670;&#160;</a></span>MQTTconnect()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MQTTconnect </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Establish connection to MQTT. </p>
 <hr  />
   
 </div>

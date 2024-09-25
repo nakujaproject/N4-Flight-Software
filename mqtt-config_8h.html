@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.12.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>N4 Flight Software: n4-flight-software/src/custom_time.h File Reference</title>
+<title>N4 Flight Software: n4-flight-software/src/mqtt-config.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -72,7 +72,7 @@ $(function() {
 </div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(function(){initNavTree('custom__time_8h.html',''); initResizable(true); });
+$(function(){initNavTree('mqtt-config_8h.html',''); initResizable(true); });
 /* @license-end */
 </script>
 <div id="doc-content">
@@ -99,90 +99,34 @@ $(function(){initNavTree('custom__time_8h.html',''); initResizable(true); });
 
 <div class="header">
   <div class="summary">
-<a href="#func-members">Functions</a> &#124;
-<a href="#var-members">Variables</a>  </div>
-  <div class="headertitle"><div class="title">custom_time.h File Reference</div></div>
+<a href="#nested-classes">Classes</a>  </div>
+  <div class="headertitle"><div class="title">mqtt-config.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-
-<p>This file defines functions needed for human readable time conversion for data logging.  
-<a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;Arduino.h&gt;</code><br />
+<code>#include &lt;WiFi.h&gt;</code><br />
+<code>#include &lt;PubSubClient.h&gt;</code><br />
+<code>#include &quot;<a class="el" href="defs_8h_source.html">defs.h</a>&quot;</code><br />
+<code>#include &quot;string.h&quot;</code><br />
 </div>
-<p><a href="custom__time_8h_source.html">Go to the source code of this file.</a></p>
+<p><a href="mqtt-config_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:a742a45ab1cba3ca3717085198ec6d2a9" id="r_a742a45ab1cba3ca3717085198ec6d2a9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a742a45ab1cba3ca3717085198ec6d2a9">convertTimestamp</a> (unsigned long)</td></tr>
-<tr class="memdesc:a742a45ab1cba3ca3717085198ec6d2a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">convert time in milliseconds to minutes, seconds and time that are human readable, to be used for system logging or other data logging tasks  <br /></td></tr>
-<tr class="separator:a742a45ab1cba3ca3717085198ec6d2a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
-Variables</h2></td></tr>
-<tr class="memitem:af763bb4748c9c0460eab15663d0472bb" id="r_af763bb4748c9c0460eab15663d0472bb"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af763bb4748c9c0460eab15663d0472bb">tstamp</a> []</td></tr>
-<tr class="separator:af763bb4748c9c0460eab15663d0472bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classMQTTConfig.html">MQTTConfig</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>This file defines functions needed for human readable time conversion for data logging. </p>
-<hr  />
-</div><h2 class="groupheader">Function Documentation</h2>
-<a id="a742a45ab1cba3ca3717085198ec6d2a9" name="a742a45ab1cba3ca3717085198ec6d2a9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a742a45ab1cba3ca3717085198ec6d2a9">&#9670;&#160;</a></span>convertTimestamp()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void convertTimestamp </td>
-          <td>(</td>
-          <td class="paramtype">unsigned long</td>          <td class="paramname"><span class="paramname"><em>msec</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>convert time in milliseconds to minutes, seconds and time that are human readable, to be used for system logging or other data logging tasks </p>
-<hr  />
- <dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">msec</td><td>time in milliseconds, got from millis() function </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>tstamp with time in huma readable format </dd></dl>
-
-</div>
-</div>
-<h2 class="groupheader">Variable Documentation</h2>
-<a id="af763bb4748c9c0460eab15663d0472bb" name="af763bb4748c9c0460eab15663d0472bb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af763bb4748c9c0460eab15663d0472bb">&#9670;&#160;</a></span>tstamp</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">char tstamp[]</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>buffer to hold a human readable timestamp </p>
-
-</div>
-</div>
-</div><!-- contents -->
+<div class="textblock"><hr  />
+<p>Handle connection to MQTT broker and data transmission over MQTT</p><ul>
+<li></li>
+</ul>
+</div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_223c149f86d1b3369d43d9ec6c6d367c.html">n4-flight-software</a></li><li class="navelem"><a class="el" href="dir_d09072d1c94fe000833aa47d92501a74.html">src</a></li><li class="navelem"><a class="el" href="custom__time_8h.html">custom_time.h</a></li>
+    <li class="navelem"><a class="el" href="dir_223c149f86d1b3369d43d9ec6c6d367c.html">n4-flight-software</a></li><li class="navelem"><a class="el" href="dir_d09072d1c94fe000833aa47d92501a74.html">src</a></li><li class="navelem"><a class="el" href="mqtt-config_8h.html">mqtt-config.h</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
   </ul>
 </div>
