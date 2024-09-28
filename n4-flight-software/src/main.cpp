@@ -528,6 +528,8 @@ void receiveTestDataSerialEvent() {
     void MQTTInit(const char* broker_IP, uint16_t broker_port);
 #endif
 
+/* WIFI configuration class object */
+WIFIConfig wifi_config;
 
 uint8_t drogue_pyro = 25;
 uint8_t main_pyro = 12;
@@ -654,11 +656,6 @@ QueueHandle_t gps_data_qHandle;
 //     debugln("[+]Network found");debug("[+]My IP address: "); debugln();
 //     debugln(WiFi.localIP());
 //     digitalWrite(LED_BUILTIN, LOW);
-// }
-
-// void initializeMQTTParameters(){
-//     /* this functions creates an MQTT client for transmitting telemetry data */;
-//     mqtt_client.setServer(MQTT_SERVER, MQTT_PORT);
 // }
 
 
@@ -1107,9 +1104,15 @@ void logToMemory(void* pvParameter) {
  *
  *******************************************************************************/
 void MQTT_TransmitTelemetry(void* pvParameters) {
+
     while(1) {
-        debugln("Transmitting telemetry");
+        if(mqtt_client.publish(MQTT_TOPIC, "Hello from FC1")) {
+             debugln("[+]Data sent");
+         } else {
+             debugln("[-]Data not sent");
+         }
     }
+
 }
 
 /*!
@@ -1196,38 +1199,13 @@ void MQTT_Reconnect() {
 //         file.close();
 //         id+=1;
 
-//         if(mqtt_client.publish("n3/telemetry", telemetry_data)){
+//         if(mqtt_client.publish("n3/telemetry", telemetry_data)) {
 //             debugln("[+]Data sent");
 //         } else{
 //             debugln("[-]Data not sent");
 //         }
 //     }
 // }
-
-// void reconnect(){
-
-//     while(!mqtt_client.connected()){
-//         debug("[..]Attempting MQTT connection...");
-//         String client_id = "[+]FC Client - ";
-//         client_id += String(random(0XFFFF), HEX);
-
-//         if(mqtt_client.connect(client_id.c_str())){
-//             debugln("[+]MQTT connected");
-//         }
-//     }
-// }
-
-// void testMQTT(void *pvParameters){
-//     while(true){
-//         debugln("Publishing data");
-//         if(mqtt_client.publish("n3/telemetry", "Hello from flight!")){
-//             debugln("Data sent");
-//         }else{
-//             debugln("Unable to send data");
-//         }
-//     }
-// }
-
 
 /*!****************************************************************************
  * @brief Initialize MQTT
@@ -1271,6 +1249,14 @@ void setup(){
     /* initialize serial */
     Serial.begin(BAUDRATE);
     delay(100);
+
+    // create dynamic WIFI
+    uint8_t wifi_connection_result = wifi_config.WifiConnect();
+    if(wifi_connection_result) {
+        debugln("Wifi config OK!");
+    } else {
+        debugln("Wifi config failed");
+    }
 
     /* initialize the system logger */
     InitSPIFFS();

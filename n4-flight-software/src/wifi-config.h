@@ -6,6 +6,7 @@
 #include "WiFiManager.h"
 
 class WIFIConfig {
+public:
     uint8_t WifiConnect();
 };
 
