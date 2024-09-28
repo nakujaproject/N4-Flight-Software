@@ -11,7 +11,6 @@ var searchData=
   ['double_20ejection_8',['Double ejection',['../index.html#step9',1,'']]],
   ['downloading_9',['Building, Compilation and Downloading.',['../index.html#install_sec',1,'']]],
   ['drogue_5fejection_5fheight_10',['DROGUE_EJECTION_HEIGHT',['../defs_8h.html#a616918f37597986c61224c6f25c9af11',1,'defs.h']]],
-  ['drogue_5fpyro_11',['drogue_pyro',['../main_8cpp.html#aa2a21869dff0c780017683e78f315bd0',1,'main.cpp']]],
-  ['droguechutedeploy_12',['drogueChuteDeploy',['../main_8cpp.html#aee373e9d6ea48f0b376bdaa1c2970510',1,'main.cpp']]],
-  ['dump_20interface_13',['Data dump interface',['../index.html#step6',1,'']]]
+  ['droguechutedeploy_11',['drogueChuteDeploy',['../main_8cpp.html#aee373e9d6ea48f0b376bdaa1c2970510',1,'main.cpp']]],
+  ['dump_20interface_12',['Data dump interface',['../index.html#step6',1,'']]]
 ];

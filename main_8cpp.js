@@ -45,7 +45,6 @@ var main_8cpp =
     [ "current_log_time", "main_8cpp.html#a318b23db9cedde5ea8466af114f0c203", null ],
     [ "current_state", "main_8cpp.html#ac559654865b2d48ea0b77b1a1f4a097b", null ],
     [ "current_test_state", "main_8cpp.html#a9dc783a2c139e60a49e643aed8b741b9", null ],
-    [ "drogue_pyro", "main_8cpp.html#aa2a21869dff0c780017683e78f315bd0", null ],
     [ "file", "main_8cpp.html#ada14cbbf98490eb3cb49b5d1cb0c0056", null ],
     [ "FILE_SIZE_1M", "main_8cpp.html#a1ba4fed8e0dad7fbe3e7de830a2e9f6c", null ],
     [ "FILE_SIZE_4M", "main_8cpp.html#aef692c53edfa11997d3470f8ed1d6a26", null ],
@@ -66,5 +65,6 @@ var main_8cpp =
     [ "SET_TEST_MODE_PIN", "main_8cpp.html#ac0121f71eae2488320c2cd36a4843976", null ],
     [ "SOH_recvd_flag", "main_8cpp.html#a6a02e76e786465c8d2fe8ba9ad3393da", null ],
     [ "telemetry_data_qHandle", "main_8cpp.html#a0ed5ea94df7417ea494d69ca56aab490", null ],
-    [ "value", "main_8cpp.html#ac4f474c82e82cbb89ca7c36dd52be0ed", null ]
+    [ "value", "main_8cpp.html#ac4f474c82e82cbb89ca7c36dd52be0ed", null ],
+    [ "wifi_config", "main_8cpp.html#ab373e93ee373b64207ddef0991fcac9d", null ]
 ];
