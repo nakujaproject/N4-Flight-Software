@@ -31,7 +31,6 @@ var src_2main_8cpp =
     [ "logToMemory", "src_2main_8cpp.html#a7df146b43e503e23146e698154d5096d", null ],
     [ "loop", "src_2main_8cpp.html#afe461d27b9c48d5921c00d521181f12f", null ],
     [ "mainChuteDeploy", "src_2main_8cpp.html#a9074d493ccf55d0cfa3acd2d173f665a", null ],
-    [ "MQTTconnect", "src_2main_8cpp.html#a3c1f419a50fc1e7a044935338f8f6509", null ],
     [ "ParseSerialNumeric", "src_2main_8cpp.html#a102c6561be41c1aafb3bd6da443deed7", null ],
     [ "readAccelerationTask", "src_2main_8cpp.html#a64be9ebbabd58a9b6d32b92ce607f2a6", null ],
     [ "readAltimeterTask", "src_2main_8cpp.html#a5947e71102388e9d5bfd09f8e97d668c", null ],

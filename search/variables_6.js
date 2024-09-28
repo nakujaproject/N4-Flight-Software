@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['operation_5fmode_0',['operation_mode',['../structTelemetry__Data.html#a9d97628691ff146f5bd3d5739d801ebd',1,'Telemetry_Data::operation_mode'],['../src_2main_8cpp.html#a59b33f351d47779eaaff510227075be1',1,'operation_mode:&#160;main.cpp']]]
+  ['latitude_0',['latitude',['../structGPS__Data.html#afb3da9032a0865674a8257fbb3ec0716',1,'GPS_Data']]],
+  ['log_5fsample_5finterval_1',['log_sample_interval',['../main_8cpp.html#affaa6e6cce540b233b04e558e3d164b2',1,'main.cpp']]],
+  ['longitude_2',['longitude',['../structGPS__Data.html#af3acb0e092149273638675c427cb4b5d',1,'GPS_Data']]]
 ];
