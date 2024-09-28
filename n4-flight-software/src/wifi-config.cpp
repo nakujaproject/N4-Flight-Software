@@ -18,7 +18,7 @@
  * @brief allow connection to WiFi
  *
  */
-WIFIConfig::WifiConnect() {
+uint8_t WIFIConfig::WifiConnect() {
     WiFi.mode(WIFI_STA); // start in station mode
     WiFiManager wm;
     bool connection_result = 0;

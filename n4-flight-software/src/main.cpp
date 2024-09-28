@@ -30,7 +30,6 @@
 #include "system_logger.h"  // system logging functions
 #include "system_log_levels.h"  // system logging log levels
 #include "wifi-config.h"    // handle wifi connection
-#include "mqtt-config.h"    // handle MQTT connection
 
 /* function prototypes definition */
 void drogueChuteDeploy();
@@ -48,6 +47,8 @@ SystemLogger system_logger;
 const char* system_log_file = "/sys_log.log";
 LOG_LEVEL level = INFO;
 const char* rocket_ID = "rocket-1";             /*!< Unique ID of the rocket. Change to the needed rocket name before uploading */
+
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
@@ -109,39 +110,46 @@ uint8_t current_test_state = TEST_STATE::HANDSHAKE; /*!< Define current state th
  * XMODEM serial function prototypes
  *
  */
-void listDir(fs::FS &fs, const char * dirname, uint8_t levels);
+void listDir(fs::FS &fs, const char *dirname, uint8_t levels);
+
 void initGPIO();
+
 void InitSPIFFS();
+
 void initSD(); // TODO: return a bool
 void SwitchLEDs(uint8_t, uint8_t);
+
 void InitXMODEM();
+
 void SerialEvent();
-void ParseSerial(char*);
+
+void ParseSerial(char *);
+
 void checkRunTestToggle();
 
 //////////////////// SPIFFS FILE OPERATIONS ///////////////////////////
 
 #define FORMAT_SPIFFS_IF_FAILED 1
-const char* test_data_file = "/data.csv";
+const char *test_data_file = "/data.csv";
 
-void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
+void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
     Serial.printf("Listing directory: %s\r\n", dirname);
     File root = fs.open(dirname);
-    if(!root){
+    if (!root) {
         debugln("- failed to open directory");
         return;
     }
-    if(!root.isDirectory()){
+    if (!root.isDirectory()) {
         debugln(" - not a directory");
         return;
     }
     File file = root.openNextFile();
-    while(file){
-        if(file.isDirectory()){
+    while (file) {
+        if (file.isDirectory()) {
             debug("  DIR : ");
             debugln(file.name());
-            if(levels){
-                listDir(fs, file.name(), levels -1);
+            if (levels) {
+                listDir(fs, file.name(), levels - 1);
             }
         } else {
             debug("  FILE: ");
@@ -153,28 +161,28 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
     }
 }
 
-void readFile(fs::FS &fs, const char * path){
+void readFile(fs::FS &fs, const char *path) {
     Serial.printf("Reading file: %s\r\n", path);
     File file = fs.open(path);
-    if(!file || file.isDirectory()){
+    if (!file || file.isDirectory()) {
         debugln("- failed to open file for reading");
         return;
     }
     debugln("- read from file:");
-    while(file.available()){
+    while (file.available()) {
         Serial.write(file.read());
     }
     file.close();
 }
 
-void writeFile(fs::FS &fs, const char * path, const char * message){
+void writeFile(fs::FS &fs, const char *path, const char *message) {
     Serial.printf("Writing file: %s\r\n", path);
     File file = fs.open(path, FILE_WRITE);
-    if(!file){
+    if (!file) {
         debugln("- failed to open file for writing");
         return;
     }
-    if(file.print(message)){
+    if (file.print(message)) {
         debugln("- file written");
     } else {
         debugln("- write failed");
@@ -182,14 +190,14 @@ void writeFile(fs::FS &fs, const char * path, const char * message){
     file.close();
 }
 
-void appendFile(fs::FS &fs, const char * path, const char * message){
+void appendFile(fs::FS &fs, const char *path, const char *message) {
     Serial.printf("Appending to file: %s\r\n", path);
     File file = fs.open(path, FILE_APPEND);
-    if(!file){
+    if (!file) {
         debugln("- failed to open file for appending");
         return;
     }
-    if(file.print(message)){
+    if (file.print(message)) {
         debugln("- message appended");
     } else {
         debugln("- append failed");
@@ -197,9 +205,9 @@ void appendFile(fs::FS &fs, const char * path, const char * message){
     file.close();
 }
 
-void deleteFile(fs::FS &fs, const char * path){
+void deleteFile(fs::FS &fs, const char *path) {
     Serial.printf("Deleting file: %s\r\n", path);
-    if(fs.remove(path)){
+    if (fs.remove(path)) {
         debugln("- file deleted");
     } else {
         debugln("- delete failed");
@@ -220,7 +228,7 @@ void readTestDataFile() {
 }
 
 void InitSPIFFS() {
-    if(!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
+    if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
         debugln("SPIFFS mount failed"); // TODO: Set a flag for test GUI
         return;
     } else {
@@ -229,7 +237,7 @@ void InitSPIFFS() {
 }
 
 void initSD() {
-    if(!SD.begin(SD_CS_PIN)) {
+    if (!SD.begin(SD_CS_PIN)) {
         delay(100);
         debugln(F("[-]SD Card mounting failed"));
         return;
@@ -238,7 +246,7 @@ void initSD() {
     }
 
     uint8_t cardType = SD.cardType();
-    if(cardType == CARD_NONE) {
+    if (cardType == CARD_NONE) {
         debugln("[-]No SD card attached");
         return;
     }
@@ -246,7 +254,7 @@ void initSD() {
     // initialize test data file
     File file = SD.open("/data.csv", FILE_WRITE); // TODO: change file name to const char*
 
-    if(!file) {
+    if (!file) {
         debugln("[File does not exist. Creating file]");
         writeFile(SD, "/data.csv", "SSID, SECURITY, CHANNEL, LAT, LONG, TIME \r\n");
     } else {
@@ -299,8 +307,8 @@ uint8_t led_state = LOW;
  *******************************************************************************/
 void buzz() {
     current_buzz = millis();
-    if((current_buzz - last_buzz) > buzz_interval) {
-        if(buzzer_state == LOW) {
+    if ((current_buzz - last_buzz) > buzz_interval) {
+        if (buzzer_state == LOW) {
             buzzer_state = HIGH;
         } else {
             buzzer_state = LOW;
@@ -318,10 +326,10 @@ void buzz() {
  *******************************************************************************/
 void blink_200ms(uint8_t led_pin) {
     current_blink = millis();
-    if((current_blink - last_blink) > blink_interval) {
-        if(led_state == LOW) {
+    if ((current_blink - last_blink) > blink_interval) {
+        if (led_state == LOW) {
             led_state = HIGH;
-        } else if(led_state == HIGH) {
+        } else if (led_state == HIGH) {
             led_state = LOW;
         }
 
@@ -340,14 +348,14 @@ void blink_200ms(uint8_t led_pin) {
  *******************************************************************************/
 void checkRunTestToggle() {
 
-    if( (digitalRead(SET_RUN_MODE_PIN) == 0) && (digitalRead(SET_TEST_MODE_PIN) == 1) ) {
+    if ((digitalRead(SET_RUN_MODE_PIN) == 0) && (digitalRead(SET_TEST_MODE_PIN) == 1)) {
         // run mode
         RUN_MODE = 1;
         TEST_MODE = 0;
         SwitchLEDs(TEST_MODE, RUN_MODE);
     }
 
-    if((digitalRead(SET_RUN_MODE_PIN) == 1) && (digitalRead(SET_TEST_MODE_PIN) == 0)){
+    if ((digitalRead(SET_RUN_MODE_PIN) == 1) && (digitalRead(SET_TEST_MODE_PIN) == 0)) {
         // test mode
         RUN_MODE = 0;
         TEST_MODE = 1;
@@ -357,7 +365,7 @@ void checkRunTestToggle() {
 
     // here the jumper has been removed. we are neither in the TEST or RUN mode
     // INVALID STATE
-    if((digitalRead(SET_RUN_MODE_PIN) == 1) && (digitalRead(SET_TEST_MODE_PIN) == 1)) {
+    if ((digitalRead(SET_RUN_MODE_PIN) == 1) && (digitalRead(SET_TEST_MODE_PIN) == 1)) {
         TEST_MODE = 0;
         RUN_MODE = 0;
         SwitchLEDs(!TEST_MODE, !RUN_MODE);
@@ -389,9 +397,10 @@ void InitXMODEM() {
  * @brief Parse the received serial command if it is a string
  *******************************************************************************/
 int value = 0;
-void ParseSerialBuffer(char* buffer) {
 
-    if(strcmp(buffer, SOH_CHR) == 0) {
+void ParseSerialBuffer(char *buffer) {
+
+    if (strcmp(buffer, SOH_CHR) == 0) {
         // if(buffer == SOH){
 
         debugln(F("<Start of transmission>"));
@@ -417,7 +426,7 @@ void ParseSerialNumeric(int value) {
     debug("Receive val: ");
     debugln(value);
 
-    if(value == 1) // SOH: numeric 1
+    if (value == 1) // SOH: numeric 1
     {
         debugln("<Start of transmission>");
         SOH_recvd_flag = 1;
@@ -428,7 +437,7 @@ void ParseSerialNumeric(int value) {
         SwitchLEDs(0, 1); // red off, green on
         current_test_state = TEST_STATE::RECEIVE_TEST_DATA;
 
-    } else if(value == 4) {
+    } else if (value == 4) {
         // EOT: numeric 4
         debugln("Unknown");
     }
@@ -438,13 +447,13 @@ void ParseSerialNumeric(int value) {
  * @brief Receive serial message during handshake
  *******************************************************************************/
 void handshakeSerialEvent() {
-    SwitchLEDs(1,0);
+    SwitchLEDs(1, 0);
     while (Serial.available()) {
         char ch = Serial.read();
 
-        if(isDigit(ch)) { // character between 0 an 9
+        if (isDigit(ch)) { // character between 0 an 9
             // accumulate value
-            value = value*ch + (ch - '0');
+            value = value * ch + (ch - '0');
         } else if (ch == '\n') {
             debug("SerEvent: ");
             debugln(value);
@@ -473,12 +482,12 @@ void handshakeSerialEvent() {
  *
  *******************************************************************************/
 void receiveTestDataSerialEvent() {
-    while(Serial.available()) {
+    while (Serial.available()) {
         char ch = Serial.read();
         Serial.write(ch);
 
         // each CSV string ends with a newline
-        if(test_data_serial_index < MAX_CSV_LENGTH && (ch != '\n') ) {
+        if (test_data_serial_index < MAX_CSV_LENGTH && (ch != '\n')) {
             test_data_buffer[test_data_serial_index++] = ch;
 
         } else {
@@ -490,7 +499,7 @@ void receiveTestDataSerialEvent() {
             //debugln(test_data_buffer);
             // open file in append mode
             File data_file = SPIFFS.open(test_data_file, "a");
-            if(data_file) {
+            if (data_file) {
                 data_file.print(test_data_buffer);
                 data_file.println(); // start a new line
                 data_file.close();
@@ -508,8 +517,18 @@ void receiveTestDataSerialEvent() {
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 
-
 //=================== MAIN SYSTEM =================
+
+/**
+ * MQTT helper instances, if using MQTT to transmit telemetry
+ */
+#if MQTT
+    WiFiClient wifi_client;
+    PubSubClient mqtt_client(wifi_client);
+    void MQTTInit(const char* broker_IP, uint16_t broker_port);
+#endif
+
+
 uint8_t drogue_pyro = 25;
 uint8_t main_pyro = 12;
 uint8_t flash_cs_pin = 5;           /*!< External flash memory chip select pin */
@@ -1001,7 +1020,7 @@ void flightStateCallback(void* pvParameters) {
  * 
  *******************************************************************************/
 void debugToTerminalTask(void* pvParameters){
-    telemetry_type_t rcvd_data; // acceleration received from acceleration_queue
+    telemetry_type_t rcvd_data; // accelleration received from acceleration_queue
 
     while(true){
         if(xQueuePeek(telemetry_data_qHandle, &rcvd_data, portMAX_DELAY) == pdPASS){
@@ -1080,7 +1099,34 @@ void logToMemory(void* pvParameter) {
 
 }
 
+/*!****************************************************************************
+ * @brief send flight data to ground
+ * @param pvParameter - A value that is passed as the paramater to the created task.
+ * If pvParameter is set to the address of a variable then the variable must still exist when the created task executes -
+ * so it is not valid to pass the address of a stack variable.
+ *
+ *******************************************************************************/
+void MQTT_TransmitTelemetry(void* pvParameters) {
+    while(1) {
+        debugln("Transmitting telemetry");
+    }
+}
 
+/*!
+ * @brief Try reconnecting to MQTT if connection is lost
+ *
+ */
+void MQTT_Reconnect() {
+     while(!mqtt_client.connected()){
+         debug("[..]Attempting MQTT connection..."); // TODO: SYS L
+         String client_id = "[+]FC Client - ";
+         client_id += String(random(0XFFFF), HEX);
+
+         if(mqtt_client.connect(client_id.c_str())){
+             debugln("[+]MQTT connected");
+         }
+    }
+}
 
 // void transmitTelemetry(void* pvParameters){
 //     /* This function sends data to the ground station */
@@ -1184,14 +1230,14 @@ void logToMemory(void* pvParameter) {
 
 
 /*!****************************************************************************
- * @brief Establish connection to MQTT
+ * @brief Initialize MQTT
  *
  *
  *******************************************************************************/
-void MQTTconnect() {
-
+void MQTTInit(const char* broker_IP, int broker_port) {
+    // mqtt_client.setBufferSize(MQTT_BUFFER_SIZE);
+    mqtt_client.setServer(broker_IP, broker_port);
 }
-
 
 /*!****************************************************************************
  * @brief fires the pyro-charge to deploy the drogue chute
@@ -1229,8 +1275,11 @@ void setup(){
     /* initialize the system logger */
     InitSPIFFS();
 
+    /* initialize MQTT */
+    MQTTInit(MQTT_SERVER, MQTT_PORT);
+
     /* mode 0 resets the system log file by clearing all the current contents */
-//    system_logger.logToFile(SPIFFS, 0, rocket_ID, level, system_log_file, "Game Time!"); // TODO: DEBUG
+    // system_logger.logToFile(SPIFFS, 0, rocket_ID, level, system_log_file, "Game Time!"); // TODO: DEBUG
 
     debugln();
     debugln(F("=============================================="));
@@ -1250,8 +1299,6 @@ void setup(){
 
     uint8_t app_id = xPortGetCoreID();
     BaseType_t th; // task creation handle
-    // mqtt_client.setBufferSize(MQTT_BUFFER_SIZE);
-    // mqtt_client.setServer(MQTT_SERVER, MQTT_PORT);
 
     debugln();
     debugln(F("=============================================="));
@@ -1409,19 +1456,12 @@ void setup(){
 
     #endif // DEBUG_TO_TERMINAL_TASK
 
-
     /* TASK 8: TRANSMIT TELEMETRY DATA */
-     if(xTaskCreate(
-             transmitTelemetry,
-             "transmit_telemetry",
-             STACK_SIZE*2,
-             NULL,
-             2,
-             NULL
-     ) != pdPASS){
+    th = xTaskCreatePinnedToCore(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*2, NULL, 2, NULL, app_id);
+     if(th == pdPASS){
+         debugln("[+]Transmit task created OK!");
+     } else {
          debugln("[-]Transmit task failed to create");
-     }else{
-         debugln("[+]Transmit task created OK.");
      }
 
     #if LOG_TO_MEMORY   // set LOG_TO_MEMORY to 1 to allow logging to memory 
@@ -1475,11 +1515,11 @@ void loop(){
 //         debug(".");
 //     }
 
-//    if(!mqtt_client.connected()){
-//        /* try to reconnect if connection is lost */
-//        reconnect();
-//    }
+    if(!mqtt_client.connected()){
+        /* try to reconnect if connection is lost */
+        MQTT_Reconnect();
+    }
 
-//    mqtt_client.loop();
+    mqtt_client.loop();
 
 }
