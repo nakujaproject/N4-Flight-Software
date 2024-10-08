@@ -11,5 +11,5 @@ var annotated_dup =
     [ "SystemLogger", "class_system_logger.html", "class_system_logger" ],
     [ "Telemetry_Data", "struct_telemetry___data.html", "struct_telemetry___data" ],
     [ "Test", "class_test.html", null ],
-    [ "WIFIConfig", "class_w_i_f_i_config.html", null ]
+    [ "WIFIConfig", "class_w_i_f_i_config.html", "class_w_i_f_i_config" ]
 ];

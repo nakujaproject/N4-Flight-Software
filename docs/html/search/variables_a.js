@@ -1,7 +1,8 @@
 var searchData=
 [
-  ['telemetry_5fdata_5fqhandle_0',['telemetry_data_qHandle',['../src_2main_8cpp.html#a0ed5ea94df7417ea494d69ca56aab490',1,'main.cpp']]],
-  ['temperature_1',['temperature',['../struct_altimeter___data.html#a00d38e00ba21a48e4732c889c7526ab6',1,'Altimeter_Data']]],
-  ['time_2',['time',['../struct_g_p_s___data.html#a6c84e2c899da790cc005c3bf3bda6d42',1,'GPS_Data']]],
-  ['tstamp_3',['tstamp',['../custom__time_8h.html#af763bb4748c9c0460eab15663d0472bb',1,'custom_time.cpp']]]
+  ['sd_5fcs_5fpin_0',['SD_CS_PIN',['../main_8cpp.html#adcf3e4d2276ee4d10b23c05e4e7da0c3',1,'main.cpp']]],
+  ['set_5frun_5fmode_5fpin_1',['SET_RUN_MODE_PIN',['../main_8cpp.html#abea45f8bc016d99f82b468ae77916e64',1,'main.cpp']]],
+  ['set_5ftest_5fmode_5fpin_2',['SET_TEST_MODE_PIN',['../main_8cpp.html#ac0121f71eae2488320c2cd36a4843976',1,'main.cpp']]],
+  ['soh_5frecvd_5fflag_3',['SOH_recvd_flag',['../main_8cpp.html#a6a02e76e786465c8d2fe8ba9ad3393da',1,'main.cpp']]],
+  ['state_4',['state',['../struct_telemetry___data.html#ab018b89ab9a786e684bff0140925d71d',1,'Telemetry_Data']]]
 ];

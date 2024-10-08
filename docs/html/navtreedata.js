@@ -44,6 +44,9 @@ var NAVTREE =
     [ "Integration and Testing Procedures", "index.html#step14", null ],
     [ "Pre-flight software checks", "index.html#step15", null ],
     [ "WIFI network configuration", "index.html#step16", null ],
+    [ "MQTT configuration", "index.html#step17", null ],
+    [ "Flight Data Collection and Kalman Filtering", "index.html#step18", null ],
+    [ "Contributors", "index.html#step20", null ],
     [ "README", "md_n4-flight-software_2_r_e_a_d_m_e.html", null ],
     [ "Flight computer pin assignment", "md_n4-flight-software_2src_2pin__assignment.html", null ],
     [ "Classes", "annotated.html", [
