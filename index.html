@@ -207,6 +207,11 @@ WIFI network configuration</h1>
 </ol>
 <h1><a class="anchor" id="step17"></a>
 MQTT configuration</h1>
+<h1><a class="anchor" id="step18"></a>
+Flight Data Collection and Kalman Filtering</h1>
+<p>The main senors used in the flight computer are accelerometer and pressure sensors. We use the <a class="el" href="classMPU6050.html">MPU6050</a> for acceleration and angular velocity measurements. We use the BMP180 for atmospheric pressure and altitude measurement. This data is collected as raw data which is then processed and filtered using the Kalman filter algorithm.</p>
+<p>The <em><b>Kalman Filter</b></em> allows us to perform predictive recursive low pass filtering which greatly improves our collected sensor data which is safe for the state machine to consume.</p>
+<p>To learn more about the Kalman filter implementation, refer to the <a class="el" href="kalman_8h_source.html">kalman.h</a> and kalman.cpp files in the src folder of the n4-flight-software.</p>
 <h1><a class="anchor" id="step20"></a>
 Contributors</h1>
 <p>Our thanks go to the following current and previous avionics team members for their contribution:</p><ol type="1">

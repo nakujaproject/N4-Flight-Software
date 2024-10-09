@@ -1,4 +1,7 @@
 var searchData=
 [
-  ['operation_5fmode_0',['operation_mode',['../structTelemetry__Data.html#a9d97628691ff146f5bd3d5739d801ebd',1,'Telemetry_Data::operation_mode'],['../main_8cpp.html#a59b33f351d47779eaaff510227075be1',1,'operation_mode:&#160;main.cpp']]]
+  ['n4_20flight_20software_0',['N4 Flight Software',['../index.html',1,'']]],
+  ['nak_1',['NAK',['../main_8cpp.html#a7ff3e502ffb5d509612c6c6741de45cc',1,'main.cpp']]],
+  ['nak_5finterval_2',['NAK_INTERVAL',['../main_8cpp.html#a394162e74bbeb9bf67d3009cc38e0466',1,'main.cpp']]],
+  ['network_20configuration_3',['WIFI network configuration',['../index.html#step16',1,'']]]
 ];
