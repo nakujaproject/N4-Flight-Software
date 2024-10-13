@@ -343,8 +343,7 @@ void blink_200ms(uint8_t led_pin) {
  * or run mode.
  * If in TEST mode, define the TEST flag
  * If in RUN mode, define the RUN flag
- * TEST_MODE Pin and RUN_MODE pin are both pulled HIGH. When you set the jumper, you pull that pin to
- * LOW.
+ * TEST_MODE Pin and RUN_MODE pin are both pulled HIGH. When you set the jumper, you pull that pin to LOW.
  *******************************************************************************/
 void checkRunTestToggle() {
 
@@ -372,7 +371,6 @@ void checkRunTestToggle() {
     }
 
 }
-
 
 
 /**
@@ -508,6 +506,44 @@ void receiveTestDataSerialEvent() {
             }
         }
 
+    }
+}
+
+/**
+ * @brief this function prepares the flight computer to receive test data 
+ * depending on the state, it tries to establich link between flight computer and sending PC
+ * receives the actual data
+ * confirm the actual data
+ */
+void prepareForDataReceive() {
+    if(TEST_MODE) {
+        // we are in test mode 
+        switch (current_test_state)
+        {
+            // this state tries to establish communication with the sending PC
+            case TEST_STATE::HANDSHAKE:
+                handshakeSerialEvent();
+                if(!SOH_recvd_flag) {
+                    current_NAK_time = millis();
+                    if((current_NAK_time - last_NAK_time) > NAK_INTERVAL) {
+                        InitXMODEM(); // send NAK every NAKINTERVAL (4 seconds typically)
+                        last_NAK_time = current_NAK_time;
+                    }
+                }
+
+                break;
+
+            // this state receives data sent from the transmitting PC
+            case TEST_STATE::RECEIVE_TEST_DATA:
+                receiveTestDataSerialEvent();
+                break;
+
+            // this state perfoms post transmission checks to see if we received the right data
+            // packets
+            case TEST_STATE::CONFIRM_TEST_DATA:
+                readTestDataFile();
+                break;
+            }
     }
 }
 
@@ -1286,6 +1322,20 @@ void setup(){
     uint8_t app_id = xPortGetCoreID();
     BaseType_t th; // task creation handle
 
+    // check whether we are in test mode or running mode
+    checkRunTestToggle();
+    if(TEST_MODE) {
+        debugln();
+        debugln(F("=============================================="));
+        debugln(F("=========FLIGHT COMPUTER TESTING MODE========="));
+        debugln(F("=============================================="));
+    }  else {
+        debugln();
+        debugln(F("=============================================="));
+        debugln(F("========= RUN MODE ========="));
+        debugln(F("=============================================="));
+    }
+
     debugln();
     debugln(F("=============================================="));
     debugln(F("============== CREATING QUEUES ==============="));
@@ -1480,14 +1530,7 @@ void setup(){
     //     debugln("[+]FSM task created OK.");
     // }
 
-    // check whether we are in test mode or running mode
-    checkRunTestToggle();
-    if(TEST_MODE) {
-        debugln();
-        debugln(F("=============================================="));
-        debugln(F("=========FLIGHT COMPUTER TESTING MODE========="));
-        debugln(F("=============================================="));
-    }
+    
 }
 
 
