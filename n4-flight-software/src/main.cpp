@@ -112,7 +112,7 @@ uint8_t current_test_state = TEST_STATE::HANDSHAKE; /*!< Define current state th
  */
 void listDir(fs::FS &fs, const char *dirname, uint8_t levels);
 
-void initGPIO();
+void initTestGPIO();
 
 void InitSPIFFS();
 
@@ -270,7 +270,7 @@ void initSD() {
 /*!****************************************************************************
  * @brief Inititialize the GPIOs
  *******************************************************************************/
-void initGPIO() {
+void initTestGPIO() {
     pinMode(red_led, OUTPUT);
     pinMode(green_led, OUTPUT);
     pinMode(SET_TEST_MODE_PIN, INPUT);
@@ -526,7 +526,7 @@ void prepareForDataReceive() {
                 if(!SOH_recvd_flag) {
                     current_NAK_time = millis();
                     if((current_NAK_time - last_NAK_time) > NAK_INTERVAL) {
-                        InitXMODEM(); // send NAK every NAKINTERVAL (4 seconds typically)
+                        InitXMODEM(); // send NAK every NAK_INTERVAL (4 seconds typically)
                         last_NAK_time = current_NAK_time;
                     }
                 }
@@ -1286,250 +1286,266 @@ void setup(){
     Serial.begin(BAUDRATE);
     delay(100);
 
-    // create dynamic WIFI
-    uint8_t wifi_connection_result = wifi_config.WifiConnect();
-    if(wifi_connection_result) {
-        debugln("Wifi config OK!");
-    } else {
-        debugln("Wifi config failed");
-    }
-
-    /* initialize the system logger */
-    InitSPIFFS();
-
-    /* initialize MQTT */
-    MQTTInit(MQTT_SERVER, MQTT_PORT);
-
-    /* mode 0 resets the system log file by clearing all the current contents */
-    // system_logger.logToFile(SPIFFS, 0, rocket_ID, level, system_log_file, "Game Time!"); // TODO: DEBUG
-
-    debugln();
-    debugln(F("=============================================="));
-    debugln(F("========= INITIALIZING PERIPHERALS ==========="));
-    debugln(F("=============================================="));
-    imu.init();
-    BMPInit();
-    GPSInit();
-    initGPIO();
-
-    debugln();
-    debugln(F("=============================================="));
-    debugln(F("===== INITIALIZING DATA LOGGING SYSTEM ======="));
-    debugln(F("=============================================="));
-    initSD();
-    data_logger.loggerInit();
-
-    uint8_t app_id = xPortGetCoreID();
-    BaseType_t th; // task creation handle
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
     // check whether we are in test mode or running mode
+    initTestGPIO();
     checkRunTestToggle();
+
     if(TEST_MODE) {
+        // in test mode we only transfer test data from the testing PC to the SD card
         debugln();
         debugln(F("=============================================="));
         debugln(F("=========FLIGHT COMPUTER TESTING MODE========="));
         debugln(F("=============================================="));
+
+        debugln("Ready to receive data...");
+
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  //////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////
+            
     }  else {
+
+        // in run mode we start all essential system functions 
         debugln();
         debugln(F("=============================================="));
         debugln(F("========= RUN MODE ========="));
         debugln(F("=============================================="));
-    }
 
-    debugln();
-    debugln(F("=============================================="));
-    debugln(F("============== CREATING QUEUES ==============="));
-    debugln(F("=============================================="));
-
-    // this queue holds the data from MPU 6050 - this data is filtered already
-    accel_data_qHandle = xQueueCreate(GYROSCOPE_QUEUE_LENGTH, sizeof(accel_type_t)); 
-
-    // this queue hold the data read from the BMP180
-    altimeter_data_qHandle = xQueueCreate(ALTIMETER_QUEUE_LENGTH, sizeof(altimeter_type_t)); 
-
-    /* create gps_data_queue */   
-    gps_data_qHandle = xQueueCreate(GPS_QUEUE_LENGTH, sizeof(gps_type_t));
-
-    // this queue holds the telemetry data packet
-    telemetry_data_qHandle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_packet));
-
-    // /* this queue will hold the flight states */
-    // flight_states_queue = xQueueCreate(FLIGHT_STATES_QUEUE_LENGTH, sizeof(int32_t));
-
-    /* check if the queues were created successfully */
-    if(accel_data_qHandle == NULL){
-        debugln("[-]accel data queue creation failed");
-    } else{
-        debugln("[+]Acceleration data queue creation OK.");
-    }
-    
-    if(altimeter_data_qHandle == NULL){
-        debugln("[-]Altimeter data queue creation failed");
-    } else{
-        debugln("[+]Altimeter data queue creation OK.");
-    }
-
-    if(gps_data_qHandle == NULL){
-        debugln("[-]GPS data queue creation failed");
-    } else{
-        debugln("[+]GPS data queue creation OK.");
-    }
-
-    if(telemetry_data_qHandle == NULL) {
-        debugln("[-]Telemetry data queue creation failed");
-    } else {
-        debugln("[+]Telemetry data queue creation OK.");
-    }
-
-    // if(filtered_data_queue == NULL){
-    //     debugln("[-]Filtered data queue creation failed!");
-    // } else{
-    //     debugln("[+]Filtered data queue creation OK.");
-    // }
-
-    // if(flight_states_queue == NULL){
-    //     debugln("[-]Flight states queue creation failed!");
-    // } else{
-    //     debugln("[+]Flight states queue creation OK.");
-    // }
-
-
-    // create  event group to sync flight data consumption
-    // see N4 flight software docs for more info
-    debugln();
-    debugln(F("=============================================="));
-    debugln(F("===== CREATING DATA CONSUMER EVENT GROUP ===="));
-    debugln(F("=============================================="));
-
-    tasksDataReceiveEventGroup = xEventGroupCreate(); // pss! whatever u do, this line must come before creating the tasks!
-    if(tasksDataReceiveEventGroup == NULL) {
-        debugln("[-] data consumer event group failed to create");
-    } else {
-        debugln("[+] data consumer event group created OK.");
-    }
-
-    debugln();
-    debugln(F("=============================================="));
-    debugln(F("============== CREATING TASKS ==============="));
-    debugln(F("=============================================="));
-
-    /* Create tasks
-     * All tasks have a stack size of 1024 words - not bytes!
-     * ESP32 is 32 bit, therefore 32bits x 1024 = 4096 bytes
-     * So the stack size is 4096 bytes
-     * 
-     * TASK CREATION PARAMETERS
-     * function that executes this task
-     * Function name - for debugging 
-     * Stack depth in words 
-     * parameter to be passed to the task 
-     * Task priority - in this case 1 
-     * task handle that can be passed to other tasks to reference the task 
-     *
-     * /
-    debugln("==============Creating tasks==============");
-
-    /* TASK 1: READ ACCELERATION DATA */
-    th = xTaskCreatePinnedToCore(readAccelerationTask, "readGyroscope", STACK_SIZE*2, NULL, 1, NULL,app_id);
-    if(th == pdPASS) {
-        debugln("[+]Read acceleration task created");
-    } else {
-        debugln("[-]Read acceleration task creation failed");
-    }
-
-    /* TASK 2: READ ALTIMETER DATA */
-    th = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*2,NULL,2,NULL,app_id);
-    if(th == pdPASS) {
-        debugln("[+]Read altimeter task created OK.");
-    } else {
-        debugln("[-]Failed to create read altimeter task");
-    }
-
-    /* TASK 3: READ GPS DATA */
-    th = xTaskCreatePinnedToCore(readGPSTask, "readGPS", STACK_SIZE*2, NULL,1,NULL, app_id);
-
-    if(th == pdPASS) {
-        debugln("[+]GPS task created OK.");
-    } else {
-        debugln("[-]Failed to create GPS task");
-    }
-
-    /* TASK 4: CLEAR TELEMETRY QUEUE ITEM */
-    th = xTaskCreatePinnedToCore(clearTelemetryQueueTask,"clearTelemetryQueueTask",STACK_SIZE*2,NULL,1, NULL,app_id);
-
-    if(th == pdPASS) {
-        debugln("[+]clearTelemetryQueueTask task created OK.");
-    } else {
-        debugln("[-]Failed to create clearTelemetryQueueTask task");
-    }
-
-    /* TASK 5: CHECK FLIGHT STATE TASK */
-    th = xTaskCreatePinnedToCore(checkFlightState,"checkFlightState",STACK_SIZE*2,NULL,1, NULL,app_id);
-    if(th == pdPASS) {
-        debugln("[+]checkFlightState task created OK.");
-    } else {
-        debugln("[-}Failed to create checkFlightState task");
-    }
-
-    /* TASK 6: FLIGHT STATE CALLBACK TASK */    
-    th = xTaskCreatePinnedToCore(flightStateCallback,"flightStateCallback",STACK_SIZE*2,NULL,1, NULL,app_id);
-    if(th == pdPASS) {
-        debugln("[+]flightStateCallback task created OK.");
-    } else {
-        debugln("[-}Failed to create flightStateCallback task");
-    }
-
-    #if DEBUG_TO_TERMINAL   // set DEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
-
-    /* TASK 7: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
-    th = xTaskCreatePinnedToCore(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE,NULL,1,NULL,app_id);
-        
-    if(th == pdPASS) {
-        debugln("[+}debugToTerminalTaskTask created");
-    } else {
-        debugln("[-}Task not created");
-    }
-
-    #endif // DEBUG_TO_TERMINAL_TASK
-
-    /* TASK 8: TRANSMIT TELEMETRY DATA */
-    th = xTaskCreatePinnedToCore(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*2, NULL, 2, NULL, app_id);
-     if(th == pdPASS){
-         debugln("[+]Transmit task created OK!");
-     } else {
-         debugln("[-]Transmit task failed to create");
-     }
-
-    #if LOG_TO_MEMORY   // set LOG_TO_MEMORY to 1 to allow logging to memory 
-        /* TASK 9: LOG DATA TO MEMORY */
-        if(xTaskCreate(
-                logToMemory,
-                "logToMemory",
-                STACK_SIZE,
-                NULL,
-                1,
-                NULL
-        ) != pdPASS){
-            debugln("[-]logToMemory task failed to create");
-  
-        }else{
-            debugln("[+]logToMemory task created OK.");
+        // create dynamic WIFI
+        uint8_t wifi_connection_result = wifi_config.WifiConnect();
+        if(wifi_connection_result) {
+            debugln("Wifi config OK!");
+        } else {
+            debugln("Wifi config failed");
         }
-    #endif // LOG_TO_MEMORY
 
-    // if(xTaskCreate(
-    //         flight_state_check,
-    //         "testFSM",
-    //         STACK_SIZE,
-    //         NULL,
-    //         2,
-    //         NULL
-    // ) != pdPASS){
-    //     debugln("[-]FSM task failed to create");
-    // }else{
-    //     debugln("[+]FSM task created OK.");
-    // }
+        /* initialize the system logger */
+        InitSPIFFS();
 
+        /* initialize MQTT */
+        MQTTInit(MQTT_SERVER, MQTT_PORT);
+
+        /* mode 0 resets the system log file by clearing all the current contents */
+        // system_logger.logToFile(SPIFFS, 0, rocket_ID, level, system_log_file, "Game Time!"); // TODO: DEBUG
+
+        debugln();
+        debugln(F("=============================================="));
+        debugln(F("========= INITIALIZING PERIPHERALS ==========="));
+        debugln(F("=============================================="));
+        imu.init();
+        BMPInit();
+        GPSInit();
+        
+
+        debugln();
+        debugln(F("=============================================="));
+        debugln(F("===== INITIALIZING DATA LOGGING SYSTEM ======="));
+        debugln(F("=============================================="));
+        initSD();
+        data_logger.loggerInit();
+
+        uint8_t app_id = xPortGetCoreID();
+        BaseType_t th; // task creation handle
+            
+
+        debugln();
+        debugln(F("=============================================="));
+        debugln(F("============== CREATING QUEUES ==============="));
+        debugln(F("=============================================="));
+
+        // this queue holds the data from MPU 6050 - this data is filtered already
+        accel_data_qHandle = xQueueCreate(GYROSCOPE_QUEUE_LENGTH, sizeof(accel_type_t)); 
+
+        // this queue hold the data read from the BMP180
+        altimeter_data_qHandle = xQueueCreate(ALTIMETER_QUEUE_LENGTH, sizeof(altimeter_type_t)); 
+
+        /* create gps_data_queue */   
+        gps_data_qHandle = xQueueCreate(GPS_QUEUE_LENGTH, sizeof(gps_type_t));
+
+        // this queue holds the telemetry data packet
+        telemetry_data_qHandle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_packet));
+
+        // /* this queue will hold the flight states */
+        // flight_states_queue = xQueueCreate(FLIGHT_STATES_QUEUE_LENGTH, sizeof(int32_t));
+
+        /* check if the queues were created successfully */
+        if(accel_data_qHandle == NULL){
+            debugln("[-]accel data queue creation failed");
+        } else{
+            debugln("[+]Acceleration data queue creation OK.");
+        }
+        
+        if(altimeter_data_qHandle == NULL){
+            debugln("[-]Altimeter data queue creation failed");
+        } else{
+            debugln("[+]Altimeter data queue creation OK.");
+        }
+
+        if(gps_data_qHandle == NULL){
+            debugln("[-]GPS data queue creation failed");
+        } else{
+            debugln("[+]GPS data queue creation OK.");
+        }
+
+        if(telemetry_data_qHandle == NULL) {
+            debugln("[-]Telemetry data queue creation failed");
+        } else {
+            debugln("[+]Telemetry data queue creation OK.");
+        }
+
+        // if(filtered_data_queue == NULL){
+        //     debugln("[-]Filtered data queue creation failed!");
+        // } else{
+        //     debugln("[+]Filtered data queue creation OK.");
+        // }
+
+        // if(flight_states_queue == NULL){
+        //     debugln("[-]Flight states queue creation failed!");
+        // } else{
+        //     debugln("[+]Flight states queue creation OK.");
+        // }
+
+
+        // create  event group to sync flight data consumption
+        // see N4 flight software docs for more info
+        debugln();
+        debugln(F("=============================================="));
+        debugln(F("===== CREATING DATA CONSUMER EVENT GROUP ===="));
+        debugln(F("=============================================="));
+
+        tasksDataReceiveEventGroup = xEventGroupCreate(); // pss! whatever u do, this line must come before creating the tasks!
+        if(tasksDataReceiveEventGroup == NULL) {
+            debugln("[-] data consumer event group failed to create");
+        } else {
+            debugln("[+] data consumer event group created OK.");
+        }
+
+        debugln();
+        debugln(F("=============================================="));
+        debugln(F("============== CREATING TASKS ==============="));
+        debugln(F("=============================================="));
+
+        /* Create tasks
+        * All tasks have a stack size of 1024 words - not bytes!
+        * ESP32 is 32 bit, therefore 32bits x 1024 = 4096 bytes
+        * So the stack size is 4096 bytes
+        * 
+        * TASK CREATION PARAMETERS
+        * function that executes this task
+        * Function name - for debugging 
+        * Stack depth in words 
+        * parameter to be passed to the task 
+        * Task priority - in this case 1 
+        * task handle that can be passed to other tasks to reference the task 
+        *
+        * /
+        debugln("==============Creating tasks==============");
+
+        /* TASK 1: READ ACCELERATION DATA */
+        th = xTaskCreatePinnedToCore(readAccelerationTask, "readGyroscope", STACK_SIZE*2, NULL, 1, NULL,app_id);
+        if(th == pdPASS) {
+            debugln("[+]Read acceleration task created");
+        } else {
+            debugln("[-]Read acceleration task creation failed");
+        }
+
+        /* TASK 2: READ ALTIMETER DATA */
+        th = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*2,NULL,2,NULL,app_id);
+        if(th == pdPASS) {
+            debugln("[+]Read altimeter task created OK.");
+        } else {
+            debugln("[-]Failed to create read altimeter task");
+        }
+
+        /* TASK 3: READ GPS DATA */
+        th = xTaskCreatePinnedToCore(readGPSTask, "readGPS", STACK_SIZE*2, NULL,1,NULL, app_id);
+
+        if(th == pdPASS) {
+            debugln("[+]GPS task created OK.");
+        } else {
+            debugln("[-]Failed to create GPS task");
+        }
+
+        /* TASK 4: CLEAR TELEMETRY QUEUE ITEM */
+        th = xTaskCreatePinnedToCore(clearTelemetryQueueTask,"clearTelemetryQueueTask",STACK_SIZE*2,NULL,1, NULL,app_id);
+
+        if(th == pdPASS) {
+            debugln("[+]clearTelemetryQueueTask task created OK.");
+        } else {
+            debugln("[-]Failed to create clearTelemetryQueueTask task");
+        }
+
+        /* TASK 5: CHECK FLIGHT STATE TASK */
+        th = xTaskCreatePinnedToCore(checkFlightState,"checkFlightState",STACK_SIZE*2,NULL,1, NULL,app_id);
+        if(th == pdPASS) {
+            debugln("[+]checkFlightState task created OK.");
+        } else {
+            debugln("[-}Failed to create checkFlightState task");
+        }
+
+        /* TASK 6: FLIGHT STATE CALLBACK TASK */    
+        th = xTaskCreatePinnedToCore(flightStateCallback,"flightStateCallback",STACK_SIZE*2,NULL,1, NULL,app_id);
+        if(th == pdPASS) {
+            debugln("[+]flightStateCallback task created OK.");
+        } else {
+            debugln("[-}Failed to create flightStateCallback task");
+        }
+
+        #if DEBUG_TO_TERMINAL   // set DEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
+
+        /* TASK 7: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
+        th = xTaskCreatePinnedToCore(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE,NULL,1,NULL,app_id);
+            
+        if(th == pdPASS) {
+            debugln("[+}debugToTerminalTaskTask created");
+        } else {
+            debugln("[-}Task not created");
+        }
+
+        #endif // DEBUG_TO_TERMINAL_TASK
+
+        /* TASK 8: TRANSMIT TELEMETRY DATA */
+        th = xTaskCreatePinnedToCore(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*2, NULL, 2, NULL, app_id);
+        if(th == pdPASS){
+            debugln("[+]Transmit task created OK!");
+        } else {
+            debugln("[-]Transmit task failed to create");
+        }
+
+        #if LOG_TO_MEMORY   // set LOG_TO_MEMORY to 1 to allow logging to memory 
+            /* TASK 9: LOG DATA TO MEMORY */
+            if(xTaskCreate(
+                    logToMemory,
+                    "logToMemory",
+                    STACK_SIZE,
+                    NULL,
+                    1,
+                    NULL
+            ) != pdPASS){
+                debugln("[-]logToMemory task failed to create");
+    
+            }else{
+                debugln("[+]logToMemory task created OK.");
+            }
+        #endif // LOG_TO_MEMORY
+
+        // if(xTaskCreate(
+        //         flight_state_check,
+        //         "testFSM",
+        //         STACK_SIZE,
+        //         NULL,
+        //         2,
+        //         NULL
+        // ) != pdPASS){
+        //     debugln("[-]FSM task failed to create");
+        // }else{
+        //     debugln("[+]FSM task created OK.");
+        // }
+    } // end of setup in running mode 
     
 }
 
@@ -1538,17 +1554,30 @@ void setup(){
  * @brief Main loop
  *******************************************************************************/
 void loop(){
-//     if(WiFi.status() != WL_CONNECTED){
-//         WiFi.begin(SSID, PASSWORD);
-//         delay(500);
-//         debug(".");
-//     }
+    //     if(WiFi.status() != WL_CONNECTED){
+    //         WiFi.begin(SSID, PASSWORD);
+    //         delay(500);
+    //         debug(".");
+    //     }
 
-    if(!mqtt_client.connected()){
-        /* try to reconnect if connection is lost */
-        MQTT_Reconnect();
+    if(TEST_MODE) {
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        prepareForDataReceive();
+
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////// END OFFLIGHT COMPUTER TESTING SYSTEM  ////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    } else {
+        if(!mqtt_client.connected()){
+            /* try to reconnect if connection is lost */
+            MQTT_Reconnect();
+        }
+
+        mqtt_client.loop();
     }
-
-    mqtt_client.loop();
 
 }
