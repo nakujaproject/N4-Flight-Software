@@ -35,6 +35,7 @@ var main_8cpp =
     [ "MQTT_TransmitTelemetry", "main_8cpp.html#a623ea109418725f80cfc705f49fd7a55", null ],
     [ "MQTTInit", "main_8cpp.html#a582e3dadcae4266158f0516e7c264bb6", null ],
     [ "ParseSerialNumeric", "main_8cpp.html#a102c6561be41c1aafb3bd6da443deed7", null ],
+    [ "prepareForDataReceive", "main_8cpp.html#af17571f8eae94b2917362daa65cc29bd", null ],
     [ "readAccelerationTask", "main_8cpp.html#a64be9ebbabd58a9b6d32b92ce607f2a6", null ],
     [ "readAltimeterTask", "main_8cpp.html#a5947e71102388e9d5bfd09f8e97d668c", null ],
     [ "readGPSTask", "main_8cpp.html#aa8ea491ed98b16bb5292ad184537f0b5", null ],
