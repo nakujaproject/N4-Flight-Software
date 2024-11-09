@@ -49,7 +49,6 @@ LOG_LEVEL level = INFO;
 const char* rocket_ID = "rocket-1";             /*!< Unique ID of the rocket. Change to the needed rocket name before uploading */
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -83,6 +82,7 @@ int16_t serial_index = 0;
 
 // buffer to store the CSV test data
 char test_data_buffer[MAX_CSV_LENGTH];
+char data_buffer_formatted[MAX_CSV_LENGTH];
 int16_t test_data_serial_index = 0;
 
 // pin definitions
@@ -252,7 +252,7 @@ void initSD() {
     }
 
     // initialize test data file
-    File file = SD.open("/data.csv", FILE_WRITE); // TODO: change file name to const char*
+    File file = SD.open("/data.txt", FILE_WRITE); // TODO: change file name to const char*
 
     if (!file) {
         debugln("[File does not exist. Creating file]");
@@ -410,6 +410,7 @@ void ParseSerialBuffer(char *buffer) {
         current_test_state = TEST_STATE::RECEIVE_TEST_DATA;
         SwitchLEDs(0, 1);
 
+
     } else {
         debugln("Unknown");
     }
@@ -424,7 +425,7 @@ void ParseSerialNumeric(int value) {
     debug("Receive val: ");
     debugln(value);
 
-    if (value == 1) // SOH: numeric 1
+    if (value == 1) // SOH: numeric 1 -> ready to receive data
     {
         debugln("<Start of transmission>");
         SOH_recvd_flag = 1;
@@ -446,7 +447,7 @@ void ParseSerialNumeric(int value) {
  *******************************************************************************/
 void handshakeSerialEvent() {
     SwitchLEDs(1, 0);
-    while (Serial.available()) {
+    if (Serial.available()) {
         char ch = Serial.read();
 
         if (isDigit(ch)) { // character between 0 an 9
@@ -480,33 +481,32 @@ void handshakeSerialEvent() {
  *
  *******************************************************************************/
 void receiveTestDataSerialEvent() {
-    while (Serial.available()) {
+    // initialize test data file
+    
+    // File file = SD.open("/data.txt", FILE_APPEND); // TODO: change file name to const char*
+
+    if (Serial.available()) {
         char ch = Serial.read();
-        Serial.write(ch);
+        // Serial.write(ch);
 
         // each CSV string ends with a newline
-        if (test_data_serial_index < MAX_CSV_LENGTH && (ch != '\n')) {
+        if (ch != '\n') { // TODO: check for string length
             test_data_buffer[test_data_serial_index++] = ch;
 
         } else {
-            // buffer is full or newline is received
+            // newline is received            
+            
+            debugln(test_data_buffer);
             test_data_buffer[test_data_serial_index] = 0; // NUL terminator
-            test_data_serial_index = 0;
 
-            // HERE - LOG THE CSV STRING TO EXTERNAL FLASH MEMORY
-            //debugln(test_data_buffer);
-            // open file in append mode
-            File data_file = SPIFFS.open(test_data_file, "a");
-            if (data_file) {
-                data_file.print(test_data_buffer);
-                data_file.println(); // start a new line
-                data_file.close();
-            } else {
-                debugln("<Failed to write to file>");
-            }
-        }
-
+            sprintf(data_buffer_formatted, "%s\n", test_data_buffer);
+            appendFile(SD, "/data.txt", (const char*) data_buffer_formatted);
+            
+            test_data_serial_index = 0;     
+        } 
     }
+
+    // file.close(); // close the file after receiving the test data is completed
 }
 
 /**
@@ -516,6 +516,17 @@ void receiveTestDataSerialEvent() {
  * confirm the actual data
  */
 void prepareForDataReceive() {
+
+    // switch (current_test_state) {
+    //     case TEST_STATE::HANDSHAKE:
+    //         debugln("HANDSHAKE");
+    //         break;
+
+    //     case TEST_STATE::RECEIVE_TEST_DATA:
+    //         debugln("RECEIVE_TEST_DATA");
+    //         break;
+    // }
+    
     if(TEST_MODE) {
         // we are in test mode 
         switch (current_test_state)
@@ -535,6 +546,7 @@ void prepareForDataReceive() {
 
             // this state receives data sent from the transmitting PC
             case TEST_STATE::RECEIVE_TEST_DATA:
+                // debugln("RECEIVE_TEST_DATA");
                 receiveTestDataSerialEvent();
                 break;
 
@@ -544,7 +556,8 @@ void prepareForDataReceive() {
                 readTestDataFile();
                 break;
             }
-    }
+    } // end of test mode
+    
 }
 
 
@@ -1261,7 +1274,22 @@ void MQTTInit(const char* broker_IP, int broker_port) {
  * 
  *******************************************************************************/
 void drogueChuteDeploy() {
-    debugln("DROGUE CHUTE DEPLOYED");
+
+    // // check for drogue chute deploy conditions 
+
+    // //if the drogue deploy pin is HIGH, there is an error
+    // if(digitalRead(DROGUE_PIN)) {
+    //     // error
+    // } else {
+    //     // pulse the drogue pin for a number ofseceonds - determined from pop tests
+    //     digitalWrite(DROGUE_PIN, HIGH);
+    //     delay(PYRO_CHARGE_TIME); // TODO- Make this delay non-blocking
+
+    //     // update the drogue deployed telemetry variable
+    //     DROGUE_DEPLOY_FLAG = 1;
+    //     debugln("DROGUE CHUTE DEPLOYED");
+    // }
+
 }
 
 /*!****************************************************************************
@@ -1272,7 +1300,20 @@ void drogueChuteDeploy() {
  * 
  *******************************************************************************/
 void mainChuteDeploy() {
-    debugln("MAIN CHUTE DEPLOYED");
+    // // check for drogue chute deploy conditions 
+
+    // //if the drogue deploy pin is HIGH, there is an error
+    // if(digitalRead(MAIN_CHUTE_EJECT_PIN)) { // NOT NECESSARY - TEST WITHOUT
+    //     // error 
+    // } else {
+    //     // pulse the drogue pin for a number of seconds - determined from pop tests
+    //     digitalWrite(MAIN_CHUTE_EJECT_PIN, HIGH);
+    //     delay(MAIN_DESCENT_PYRO_CHARGE_TIME); // TODO- Make this delay non-blocking
+
+    //     // update the drogue deployed telemetry variable
+    //     MAIN_CHUTE_EJECT_FLAG = 1;
+    //     debugln("MAIN CHUTE DEPLOYED");
+    // }
 }
 
 
@@ -1291,6 +1332,7 @@ void setup(){
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     // check whether we are in test mode or running mode
+    initSD();
     initTestGPIO();
     checkRunTestToggle();
 
@@ -1345,7 +1387,7 @@ void setup(){
         debugln(F("=============================================="));
         debugln(F("===== INITIALIZING DATA LOGGING SYSTEM ======="));
         debugln(F("=============================================="));
-        initSD();
+        
         data_logger.loggerInit();
 
         uint8_t app_id = xPortGetCoreID();
@@ -1567,7 +1609,7 @@ void loop(){
         prepareForDataReceive();
 
         //////////////////////////////////////////////////////////////////////////////////////////////
-        //////////////////////////// END OFFLIGHT COMPUTER TESTING SYSTEM  ////////////////////////////
+        //////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  ////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////
 
 
