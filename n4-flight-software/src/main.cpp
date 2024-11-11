@@ -198,9 +198,9 @@ void appendFile(fs::FS &fs, const char *path, const char *message) {
         return;
     }
     if (file.print(message)) {
-        debugln("- message appended");
+        debugln("OK");
     } else {
-        debugln("- append failed");
+        debugln("FAILED");
     }
     file.close();
 }
@@ -225,6 +225,9 @@ void readTestDataFile() {
     } else {
         debugln("Failed to open log file for reading.");
     }
+
+    // read back the received data to confirm
+    
 }
 
 void InitSPIFFS() {
@@ -453,7 +456,7 @@ void handshakeSerialEvent() {
         if (isDigit(ch)) { // character between 0 an 9
             // accumulate value
             value = value * ch + (ch - '0');
-        } else if (ch == '\n') {
+        } else if (ch == '\n') { 
             debug("SerEvent: ");
             debugln(value);
             ParseSerialNumeric(value);
@@ -496,15 +499,21 @@ void receiveTestDataSerialEvent() {
         } else {
             // newline is received            
             
-            debugln(test_data_buffer);
+            // debugln(test_data_buffer);
             test_data_buffer[test_data_serial_index] = 0; // NUL terminator
 
             sprintf(data_buffer_formatted, "%s\n", test_data_buffer);
             appendFile(SD, "/data.txt", (const char*) data_buffer_formatted);
-            
-            test_data_serial_index = 0;     
+
+            test_data_serial_index = 0;   
+
         } 
-    }
+    } else {
+        // end of transmission
+        debugln("EOT");
+        current_test_state = TEST_STATE::CONFIRM_TEST_DATA;
+
+    }   
 
     // file.close(); // close the file after receiving the test data is completed
 }
@@ -554,6 +563,7 @@ void prepareForDataReceive() {
             // packets
             case TEST_STATE::CONFIRM_TEST_DATA:
                 readTestDataFile();
+                // debugln("CONFIRM_TEST_DATA");
                 break;
             }
     } // end of test mode
