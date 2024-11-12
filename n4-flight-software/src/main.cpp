@@ -120,7 +120,6 @@ uint8_t current_test_state = TEST_STATE::HANDSHAKE; /*!< Define current state th
 
 /**
  * XMODEM serial function prototypes
- *
  */
 void listDir(fs::FS &fs, const char *dirname, uint8_t levels);
 
@@ -1472,7 +1471,6 @@ void setup(){
         uint8_t app_id = xPortGetCoreID();
         BaseType_t th; // task creation handle
             
-
         debugln();
         debugln(F("=============================================="));
         debugln(F("============== CREATING QUEUES ==============="));
@@ -1620,7 +1618,7 @@ void setup(){
 
         /* TASK 7: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
         th = xTaskCreatePinnedToCore(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE,NULL,1,NULL,app_id);
-            
+        
         if(th == pdPASS) {
             debugln("[+}debugToTerminalTaskTask created");
         } else {
@@ -1675,12 +1673,20 @@ void setup(){
 /*!****************************************************************************
  * @brief Main loop
  *******************************************************************************/
-void loop(){
+void loop() {
     //     if(WiFi.status() != WL_CONNECTED){
     //         WiFi.begin(SSID, PASSWORD);
     //         delay(500);
     //         debug(".");
     //     }
+
+
+    // check if the testing system is done receiving the test data 
+    // 
+    // if(current_test_state == TEST_STATE::FINISH_DATA_RECEIVE) {
+    //     // consume the received test data 
+    //     readFile(SD, "/data.txt");
+    // }
 
     if(TEST_MODE) {
 
@@ -1694,12 +1700,17 @@ void loop(){
         //////////////////////////////////////////////////////////////////////////////////////////////
 
     } else if(RUN_MODE) {
-        if(!mqtt_client.connected()) {
-            /* try to reconnect if connection is lost */
-            MQTT_Reconnect();
-        }
 
-        mqtt_client.loop();
+        // check the current mode
+
+
+
+        // if( !mqtt_client.connected() ) {
+        //     /* try to reconnect if connection is lost */
+        //     MQTT_Reconnect();
+        // }
+
+        // mqtt_client.loop();
 
     }
 
