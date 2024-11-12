@@ -12,10 +12,11 @@ var main_8cpp =
     [ "TEST_STATE", "main_8cpp.html#a7010bdd588d627529b5948acb89dc09d", [
       [ "HANDSHAKE", "main_8cpp.html#a7010bdd588d627529b5948acb89dc09dacc6ddcaa36bd57e5aec12749cb5ce29c", null ],
       [ "RECEIVE_TEST_DATA", "main_8cpp.html#a7010bdd588d627529b5948acb89dc09da078eb5ef5383567cdf7a9b36f49289d6", null ],
-      [ "CONFIRM_TEST_DATA", "main_8cpp.html#a7010bdd588d627529b5948acb89dc09da45b2e590181d2cc1c7626bea6a9b6810", null ]
+      [ "CONFIRM_TEST_DATA", "main_8cpp.html#a7010bdd588d627529b5948acb89dc09da45b2e590181d2cc1c7626bea6a9b6810", null ],
+      [ "FINISH_DATA_RECEIVE", "main_8cpp.html#a7010bdd588d627529b5948acb89dc09da9e607d728f1f37a37d39d2e251e2f73a", null ]
     ] ],
     [ "blink_200ms", "main_8cpp.html#a4139203bf745c4d38fd73bab228d571e", null ],
-    [ "BMPInit", "main_8cpp.html#a80d57b1ee5cb9d474465d3f8485f5bbc", null ],
+    [ "BMPInit", "main_8cpp.html#a8bd22523fa85c7cdc0b1ce2ca2ad9340", null ],
     [ "buzz", "main_8cpp.html#a28b1eb955e6e2f5e83599536f6bf4d2f", null ],
     [ "checkFlightState", "main_8cpp.html#a152aa3ad3c21993eb70968de75219174", null ],
     [ "checkRunTestToggle", "main_8cpp.html#a36d26be00724540c08411ce54b01a49b", null ],
@@ -23,9 +24,9 @@ var main_8cpp =
     [ "debugToTerminalTask", "main_8cpp.html#aaa1a5716bd567e8c37465dabe33e6396", null ],
     [ "drogueChuteDeploy", "main_8cpp.html#aee373e9d6ea48f0b376bdaa1c2970510", null ],
     [ "flightStateCallback", "main_8cpp.html#a6648d201a9f47aa836d36e5339e78ef3", null ],
-    [ "GPSInit", "main_8cpp.html#a6f220446b54026b1217f93a3a9c04c1f", null ],
+    [ "GPSInit", "main_8cpp.html#a7614084d3b4eca93954d98680cc2443d", null ],
     [ "handshakeSerialEvent", "main_8cpp.html#a41453ccb33ef6b57e513b16e92dd130e", null ],
-    [ "initTestGPIO", "main_8cpp.html#a7af0e193a04da9fdd585d4f042f891db", null ],
+    [ "initTestGPIO", "main_8cpp.html#a7e2d538eec5c54386e40bbc0b99d0ac1", null ],
     [ "InitXMODEM", "main_8cpp.html#abf447a0860a5fec74fecf8654172fec0", null ],
     [ "listDir", "main_8cpp.html#a8841578fe91cace6206676f0e751cab5", null ],
     [ "logToMemory", "main_8cpp.html#a7df146b43e503e23146e698154d5096d", null ],
@@ -65,6 +66,8 @@ var main_8cpp =
     [ "SET_RUN_MODE_PIN", "main_8cpp.html#abea45f8bc016d99f82b468ae77916e64", null ],
     [ "SET_TEST_MODE_PIN", "main_8cpp.html#ac0121f71eae2488320c2cd36a4843976", null ],
     [ "SOH_recvd_flag", "main_8cpp.html#a6a02e76e786465c8d2fe8ba9ad3393da", null ],
+    [ "SUBSYSTEM_INIT_MASK", "main_8cpp.html#a5fa0d939030a4ab773be75554017c4aa", null ],
+    [ "subsystems_state_buffer", "main_8cpp.html#a12a374be19c9b55750097a0b9fad50fb", null ],
     [ "telemetry_data_qHandle", "main_8cpp.html#a0ed5ea94df7417ea494d69ca56aab490", null ],
     [ "value", "main_8cpp.html#ac4f474c82e82cbb89ca7c36dd52be0ed", null ],
     [ "wifi_config", "main_8cpp.html#ab373e93ee373b64207ddef0991fcac9d", null ]

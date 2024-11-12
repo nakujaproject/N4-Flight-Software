@@ -16,8 +16,10 @@ var searchData=
   ['state_5fmachine_13',['State_machine',['../classState__machine.html',1,'']]],
   ['state_5fmachine_2ecpp_14',['state_machine.cpp',['../state__machine_8cpp.html',1,'']]],
   ['states_2eh_15',['states.h',['../states_8h.html',1,'']]],
-  ['switchleds_16',['SwitchLEDs',['../main_8cpp.html#a5f3e40ff0b3b6f2c247fadc41b0a5896',1,'main.cpp']]],
-  ['system_20logging_17',['System Logging',['../index.html#step3',1,'']]],
-  ['system_20requirements_18',['System requirements',['../index.html#step10',1,'']]],
-  ['systemlogger_19',['SystemLogger',['../classSystemLogger.html',1,'']]]
+  ['subsystem_5finit_5fmask_16',['SUBSYSTEM_INIT_MASK',['../main_8cpp.html#a5fa0d939030a4ab773be75554017c4aa',1,'main.cpp']]],
+  ['subsystems_5fstate_5fbuffer_17',['subsystems_state_buffer',['../main_8cpp.html#a12a374be19c9b55750097a0b9fad50fb',1,'main.cpp']]],
+  ['switchleds_18',['SwitchLEDs',['../main_8cpp.html#a5f3e40ff0b3b6f2c247fadc41b0a5896',1,'main.cpp']]],
+  ['system_20logging_19',['System Logging',['../index.html#step3',1,'']]],
+  ['system_20requirements_20',['System requirements',['../index.html#step10',1,'']]],
+  ['systemlogger_21',['SystemLogger',['../classSystemLogger.html',1,'']]]
 ];
