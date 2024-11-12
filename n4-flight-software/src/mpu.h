@@ -69,7 +69,7 @@ class MPU6050 {
 
 
         MPU6050(uint8_t address, uint32_t accel_fs_range, uint32_t gyro_fs_range);
-        void init();
+        uint8_t init();
         float readXAcceleration();
         float readYAcceleration();
         float readZAcceleration();

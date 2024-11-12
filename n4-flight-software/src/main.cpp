@@ -52,12 +52,23 @@ const char* rocket_ID = "rocket-1";             /*!< Unique ID of the rocket. Ch
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
+char subsystems_state_buffer[10]; /*!< Holds the status of the subsystems. 1 if Init OK, 0 if init failed */
+
+#define BMP_CHECK_BIT           0
+#define IMU_CHECK_BIT           1   
+#define FLASH_CHECK_BIT         2
+#define GPS_CHECK_BIT           3
+#define SD_CHECK_BIT            4
+#define SPIFFS_CHECK_BIT        5
+#define TEST_HARDWARE_CHECK_BIT 6
+
+uint8_t SUBSYSTEM_INIT_MASK = 0b00000000;  /*!< Holds the status of the subsystems. 1 if Init OK, 0 if init failed */
 
 uint8_t RUN_MODE = 0;
 uint8_t TEST_MODE = 0;
 
 #define BAUDRATE        115200
-#define NAK_INTERVAL    4000 /*!< Interval in which to send the NAK command to the transmitter */
+#define NAK_INTERVAL    4000        /*!< Interval in which to send the NAK command to the transmitter */
 
 //  Flags
 uint8_t SOH_recvd_flag = 0; /*!< Transmitter acknowledged?  */
@@ -101,7 +112,8 @@ uint8_t SD_CS_PIN = 26;             /*!< Chip select pin for SD card */
 enum TEST_STATE {
     HANDSHAKE = 0,      /*!< state to establish initial communication with transmitter */
     RECEIVE_TEST_DATA,  /*!< sets the flight computer to receive test data over serial */
-    CONFIRM_TEST_DATA
+    CONFIRM_TEST_DATA,
+    FINISH_DATA_RECEIVE
 };
 
 uint8_t current_test_state = TEST_STATE::HANDSHAKE; /*!< Define current state the flight computer is in */
@@ -112,11 +124,11 @@ uint8_t current_test_state = TEST_STATE::HANDSHAKE; /*!< Define current state th
  */
 void listDir(fs::FS &fs, const char *dirname, uint8_t levels);
 
-void initTestGPIO();
+uint8_t initTestGPIO();
 
-void InitSPIFFS();
+uint8_t InitSPIFFS();
 
-void initSD(); // TODO: return a bool
+uint8_t initSD(); // TODO: return a bool
 void SwitchLEDs(uint8_t, uint8_t);
 
 void InitXMODEM();
@@ -215,43 +227,46 @@ void deleteFile(fs::FS &fs, const char *path) {
 }
 
 void readTestDataFile() {
-    File logFile = SPIFFS.open(test_data_file, "r");
-    if (logFile) {
-        debugln("Log file contents:");
-        while (logFile.available()) {
-            Serial.write(logFile.read());
-        }
-        logFile.close();
-    } else {
-        debugln("Failed to open log file for reading.");
-    }
+    // File logFile = SPIFFS.open(test_data_file, "r");
+    // if (logFile) {
+    //     debugln("Log file contents:");
+    //     while (logFile.available()) {
+    //         Serial.write(logFile.read());
+    //     }
+    //     logFile.close();
+    // } else {
+    //     debugln("Failed to open log file for reading.");
+    // }
 
     // read back the received data to confirm
+    readFile(SD, "/data.txt");
     
 }
 
-void InitSPIFFS() {
+uint8_t InitSPIFFS() {
     if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
         debugln("SPIFFS mount failed"); // TODO: Set a flag for test GUI
-        return;
+        return 0;
     } else {
         debugln("SPIFFS init success");
+        return 1;
     }
 }
 
-void initSD() {
+uint8_t initSD() {
     if (!SD.begin(SD_CS_PIN)) {
         delay(100);
         debugln(F("[-]SD Card mounting failed"));
-        return;
+        return 0;
     } else {
         debugln(F("[+]SD card Init OK!"));
+        return 1;
     }
 
     uint8_t cardType = SD.cardType();
     if (cardType == CARD_NONE) {
         debugln("[-]No SD card attached");
-        return;
+        return 0;
     }
 
     // initialize test data file
@@ -273,7 +288,7 @@ void initSD() {
 /*!****************************************************************************
  * @brief Inititialize the GPIOs
  *******************************************************************************/
-void initTestGPIO() {
+uint8_t initTestGPIO() {
     pinMode(red_led, OUTPUT);
     pinMode(green_led, OUTPUT);
     pinMode(SET_TEST_MODE_PIN, INPUT);
@@ -283,6 +298,8 @@ void initTestGPIO() {
     // set LEDs to a known starting state
     digitalWrite(red_led, LOW);
     digitalWrite(green_led, LOW);
+
+    return 1; /* FIXME: Do a proper check here! */
 }
 
 /*!****************************************************************************
@@ -511,8 +528,10 @@ void receiveTestDataSerialEvent() {
     } else {
         // end of transmission
         debugln("EOT");
-        current_test_state = TEST_STATE::CONFIRM_TEST_DATA;
 
+        // current_test_state = TEST_STATE::CONFIRM_TEST_DATA;
+        current_test_state = TEST_STATE::FINISH_DATA_RECEIVE;
+        
     }   
 
     // file.close(); // close the file after receiving the test data is completed
@@ -565,7 +584,12 @@ void prepareForDataReceive() {
                 readTestDataFile();
                 // debugln("CONFIRM_TEST_DATA");
                 break;
+
+            // this state stops the data transmission state 
+            case TEST_STATE::FINISH_DATA_RECEIVE:
+                break;
             }
+
     } // end of test mode
     
 }
@@ -663,12 +687,14 @@ double T, P, p0, a;
  * @return TODO: 1 if init OK, 0 otherwise
  * 
  *******************************************************************************/
-void BMPInit() {
+uint8_t BMPInit() {
     if(altimeter.begin()) {
         debugln("[+]BMP init OK.");
         // TODO: update system table
+        return 1;
     } else {
         debugln("[+]BMP init failed");
+        return 0;
     }
 }
 
@@ -677,11 +703,21 @@ void BMPInit() {
  * @return 1 if init OK, 0 otherwise
  * 
  *******************************************************************************/
-void GPSInit() {
+uint8_t GPSInit() {
     Serial2.begin(GPS_BAUD_RATE);
     delay(100); // wait for GPS to init
 
-    debugln("[+]GPS init OK!"); // TODO: Proper GPS init check
+    debugln("[+]GPS init OK!"); 
+
+    /**
+     * FIXME: Proper GPS init check
+     * Look into if the GPS has acquired a LOCK on satelites 
+     * Only if it has a lock then can we return a 1
+     * 
+     * GPS is low priority at the time of writing this but make it work! 
+     * */ 
+
+    return 1;
 }
 
 /**
@@ -1337,15 +1373,65 @@ void setup(){
     Serial.begin(BAUDRATE);
     delay(100);
 
+    debugln();
+    debugln(F("=============================================="));
+    debugln(F("========= INITIALIZING PERIPHERALS ==========="));
+    debugln(F("=============================================="));
+
+    uint8_t bmp_init_state = BMPInit();
+    uint8_t imu_init_state = imu.init();
+    uint8_t gps_init_state = GPSInit();
+    uint8_t sd_init_state = initSD();
+    uint8_t spiffs_init_state = InitSPIFFS();
+    uint8_t test_gpio_init_state = initTestGPIO();
+    // uint8_t mqtt_init_state = MQTTInit(MQTT_SERVER, MQTT_PORT);    
+
+    /* update the susbsystems init state table */   
+    // check if BMP init OK
+    if(bmp_init_state) { 
+        SUBSYSTEM_INIT_MASK |= (1 << BMP_CHECK_BIT);
+    }
+
+    // check if MPU init OK
+    if(imu_init_state)  {
+        SUBSYSTEM_INIT_MASK |= (1 << IMU_CHECK_BIT);
+    }
+
+    // check if flash memory init OK
+    // if (flash_init_state) {
+    //     SUBSYSTEM_INIT_MASK |= (1 << FLASH_CHECK_BIT);
+    // }
+
+    // check if GPS init OK
+    if(gps_init_state) {
+        SUBSYSTEM_INIT_MASK |= (1 << GPS_CHECK_BIT);
+    }
+
+    // check if SD CARD init OK
+    if(sd_init_state) {
+        SUBSYSTEM_INIT_MASK |= (1 << SD_CHECK_BIT);
+    } 
+
+    // check if SPIFFS init OK
+    if(spiffs_init_state) {
+        SUBSYSTEM_INIT_MASK |= (1 << SPIFFS_CHECK_BIT);
+    }
+
+    // check if test hardware init OK
+    if(test_gpio_init_state) {
+        SUBSYSTEM_INIT_MASK |= (1 << TEST_HARDWARE_CHECK_BIT);
+    }
+
+    debug("SUBSYSTEM_INIT_MASK: "); debugln(SUBSYSTEM_INIT_MASK);
+
+    // delay(2000);
+
+    /* check whether we are in TEST or RUN mode */
+    checkRunTestToggle();
+
     //////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
-
-    // check whether we are in test mode or running mode
-    initSD();
-    initTestGPIO();
-    checkRunTestToggle();
-
     if(TEST_MODE) {
         // in test mode we only transfer test data from the testing PC to the SD card
         debugln();
@@ -1360,8 +1446,6 @@ void setup(){
         //////////////////////////////////////////////////////////////////////////////////////////////
             
     }  else {
-
-        // in run mode we start all essential system functions 
         debugln();
         debugln(F("=============================================="));
         debugln(F("========= RUN MODE ========="));
@@ -1375,23 +1459,8 @@ void setup(){
             debugln("Wifi config failed");
         }
 
-        /* initialize the system logger */
-        InitSPIFFS();
-
-        /* initialize MQTT */
-        MQTTInit(MQTT_SERVER, MQTT_PORT);
-
         /* mode 0 resets the system log file by clearing all the current contents */
         // system_logger.logToFile(SPIFFS, 0, rocket_ID, level, system_log_file, "Game Time!"); // TODO: DEBUG
-
-        debugln();
-        debugln(F("=============================================="));
-        debugln(F("========= INITIALIZING PERIPHERALS ==========="));
-        debugln(F("=============================================="));
-        imu.init();
-        BMPInit();
-        GPSInit();
-        
 
         debugln();
         debugln(F("=============================================="));
@@ -1597,6 +1666,7 @@ void setup(){
         // }else{
         //     debugln("[+]FSM task created OK.");
         // }
+
     } // end of setup in running mode 
     
 }
@@ -1613,6 +1683,7 @@ void loop(){
     //     }
 
     if(TEST_MODE) {
+
         //////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////
@@ -1622,14 +1693,14 @@ void loop(){
         //////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  ////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////
 
-
-    } else {
-        if(!mqtt_client.connected()){
+    } else if(RUN_MODE) {
+        if(!mqtt_client.connected()) {
             /* try to reconnect if connection is lost */
             MQTT_Reconnect();
         }
 
         mqtt_client.loop();
+
     }
 
 }
