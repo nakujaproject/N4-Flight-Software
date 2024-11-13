@@ -142,6 +142,7 @@ void checkRunTestToggle();
 
 #define FORMAT_SPIFFS_IF_FAILED 1
 const char *test_data_file = "/data.csv";
+const char* run_state_file = "/state.txt";
 
 void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
     Serial.printf("Listing directory: %s\r\n", dirname);
@@ -183,6 +184,28 @@ void readFile(fs::FS &fs, const char *path) {
     while (file.available()) {
         Serial.write(file.read());
     }
+    file.close();
+}
+
+char current_test_state_buf[50] = ""; // TODO: use appropriate size, to hold the test state read from the SD card state.txt file 
+void readStateFile(fs::FS &fs, const char *path) {
+    Serial.printf("Reading file: %s\r\n", path);
+    File file = fs.open(path);
+    if (!file || file.isDirectory()) {
+        debugln("- failed to open file for reading");
+        return;
+    }
+
+    debugln("- read from file:");
+    int index = 0;
+    while (file.available()) {
+        // Serial.write(file.read());
+        current_test_state_buf[index++] = file.read();
+        // sprintf(current_test_state_buf,"%s\n", file.read());
+    }
+
+    current_test_state_buf[index] = '\0';
+
     file.close();
 }
 
@@ -259,26 +282,43 @@ uint8_t initSD() {
         return 0;
     } else {
         debugln(F("[+]SD card Init OK!"));
+
+        /* check for card type */
+        uint8_t cardType = SD.cardType();
+        if (cardType == CARD_NONE) {
+            debugln("[-]No SD card attached");
+        } else {
+            debugln("[+]Valid card found");
+        }
+
+        // initialize test data file
+        File file = SD.open("/data.txt", FILE_WRITE); // TODO: change file name to const char*
+        if (!file) {
+            debugln("[File does not exist. Creating file]");
+            debugln("Test data file created");
+        } else {
+            debugln("[*]Data file already exists");
+        }
+        file.close();
+
+        // initialize test state file 
+        File state_file = SD.open("/state.txt", FILE_WRITE);
+        if(!state_file) {
+            debugln("State file does not exit. Creating file...");
+
+            debugln("state file created."); // TODO: move to system logger
+        }
+
+        state_file.close();
+
         return 1;
     }
+}
 
-    uint8_t cardType = SD.cardType();
-    if (cardType == CARD_NONE) {
-        debugln("[-]No SD card attached");
-        return 0;
-    }
+void initDataFiles() {
 
-    // initialize test data file
-    File file = SD.open("/data.txt", FILE_WRITE); // TODO: change file name to const char*
-
-    if (!file) {
-        debugln("[File does not exist. Creating file]");
-        writeFile(SD, "/data.csv", "SSID, SECURITY, CHANNEL, LAT, LONG, TIME \r\n");
-    } else {
-        debugln("[*]Data file already exists");
-    }
-
-    file.close();
+    writeFile(SD, "/data.txt", "Test data\r\n");
+    writeFile(SD, "/state.txt", "CONSUME_DATA_STATE\r\n"); 
 
 }
 
@@ -1381,6 +1421,7 @@ void setup(){
     uint8_t imu_init_state = imu.init();
     uint8_t gps_init_state = GPSInit();
     uint8_t sd_init_state = initSD();
+    initDataFiles();
     uint8_t spiffs_init_state = InitSPIFFS();
     uint8_t test_gpio_init_state = initTestGPIO();
     // uint8_t mqtt_init_state = MQTTInit(MQTT_SERVER, MQTT_PORT);    
@@ -1449,6 +1490,19 @@ void setup(){
         debugln(F("=============================================="));
         debugln(F("========= RUN MODE ========="));
         debugln(F("=============================================="));
+
+        /**
+         * We need to read the TEST state from a file in the SD card 
+         * This file stores the state we are in permanently, so that next time we reset while in run mode,
+         * we have a reference state to use
+         * 
+         * This file will be updated in the loop once we are done consuming the test data 
+         * 
+         */
+        readStateFile(SD, "/state.txt");
+        debugln(current_test_state_buf);
+
+        // delay(200);
 
         // create dynamic WIFI
         uint8_t wifi_connection_result = wifi_config.WifiConnect();
@@ -1702,6 +1756,7 @@ void loop() {
     } else if(RUN_MODE) {
 
         // check the current mode
+        // if(current_run_state)
 
 
 
