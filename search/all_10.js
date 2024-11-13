@@ -4,7 +4,7 @@ var searchData=
   ['sd_5fcs_5fpin_1',['SD_CS_PIN',['../main_8cpp.html#adcf3e4d2276ee4d10b23c05e4e7da0c3',1,'main.cpp']]],
   ['sea_5flevel_5fpressure_2',['SEA_LEVEL_PRESSURE',['../defs_8h.html#a335fe74f296f8ed3fa8a86c66a2dc237',1,'defs.h']]],
   ['selection_3',['XBEE, MQTT, LORA, WIFI telemetry selection',['../index.html#step8',1,'']]],
-  ['set_5frun_5fmode_5fpin_4',['SET_RUN_MODE_PIN',['../main_8cpp.html#abea45f8bc016d99f82b468ae77916e64',1,'main.cpp']]],
+  ['set_5fdaq_5fmode_5fpin_4',['SET_DAQ_MODE_PIN',['../main_8cpp.html#a060a5c871540f7913d6529a2afb3b1e4',1,'main.cpp']]],
   ['set_5ftest_5fmode_5fpin_5',['SET_TEST_MODE_PIN',['../main_8cpp.html#ac0121f71eae2488320c2cd36a4843976',1,'main.cpp']]],
   ['setup_6',['setup',['../main_8cpp.html#a4fc01d736fe50cf5b977f755b675f11d',1,'main.cpp']]],
   ['software_7',['N4 Flight Software',['../index.html',1,'']]],

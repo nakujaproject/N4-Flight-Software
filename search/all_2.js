@@ -12,9 +12,9 @@ var searchData=
   ['configuration_9',['configuration',['../index.html#step17',1,'MQTT configuration'],['../index.html#step16',1,'WIFI network configuration']]],
   ['contributors_10',['Contributors',['../index.html#step20',1,'']]],
   ['converttimestamp_11',['convertTimestamp',['../custom__time_8h.html#a742a45ab1cba3ca3717085198ec6d2a9',1,'convertTimestamp(unsigned long):&#160;custom_time.cpp'],['../custom-time_8h.html#a742a45ab1cba3ca3717085198ec6d2a9',1,'convertTimestamp(unsigned long):&#160;custom_time.cpp']]],
-  ['current_5flog_5ftime_12',['current_log_time',['../main_8cpp.html#a318b23db9cedde5ea8466af114f0c203',1,'main.cpp']]],
-  ['current_5fstate_13',['current_state',['../main_8cpp.html#ac559654865b2d48ea0b77b1a1f4a097b',1,'main.cpp']]],
-  ['current_5ftest_5fstate_14',['current_test_state',['../main_8cpp.html#a9dc783a2c139e60a49e643aed8b741b9',1,'main.cpp']]],
+  ['current_5fdaq_5fstate_12',['current_DAQ_state',['../main_8cpp.html#a5a374cc6b295b98bbdf9bc4adbdf3950',1,'main.cpp']]],
+  ['current_5flog_5ftime_13',['current_log_time',['../main_8cpp.html#a318b23db9cedde5ea8466af114f0c203',1,'main.cpp']]],
+  ['current_5fstate_14',['current_state',['../main_8cpp.html#ac559654865b2d48ea0b77b1a1f4a097b',1,'main.cpp']]],
   ['custom_2dtime_2eh_15',['custom-time.h',['../custom-time_8h.html',1,'']]],
   ['custom_5ftime_2eh_16',['custom_time.h',['../custom__time_8h.html',1,'']]]
 ];
