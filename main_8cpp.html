@@ -241,6 +241,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>ParseSerial</b> (char
 <tr class="memitem:a39694d8c816730fe5b678b70afa424ed" id="r_a39694d8c816730fe5b678b70afa424ed"><td class="memItemLeft" align="right" valign="top"><a id="a39694d8c816730fe5b678b70afa424ed" name="a39694d8c816730fe5b678b70afa424ed"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>readFile</b> (fs::FS &amp;fs, const char *path)</td></tr>
 <tr class="separator:a39694d8c816730fe5b678b70afa424ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3cec70f0be8f6c2c69ef9bbd76508724" id="r_a3cec70f0be8f6c2c69ef9bbd76508724"><td class="memItemLeft" align="right" valign="top"><a id="a3cec70f0be8f6c2c69ef9bbd76508724" name="a3cec70f0be8f6c2c69ef9bbd76508724"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>readStateFile</b> (fs::FS &amp;fs, const char *path)</td></tr>
+<tr class="separator:a3cec70f0be8f6c2c69ef9bbd76508724"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adfdfe491c3b951586aeba25a0b8ccf80" id="r_adfdfe491c3b951586aeba25a0b8ccf80"><td class="memItemLeft" align="right" valign="top"><a id="adfdfe491c3b951586aeba25a0b8ccf80" name="adfdfe491c3b951586aeba25a0b8ccf80"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>writeFile</b> (fs::FS &amp;fs, const char *path, const char *message)</td></tr>
 <tr class="separator:adfdfe491c3b951586aeba25a0b8ccf80"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -253,6 +256,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>deleteFile</b> (fs::F
 <tr class="memitem:a08fd5ccb534426dffe601ec8a8bf1d3e" id="r_a08fd5ccb534426dffe601ec8a8bf1d3e"><td class="memItemLeft" align="right" valign="top"><a id="a08fd5ccb534426dffe601ec8a8bf1d3e" name="a08fd5ccb534426dffe601ec8a8bf1d3e"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>readTestDataFile</b> ()</td></tr>
 <tr class="separator:a08fd5ccb534426dffe601ec8a8bf1d3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a15fa02eb36dd89d676974ce84c747820" id="r_a15fa02eb36dd89d676974ce84c747820"><td class="memItemLeft" align="right" valign="top"><a id="a15fa02eb36dd89d676974ce84c747820" name="a15fa02eb36dd89d676974ce84c747820"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>initDataFiles</b> ()</td></tr>
+<tr class="separator:a15fa02eb36dd89d676974ce84c747820"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a28b1eb955e6e2f5e83599536f6bf4d2f" id="r_a28b1eb955e6e2f5e83599536f6bf4d2f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a28b1eb955e6e2f5e83599536f6bf4d2f">buzz</a> ()</td></tr>
 <tr class="memdesc:a28b1eb955e6e2f5e83599536f6bf4d2f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Buzz the buzzer for a given buzz_interval This function is non-blocking.  <br /></td></tr>
 <tr class="separator:a28b1eb955e6e2f5e83599536f6bf4d2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -398,6 +404,12 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>buzzer</b> = 33</t
 <tr class="memitem:a7db00b07999bb801300dca544a0fb21b" id="r_a7db00b07999bb801300dca544a0fb21b"><td class="memItemLeft" align="right" valign="top"><a id="a7db00b07999bb801300dca544a0fb21b" name="a7db00b07999bb801300dca544a0fb21b"></a>
 const char *&#160;</td><td class="memItemRight" valign="bottom"><b>test_data_file</b> = &quot;/data.csv&quot;</td></tr>
 <tr class="separator:a7db00b07999bb801300dca544a0fb21b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96c0c5d355fd6b8fe27a19d2cb5e2006" id="r_a96c0c5d355fd6b8fe27a19d2cb5e2006"><td class="memItemLeft" align="right" valign="top"><a id="a96c0c5d355fd6b8fe27a19d2cb5e2006" name="a96c0c5d355fd6b8fe27a19d2cb5e2006"></a>
+const char *&#160;</td><td class="memItemRight" valign="bottom"><b>run_state_file</b> = &quot;/state.txt&quot;</td></tr>
+<tr class="separator:a96c0c5d355fd6b8fe27a19d2cb5e2006"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a443c4803075794cc2c7a849cc48c81ff" id="r_a443c4803075794cc2c7a849cc48c81ff"><td class="memItemLeft" align="right" valign="top"><a id="a443c4803075794cc2c7a849cc48c81ff" name="a443c4803075794cc2c7a849cc48c81ff"></a>
+char&#160;</td><td class="memItemRight" valign="bottom"><b>current_test_state_buf</b> [50] = &quot;&quot;</td></tr>
+<tr class="separator:a443c4803075794cc2c7a849cc48c81ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af5979e0a17df28709d21894625a29136" id="r_af5979e0a17df28709d21894625a29136"><td class="memItemLeft" align="right" valign="top"><a id="af5979e0a17df28709d21894625a29136" name="af5979e0a17df28709d21894625a29136"></a>
 unsigned long&#160;</td><td class="memItemRight" valign="bottom"><b>last_buzz</b> = 0</td></tr>
 <tr class="separator:af5979e0a17df28709d21894625a29136"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1260,7 +1272,9 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 
 <p>Setup - perform initialization of all hardware subsystems, create queues, create queue handles initialize system check table. </p>
 <hr  />
-  
+  <p>We need to read the TEST state from a file in the SD card This file stores the state we are in permanently, so that next time we reset while in run mode, we have a reference state to use</p>
+<p>This file will be updated in the loop once we are done consuming the test data</p>
+
 </div>
 </div>
 <a id="a5f3e40ff0b3b6f2c247fadc41b0a5896" name="a5f3e40ff0b3b6f2c247fadc41b0a5896"></a>
