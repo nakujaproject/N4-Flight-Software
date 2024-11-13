@@ -1083,7 +1083,8 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 
 <p>Main loop. </p>
 <hr  />
-  
+  <p>Here is where we consume the test data stored in the data.txt file</p>
+
 </div>
 </div>
 <a id="a9074d493ccf55d0cfa3acd2d173f665a" name="a9074d493ccf55d0cfa3acd2d173f665a"></a>
@@ -1297,6 +1298,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
   <p>We need to read the TEST state from a file in the SD card This file stores the state we are in permanently, so that next time we reset while in run mode, we have a reference state to use</p>
 <p>This file will be updated in the loop once we are done consuming the test data</p>
 <p>check what state we are in while in the test state. If we are in the data consume state, set the current state to DATA_CONSUME The state is got from the SD card state.txt file</p>
+<p>create dynamic WIFI</p>
 
 </div>
 </div>
