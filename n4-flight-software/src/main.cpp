@@ -1524,13 +1524,16 @@ void setup(){
             debugln("current state undefined... ");
         }
 
-        // create dynamic WIFI
-        uint8_t wifi_connection_result = wifi_config.WifiConnect();
-        if(wifi_connection_result) {
-            debugln("Wifi config OK!");
-        } else {
-            debugln("Wifi config failed");
-        }
+        /**
+         * create dynamic WIFI
+         *
+         */ 
+        // uint8_t wifi_connection_result = wifi_config.WifiConnect();
+        // if(wifi_connection_result) {
+        //     debugln("Wifi config OK!");
+        // } else {
+        //     debugln("Wifi config failed");
+        // }
 
         /* mode 0 resets the system log file by clearing all the current contents */
         // system_logger.logToFile(SPIFFS, 0, rocket_ID, level, system_log_file, "Game Time!"); // TODO: DEBUG
@@ -1755,30 +1758,24 @@ void loop() {
     //     }
 
 
-    // check if the testing system is done receiving the test data 
-    // 
-    // if(current_test_state == TEST_STATE::FINISH_DATA_RECEIVE) {
-    //     // consume the received test data 
-    //     readFile(SD, "/data.txt");
-    // }
-
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    
     if(DAQ_MODE) {
-
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
         prepareForDataReceive();
 
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        //////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  ////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
-
     } else if(TEST_MODE) {
+        debugln("DATA CONSUME");
 
-        // check the current mode
-        // if(current_run_state)
-
-
+        /**
+         * Here is where we consume the test data stored in the data.txt file 
+         * 
+         */
+        if(current_test_state == TEST_STATES::DATA_CONSUME) {
+            debugln("=============== Consuming test data ===============");
+            readFile(SD, "/data.txt");
+        }
 
         // if( !mqtt_client.connected() ) {
         //     /* try to reconnect if connection is lost */
@@ -1789,4 +1786,8 @@ void loop() {
 
     }
 
-}
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  ////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+} // end of loop
