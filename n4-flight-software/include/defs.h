@@ -65,7 +65,7 @@ const char MQTT_TOPIC[20] = "n4/telemetry";
 // const char* SSID = "Galaxy";             /*!< WIFi SSID */
 // const char* PASSWORD = "luwa2131";       /*!< WiFi password */
 
-#define CALLIBRATION_READINGS   200         /*!< number of readings to take while calibrating the sensor */
+#define CALLIBRATION_READINGS       200         /*!< number of readings to take while calibrating the sensor */
 
 #define GPS_TX 17                           /*!< GPS TX pin */
 #define GPS_RX 16                           /*!< GPS RX pin */

@@ -64,8 +64,9 @@ char subsystems_state_buffer[10]; /*!< Holds the status of the subsystems. 1 if 
 
 uint8_t SUBSYSTEM_INIT_MASK = 0b00000000;  /*!< Holds the status of the subsystems. 1 if Init OK, 0 if init failed */
 
-uint8_t RUN_MODE = 0;
+uint8_t DAQ_MODE = 0;
 uint8_t TEST_MODE = 0;
+uint8_t current_test_state;
 
 #define BAUDRATE        115200
 #define NAK_INTERVAL    4000        /*!< Interval in which to send the NAK command to the transmitter */
@@ -101,22 +102,32 @@ uint8_t recv_data_led = 2;          /*!< External flash memory chip select pin *
 uint8_t red_led = 15;               /*!< Red LED pin */
 uint8_t green_led = 4;              /*!< Green LED pin */
 uint8_t buzzer = 33;
-uint8_t SET_TEST_MODE_PIN = 14;     /*!< Pin to set the flight computer to TEST mode */
-uint8_t SET_RUN_MODE_PIN = 13;      /*!< Pin to set the flight computer to RUN mode */
+uint8_t SET_DAQ_MODE_PIN = 14;     /*!< Pin to set the flight computer to DAQ mode */
+uint8_t SET_TEST_MODE_PIN = 13;      /*!< Pin to set the flight computer to TEST mode */
 uint8_t SD_CS_PIN = 26;             /*!< Chip select pin for SD card */
 
 
 /*!*****************************************************************************
  * @brief This enum holds the states during flight computer test mode
  *******************************************************************************/
-enum TEST_STATE {
+enum DAQ_STATES {
     HANDSHAKE = 0,      /*!< state to establish initial communication with transmitter */
     RECEIVE_TEST_DATA,  /*!< sets the flight computer to receive test data over serial */
     CONFIRM_TEST_DATA,
     FINISH_DATA_RECEIVE
 };
 
-uint8_t current_test_state = TEST_STATE::HANDSHAKE; /*!< Define current state the flight computer is in */
+/**
+ * 
+ * Holds the states used when consuming the test data in testing mode
+ * 
+ */
+enum TEST_STATES {
+    DATA_CONSUME = 0,
+    DONE_TESTING
+};
+
+uint8_t current_DAQ_state = DAQ_STATES::HANDSHAKE; /*!< Define current state the flight computer is in */
 
 /**
  * XMODEM serial function prototypes
@@ -187,7 +198,7 @@ void readFile(fs::FS &fs, const char *path) {
     file.close();
 }
 
-char current_test_state_buf[50] = ""; // TODO: use appropriate size, to hold the test state read from the SD card state.txt file 
+char current_test_state_buffer[50] = ""; // TODO: use appropriate size, to hold the test state read from the SD card state.txt file 
 void readStateFile(fs::FS &fs, const char *path) {
     Serial.printf("Reading file: %s\r\n", path);
     File file = fs.open(path);
@@ -200,11 +211,11 @@ void readStateFile(fs::FS &fs, const char *path) {
     int index = 0;
     while (file.available()) {
         // Serial.write(file.read());
-        current_test_state_buf[index++] = file.read();
+        current_test_state_buffer[index++] = file.read();
         // sprintf(current_test_state_buf,"%s\n", file.read());
     }
 
-    current_test_state_buf[index] = '\0';
+    current_test_state_buffer[index] = '\0';
 
     file.close();
 }
@@ -318,7 +329,7 @@ uint8_t initSD() {
 void initDataFiles() {
 
     writeFile(SD, "/data.txt", "Test data\r\n");
-    writeFile(SD, "/state.txt", "CONSUME_DATA_STATE\r\n"); 
+    writeFile(SD, "/state.txt", "DATA_CONSUME\r\n"); 
 
 }
 
@@ -330,8 +341,8 @@ void initDataFiles() {
 uint8_t initTestGPIO() {
     pinMode(red_led, OUTPUT);
     pinMode(green_led, OUTPUT);
+    pinMode(SET_DAQ_MODE_PIN, INPUT);
     pinMode(SET_TEST_MODE_PIN, INPUT);
-    pinMode(SET_RUN_MODE_PIN, INPUT);
     pinMode(buzzer, OUTPUT);
 
     // set LEDs to a known starting state
@@ -398,7 +409,7 @@ void blink_200ms(uint8_t led_pin) {
 }
 
 /*!****************************************************************************
- * @brief Sample the RUN/TEST toggle pins to check whether the fligh tcomputer is in test mode
+ * @brief Sample the RUN/TEST toggle pins to check whether the flight computer is in test mode
  * or run mode.
  * If in TEST mode, define the TEST flag
  * If in RUN mode, define the RUN flag
@@ -406,27 +417,27 @@ void blink_200ms(uint8_t led_pin) {
  *******************************************************************************/
 void checkRunTestToggle() {
 
-    if ((digitalRead(SET_RUN_MODE_PIN) == 0) && (digitalRead(SET_TEST_MODE_PIN) == 1)) {
+    if ((digitalRead(SET_TEST_MODE_PIN) == 0) && (digitalRead(SET_DAQ_MODE_PIN) == 1)) {
         // run mode
-        RUN_MODE = 1;
-        TEST_MODE = 0;
-        SwitchLEDs(TEST_MODE, RUN_MODE);
+        TEST_MODE = 1;
+        DAQ_MODE = 0;
+        SwitchLEDs(DAQ_MODE, TEST_MODE);
     }
 
-    if ((digitalRead(SET_RUN_MODE_PIN) == 1) && (digitalRead(SET_TEST_MODE_PIN) == 0)) {
+    if ((digitalRead(SET_TEST_MODE_PIN) == 1) && (digitalRead(SET_DAQ_MODE_PIN) == 0)) {
         // test mode
-        RUN_MODE = 0;
-        TEST_MODE = 1;
+        TEST_MODE = 0;
+        DAQ_MODE = 1;
 
-        SwitchLEDs(TEST_MODE, RUN_MODE);
+        SwitchLEDs(DAQ_MODE, TEST_MODE);
     }
 
     // here the jumper has been removed. we are neither in the TEST or RUN mode
     // INVALID STATE
-    if ((digitalRead(SET_RUN_MODE_PIN) == 1) && (digitalRead(SET_TEST_MODE_PIN) == 1)) {
+    if ((digitalRead(SET_TEST_MODE_PIN) == 1) && (digitalRead(SET_DAQ_MODE_PIN) == 1)) {
+        DAQ_MODE = 0;
         TEST_MODE = 0;
-        RUN_MODE = 0;
-        SwitchLEDs(!TEST_MODE, !RUN_MODE);
+        SwitchLEDs(!DAQ_MODE, !TEST_MODE);
     }
 
 }
@@ -466,7 +477,7 @@ void ParseSerialBuffer(char *buffer) {
         debugln(F("<SOH rcvd from receiver> Waiting for data..."));
 
         // put the MCU in data receive state
-        current_test_state = TEST_STATE::RECEIVE_TEST_DATA;
+        current_DAQ_state = DAQ_STATES::RECEIVE_TEST_DATA;
         SwitchLEDs(0, 1);
 
 
@@ -493,7 +504,7 @@ void ParseSerialNumeric(int value) {
         // put the MCU in data receive state
         // any serial data after this will be the actual test data being received
         SwitchLEDs(0, 1); // red off, green on
-        current_test_state = TEST_STATE::RECEIVE_TEST_DATA;
+        current_DAQ_state = DAQ_STATES::RECEIVE_TEST_DATA;
 
     } else if (value == 4) {
         // EOT: numeric 4
@@ -569,7 +580,7 @@ void receiveTestDataSerialEvent() {
         debugln("EOT");
 
         // current_test_state = TEST_STATE::CONFIRM_TEST_DATA;
-        current_test_state = TEST_STATE::FINISH_DATA_RECEIVE;
+        current_DAQ_state = DAQ_STATES::FINISH_DATA_RECEIVE;
         
     }   
 
@@ -594,12 +605,12 @@ void prepareForDataReceive() {
     //         break;
     // }
     
-    if(TEST_MODE) {
+    if(DAQ_MODE) {
         // we are in test mode 
-        switch (current_test_state)
+        switch (current_DAQ_state)
         {
             // this state tries to establish communication with the sending PC
-            case TEST_STATE::HANDSHAKE:
+            case DAQ_STATES::HANDSHAKE:
                 handshakeSerialEvent();
                 if(!SOH_recvd_flag) {
                     current_NAK_time = millis();
@@ -612,20 +623,20 @@ void prepareForDataReceive() {
                 break;
 
             // this state receives data sent from the transmitting PC
-            case TEST_STATE::RECEIVE_TEST_DATA:
+            case DAQ_STATES::RECEIVE_TEST_DATA:
                 // debugln("RECEIVE_TEST_DATA");
                 receiveTestDataSerialEvent();
                 break;
 
             // this state perfoms post transmission checks to see if we received the right data
             // packets
-            case TEST_STATE::CONFIRM_TEST_DATA:
+            case DAQ_STATES::CONFIRM_TEST_DATA:
                 readTestDataFile();
                 // debugln("CONFIRM_TEST_DATA");
                 break;
 
             // this state stops the data transmission state 
-            case TEST_STATE::FINISH_DATA_RECEIVE:
+            case DAQ_STATES::FINISH_DATA_RECEIVE:
                 break;
             }
 
@@ -1472,11 +1483,11 @@ void setup(){
     //////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
-    if(TEST_MODE) {
+    if(DAQ_MODE) {
         // in test mode we only transfer test data from the testing PC to the SD card
         debugln();
         debugln(F("=============================================="));
-        debugln(F("=========FLIGHT COMPUTER TESTING MODE========="));
+        debugln(F("=========FLIGHT COMPUTER DATA ACQUISITION MODE========="));
         debugln(F("=============================================="));
 
         debugln("Ready to receive data...");
@@ -1485,10 +1496,10 @@ void setup(){
         //////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  //////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////
             
-    }  else {
+    }  else if (TEST_MODE) {
         debugln();
         debugln(F("=============================================="));
-        debugln(F("========= RUN MODE ========="));
+        debugln(F("========= TEST MODE ========="));
         debugln(F("=============================================="));
 
         /**
@@ -1497,12 +1508,21 @@ void setup(){
          * we have a reference state to use
          * 
          * This file will be updated in the loop once we are done consuming the test data 
-         * 
          */
         readStateFile(SD, "/state.txt");
-        debugln(current_test_state_buf);
+        debugln(current_test_state_buffer);
 
-        // delay(200);
+        /**
+         * check what state we are in while in the test state. 
+         * If we are in the data consume state, set the current state to DATA_CONSUME
+         * The state is got from the SD card state.txt file
+         */
+        if (strcmp(current_test_state_buffer, "DATA_CONSUME\r\n") == 0) {
+            current_test_state = TEST_STATES::DATA_CONSUME;
+            debugln("STATE set to DATA CONSUME ");
+        } else {
+            debugln("current state undefined... ");
+        }
 
         // create dynamic WIFI
         uint8_t wifi_connection_result = wifi_config.WifiConnect();
@@ -1742,7 +1762,7 @@ void loop() {
     //     readFile(SD, "/data.txt");
     // }
 
-    if(TEST_MODE) {
+    if(DAQ_MODE) {
 
         //////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
@@ -1753,7 +1773,7 @@ void loop() {
         //////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  ////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////
 
-    } else if(RUN_MODE) {
+    } else if(TEST_MODE) {
 
         // check the current mode
         // if(current_run_state)
