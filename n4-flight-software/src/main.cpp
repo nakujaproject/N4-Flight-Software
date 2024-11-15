@@ -138,7 +138,20 @@ uint8_t initTestGPIO();
 
 uint8_t InitSPIFFS();
 
-uint8_t initSD(); // TODO: return a bool
+uint8_t 
+
+
+
+
+
+
+
+
+
+
+
+
+initSD(); // TODO: return a bool
 void SwitchLEDs(uint8_t, uint8_t);
 
 void InitXMODEM();
@@ -1499,7 +1512,7 @@ void setup(){
     }  else if (TEST_MODE) {
         debugln();
         debugln(F("=============================================="));
-        debugln(F("========= TEST MODE ========="));
+        debugln(F("=================== TEST MODE ================"));
         debugln(F("=============================================="));
 
         /**
@@ -1520,8 +1533,10 @@ void setup(){
         if (strcmp(current_test_state_buffer, "DATA_CONSUME\r\n") == 0) {
             current_test_state = TEST_STATES::DATA_CONSUME;
             debugln("STATE set to DATA CONSUME ");
+
         } else {
             debugln("current state undefined... ");
+
         }
 
         /**
@@ -1606,7 +1621,7 @@ void setup(){
         // }
 
 
-        // create  event group to sync flight data consumption
+        // create  event group to synchronize flight data consumption
         // see N4 flight software docs for more info
         debugln();
         debugln(F("=============================================="));
@@ -1761,8 +1776,8 @@ void loop() {
     //////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
-    
-    if(DAQ_MODE) {
+
+    if (DAQ_MODE) {
         prepareForDataReceive();
 
     } else if(TEST_MODE) {
