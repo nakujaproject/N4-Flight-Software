@@ -1213,101 +1213,101 @@ void MQTT_Reconnect() {
     }
 }
 
-// void transmitTelemetry(void* pvParameters){
-//     /* This function sends data to the ground station */
+void transmitTelemetry(void* pvParameters){
+    /* This function sends data to the ground station */
 
-//      /*  create two pointers to the data structures to be transmitted */
+     /*  create two pointers to the data structures to be transmitted */
 
-//     constexpr int INITIAL_BUFFER_SIZE = 512;  // typical buffer size of telemetry packet is 450 ~ 500 bytes
-//     char telemetry_data[INITIAL_BUFFER_SIZE];
+    constexpr int INITIAL_BUFFER_SIZE = 512;  // typical buffer size of telemetry packet is 450 ~ 500 bytes
+    char telemetry_data[INITIAL_BUFFER_SIZE];
 
-//     struct Telemetry_Data telemetry_data_receive;
-//     // struct Acceleration_Data gyroscope_data_receive;
-//     // struct Altimeter_Data altimeter_data_receive;
-//     // struct GPS_Data gps_data_receive;
-//     // int32_t flight_state_receive;
-//     int id = 0;
+    struct Telemetry_Data telemetry_data_receive;
+    // struct Acceleration_Data gyroscope_data_receive;
+    // struct Altimeter_Data altimeter_data_receive;
+    // struct GPS_Data gps_data_receive;
+    // int32_t flight_state_receive;
+    int id = 0;
 
-//     while(true){
-//         File logFile = SPIFFS.open("/log.csv", FILE_APPEND);
-//         if(!file) debugln("[-] Failed to open file for appending");
-//         else debugln("[+] File opened for appending");
+    while(true){
+        File logFile = SPIFFS.open("/log.csv", FILE_APPEND);
+        if(!file) debugln("[-] Failed to open file for appending");
+        else debugln("[+] File opened for appending");
         
-//         /* receive data into respective queues */
-//         if(xQueueReceive(telemetry_data_qHandle, &telemetry_data_receive, portMAX_DELAY) == pdPASS){
-//             debugln("[+]Telemetry data ready for sending ");
-//         }else{
-//             debugln("[-]Failed to receive telemetry data");
-//         }
+        /* receive data into respective queues */
+        if(xQueueReceive(telemetry_data_qHandle, &telemetry_data_receive, portMAX_DELAY) == pdPASS){
+            debugln("[+]Telemetry data ready for sending ");
+        }else{
+            debugln("[-]Failed to receive telemetry data");
+        }
 
-//         // if(xQueueReceive(altimeter_data_queue, &altimeter_data_receive, portMAX_DELAY) == pdPASS){
-//         //     debugln("[+]Altimeter data ready for sending ");
-//         // }else{
-//         //     debugln("[-]Failed to receive altimeter data");
-//         // }
+        // if(xQueueReceive(altimeter_data_queue, &altimeter_data_receive, portMAX_DELAY) == pdPASS){
+        //     debugln("[+]Altimeter data ready for sending ");
+        // }else{
+        //     debugln("[-]Failed to receive altimeter data");
+        // }
 
-//         // if(xQueueReceive(gps_data_queue, &gps_data_receive, portMAX_DELAY) == pdPASS){
-//         //     debugln("[+]GPS data ready for sending ");
-//         // }else{
-//         //     debugln("[-]Failed to receive GPS data");
-//         // }
+        // if(xQueueReceive(gps_data_queue, &gps_data_receive, portMAX_DELAY) == pdPASS){
+        //     debugln("[+]GPS data ready for sending ");
+        // }else{
+        //     debugln("[-]Failed to receive GPS data");
+        // }
 
-//         // if(xQueueReceive(flight_states_queue, &flight_state_receive, portMAX_DELAY) == pdPASS){
-//         //     debugln("[+]Flight state ready for sending ");
-//         // }else{
-//         //     debugln("[-]Failed to receive Flight state");
-//         // }
+        // if(xQueueReceive(flight_states_queue, &flight_state_receive, portMAX_DELAY) == pdPASS){
+        //     debugln("[+]Flight state ready for sending ");
+        // }else{
+        //     debugln("[-]Failed to receive Flight state");
+        // }
 
 
-//         // parse data in json format to telemetry_data packet
-//         // Example output -> { "id": 123, "state": 1, "operation_mode": 2, 
-//         // "acc_data": { "ax": 1.23, "ay": 4.56, "az": 7.89, "pitch": 10.11, "roll": 12.13 }, 
-//         // "gyro_data": { "gx": 14.15, "gy": 16.17, "gz": 18.19 }, 
-//         // "gps_data": { "latitude": 20.2, "longitude": 22.2, "gps_altitude": 24.23, "time": 25 }, 
-//         // "alt_data": { "pressure": 26.24, "temperature": 28.25, "AGL": 30.26, "velocity": 32.27 }, 
-//         // "chute_state": { "pyro1_state": 1, "pyro2_state": 0 }, "battery_voltage": 34.28 }
+        // parse data in json format to telemetry_data packet
+        // Example output -> { "id": 123, "state": 1, "operation_mode": 2, 
+        // "acc_data": { "ax": 1.23, "ay": 4.56, "az": 7.89, "pitch": 10.11, "roll": 12.13 }, 
+        // "gyro_data": { "gx": 14.15, "gy": 16.17, "gz": 18.19 }, 
+        // "gps_data": { "latitude": 20.2, "longitude": 22.2, "gps_altitude": 24.23, "time": 25 }, 
+        // "alt_data": { "pressure": 26.24, "temperature": 28.25, "AGL": 30.26, "velocity": 32.27 }, 
+        // "chute_state": { "pyro1_state": 1, "pyro2_state": 0 }, "battery_voltage": 34.28 }
 
-//         sprintf(telemetry_data,
-//             "%i,"%i,"%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.8f,%.8f,%.2f,%.X,%.2f,%.2f,%.2f,%.2f,%i,%i,%.2f,\n",
-//             id,//0
-//             telemetry_data_receive.state, //1
-//             telemetry_data_receive.operation_mode, //2
-//             telemetry_data_receive.acc_data.ax,//3
-//             telemetry_data_receive.acc_data.ay,//4
-//             telemetry_data_receive.acc_data.az,//5
-//             telemetry_data_receive.acc_data.pitch,//6
-//             telemetry_data_receive.acc_data.roll,//7
-//             telemetry_data_receive.gyro_data.gx,//8
-//             telemetry_data_receive.gyro_data.gy,//9
-//             telemetry_data_receive.gyro_data.gz,//10
-//             telemetry_data_receive.gps_data.latitude,//11
-//             telemetry_data_receive.gps_data.longitude,//12
-//             telemetry_data_receive.gps_data.gps_altitude,//13
-//             telemetry_data_receive.gps_data.time,//14
-//             telemetry_data_receive.alt_data.pressure,//15
-//             telemetry_data_receive.alt_data.temperature,//16
-//             telemetry_data_receive.alt_data.AGL,//17
-//             telemetry_data_receive.alt_data.velocity,//18
-//             telemetry_data_receive.chute_state.pyro1_state,//19
-//             telemetry_data_receive.chute_state.pyro2_state,//20
-//             telemetry_data_receive.battery_voltage,//21 
-//         );
+        sprintf(telemetry_data,
+            "%i,%i,%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.8f,%.8f,%.2f,%.X,%.2f,%.2f,%.2f,%.2f,%i,%i,%.2f\n",
+            id,//0
+            telemetry_data_receive.state, //1
+            telemetry_data_receive.operation_mode, //2
+            telemetry_data_receive.acc_data.ax,//3
+            telemetry_data_receive.acc_data.ay,//4
+            telemetry_data_receive.acc_data.az,//5
+            telemetry_data_receive.acc_data.pitch,//6
+            telemetry_data_receive.acc_data.roll,//7
+            telemetry_data_receive.gyro_data.gx,//8
+            telemetry_data_receive.gyro_data.gy,//9
+            telemetry_data_receive.gyro_data.gz,//10
+            telemetry_data_receive.gps_data.latitude,//11
+            telemetry_data_receive.gps_data.longitude,//12
+            telemetry_data_receive.gps_data.gps_altitude,//13
+            telemetry_data_receive.gps_data.time,//14
+            telemetry_data_receive.alt_data.pressure,//15
+            telemetry_data_receive.alt_data.temperature,//16
+            telemetry_data_receive.alt_data.AGL,//17
+            telemetry_data_receive.alt_data.velocity,//18
+            telemetry_data_receive.chute_state.pyro1_state,//19
+            telemetry_data_receive.chute_state.pyro2_state,//20
+            telemetry_data_receive.battery_voltage,//21 
+        );
 
-//         if(logFile.print(telemetry_data)){
-//             debugln("[+] Message appended");
-//         } else {
-//             debugln("[-] Append failed");
-//         }
-//         logFile.close();
-//         id+=1;
+        if(logFile.print(telemetry_data)){
+            debugln("[+] Message appended");
+        } else {
+            debugln("[-] Append failed");
+        }
+        logFile.close();
+        id+=1;
 
-//         if(mqtt_client.publish(MQTT_TOPIC, telemetry_data)) {
-//             debugln("[+]Data sent");
-//         } else{
-//             debugln("[-]Data not sent");
-//         }
-//     }
-// }
+        if(mqtt_client.publish(MQTT_TOPIC, telemetry_data)) {
+            debugln("[+]Data sent");
+        } else{
+            debugln("[-]Data not sent");
+        }
+    }
+}
 
 /*!****************************************************************************
  * @brief Initialize MQTT
