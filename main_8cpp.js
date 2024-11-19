@@ -30,6 +30,7 @@ var main_8cpp =
     [ "flightStateCallback", "main_8cpp.html#a6648d201a9f47aa836d36e5339e78ef3", null ],
     [ "GPSInit", "main_8cpp.html#a7614084d3b4eca93954d98680cc2443d", null ],
     [ "handshakeSerialEvent", "main_8cpp.html#a41453ccb33ef6b57e513b16e92dd130e", null ],
+    [ "initDynamicWIFI", "main_8cpp.html#a29b878fa9aee771a49679759f9f10da1", null ],
     [ "initTestGPIO", "main_8cpp.html#a7e2d538eec5c54386e40bbc0b99d0ac1", null ],
     [ "InitXMODEM", "main_8cpp.html#abf447a0860a5fec74fecf8654172fec0", null ],
     [ "listDir", "main_8cpp.html#a8841578fe91cace6206676f0e751cab5", null ],

@@ -15,8 +15,9 @@ var searchData=
   ['and_20kalman_20filtering_12',['Flight Data Collection and Kalman Filtering',['../index.html#step23',1,'']]],
   ['and_20peripherals_13',['Hardware, pin assignment and peripherals',['../index.html#step13',1,'']]],
   ['and_20testing_20procedures_14',['Integration and Testing Procedures',['../index.html#step14',1,'']]],
-  ['assignment_20and_20peripherals_15',['Hardware, pin assignment and peripherals',['../index.html#step13',1,'']]],
-  ['ax_16',['ax',['../structAcceleration__Data.html#a0ac3f80a6aaf6bb4b39cc5b6298bf48d',1,'Acceleration_Data']]],
-  ['ay_17',['ay',['../structAcceleration__Data.html#af18da59fae25e84ce665ebe427d0d43b',1,'Acceleration_Data']]],
-  ['az_18',['az',['../structAcceleration__Data.html#a358fef1b09bfe48d8927bc16ab557a59',1,'Acceleration_Data']]]
+  ['apogee_15',['apogee',['../namespaceapogee.html',1,'']]],
+  ['assignment_20and_20peripherals_16',['Hardware, pin assignment and peripherals',['../index.html#step13',1,'']]],
+  ['ax_17',['ax',['../structAcceleration__Data.html#a0ac3f80a6aaf6bb4b39cc5b6298bf48d',1,'Acceleration_Data']]],
+  ['ay_18',['ay',['../structAcceleration__Data.html#af18da59fae25e84ce665ebe427d0d43b',1,'Acceleration_Data']]],
+  ['az_19',['az',['../structAcceleration__Data.html#a358fef1b09bfe48d8927bc16ab557a59',1,'Acceleration_Data']]]
 ];

@@ -53,6 +53,9 @@ var NAVTREE =
     [ "Flight Data Collection and Kalman Filtering", "index.html#step23", null ],
     [ "Contributors", "index.html#step24", null ],
     [ "README", "md_n4-flight-software_2README.html", null ],
+    [ "Namespaces", "namespaces.html", [
+      [ "Namespace List", "namespaces.html", "namespaces_dup" ]
+    ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
       [ "Class Index", "classes.html", null ],
