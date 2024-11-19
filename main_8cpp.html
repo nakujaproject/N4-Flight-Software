@@ -213,8 +213,7 @@ Functions</h2></td></tr>
  Default no. of seconds to remain HIGH is 5  <br /></td></tr>
 <tr class="separator:aee373e9d6ea48f0b376bdaa1c2970510"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9074d493ccf55d0cfa3acd2d173f665a" id="r_a9074d493ccf55d0cfa3acd2d173f665a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9074d493ccf55d0cfa3acd2d173f665a">mainChuteDeploy</a> ()</td></tr>
-<tr class="memdesc:a9074d493ccf55d0cfa3acd2d173f665a"><td class="mdescLeft">&#160;</td><td class="mdescRight">fires the pyro-charge to deploy the main chute Turn on the main chute ejection circuit by running the GPIO HIGH for a preset No. of seconds. <br  />
- Default no. of seconds to remain HIGH is 5  <br /></td></tr>
+<tr class="memdesc:a9074d493ccf55d0cfa3acd2d173f665a"><td class="mdescLeft">&#160;</td><td class="mdescRight">fires the pyro-charge to deploy the main chute Turn on the main chute ejection circuit by running the GPIO HIGH for a preset No. of seconds Default no. of seconds to remain HIGH is 5  <br /></td></tr>
 <tr class="separator:a9074d493ccf55d0cfa3acd2d173f665a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29b878fa9aee771a49679759f9f10da1" id="r_a29b878fa9aee771a49679759f9f10da1"><td class="memItemLeft" align="right" valign="top"><a id="a29b878fa9aee771a49679759f9f10da1" name="a29b878fa9aee771a49679759f9f10da1"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>initDynamicWIFI</b> ()</td></tr>
@@ -289,6 +288,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>ParseSerialBuffer</b>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>prepareForDataReceive</b> ()</td></tr>
 <tr class="memdesc:af17571f8eae94b2917362daa65cc29bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">this function prepares the flight computer to receive test data depending on the state, it tries to establich link between flight computer and sending PC receives the actual data confirm the actual data <br /></td></tr>
 <tr class="separator:af17571f8eae94b2917362daa65cc29bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a241552a311530bd71688f2827359443b" id="r_a241552a311530bd71688f2827359443b"><td class="memItemLeft" align="right" valign="top"><a id="a241552a311530bd71688f2827359443b" name="a241552a311530bd71688f2827359443b"></a>
+PubSubClient&#160;</td><td class="memItemRight" valign="bottom"><b>client</b> (<a class="el" href="#afafd0fc922c17c38235820189e1d9b3b">wifi_client</a>)</td></tr>
+<tr class="separator:a241552a311530bd71688f2827359443b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91b508daf26fad06708a9e3ba3c7d37b" id="r_a91b508daf26fad06708a9e3ba3c7d37b"><td class="memItemLeft" align="right" valign="top"><a id="a91b508daf26fad06708a9e3ba3c7d37b" name="a91b508daf26fad06708a9e3ba3c7d37b"></a>
+uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>MQTTInit</b> (const char *broker_IP, uint16_t broker_port)</td></tr>
+<tr class="separator:a91b508daf26fad06708a9e3ba3c7d37b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8bd22523fa85c7cdc0b1ce2ca2ad9340" id="r_a8bd22523fa85c7cdc0b1ce2ca2ad9340"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8bd22523fa85c7cdc0b1ce2ca2ad9340">BMPInit</a> ()</td></tr>
 <tr class="memdesc:a8bd22523fa85c7cdc0b1ce2ca2ad9340"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize BMP180 barometric sensor.  <br /></td></tr>
 <tr class="separator:a8bd22523fa85c7cdc0b1ce2ca2ad9340"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -448,7 +453,10 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>led_state</b> = LO
 <tr class="memitem:ac4f474c82e82cbb89ca7c36dd52be0ed" id="r_ac4f474c82e82cbb89ca7c36dd52be0ed"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac4f474c82e82cbb89ca7c36dd52be0ed">value</a> = 0</td></tr>
 <tr class="memdesc:ac4f474c82e82cbb89ca7c36dd52be0ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parse the received serial command if it is a string.  <br /></td></tr>
 <tr class="separator:ac4f474c82e82cbb89ca7c36dd52be0ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab373e93ee373b64207ddef0991fcac9d" id="r_ab373e93ee373b64207ddef0991fcac9d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classWIFIConfig.html">WIFIConfig</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab373e93ee373b64207ddef0991fcac9d">wifi_config</a></td></tr>
+<tr class="memitem:afafd0fc922c17c38235820189e1d9b3b" id="r_afafd0fc922c17c38235820189e1d9b3b"><td class="memItemLeft" align="right" valign="top">WiFiClient&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afafd0fc922c17c38235820189e1d9b3b">wifi_client</a></td></tr>
+<tr class="separator:afafd0fc922c17c38235820189e1d9b3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab373e93ee373b64207ddef0991fcac9d" id="r_ab373e93ee373b64207ddef0991fcac9d"><td class="memItemLeft" align="right" valign="top"><a id="ab373e93ee373b64207ddef0991fcac9d" name="ab373e93ee373b64207ddef0991fcac9d"></a>
+<a class="el" href="classWIFIConfig.html">WIFIConfig</a>&#160;</td><td class="memItemRight" valign="bottom"><b>wifi_config</b></td></tr>
 <tr class="separator:ab373e93ee373b64207ddef0991fcac9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa2a21869dff0c780017683e78f315bd0" id="r_aa2a21869dff0c780017683e78f315bd0"><td class="memItemLeft" align="right" valign="top"><a id="aa2a21869dff0c780017683e78f315bd0" name="aa2a21869dff0c780017683e78f315bd0"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>drogue_pyro</b> = 25</td></tr>
@@ -1106,8 +1114,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
       </table>
 </div><div class="memdoc">
 
-<p>fires the pyro-charge to deploy the main chute Turn on the main chute ejection circuit by running the GPIO HIGH for a preset No. of seconds. <br  />
- Default no. of seconds to remain HIGH is 5 </p>
+<p>fires the pyro-charge to deploy the main chute Turn on the main chute ejection circuit by running the GPIO HIGH for a preset No. of seconds Default no. of seconds to remain HIGH is 5 </p>
 <hr  />
   
 </div>
@@ -1751,14 +1758,14 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
   
 </div>
 </div>
-<a id="ab373e93ee373b64207ddef0991fcac9d" name="ab373e93ee373b64207ddef0991fcac9d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab373e93ee373b64207ddef0991fcac9d">&#9670;&#160;</a></span>wifi_config</h2>
+<a id="afafd0fc922c17c38235820189e1d9b3b" name="afafd0fc922c17c38235820189e1d9b3b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afafd0fc922c17c38235820189e1d9b3b">&#9670;&#160;</a></span>wifi_client</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classWIFIConfig.html">WIFIConfig</a> wifi_config</td>
+          <td class="memname">WiFiClient wifi_client</td>
         </tr>
       </table>
 </div><div class="memdoc">

@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['value_0',['value',['../main_8cpp.html#ac4f474c82e82cbb89ca7c36dd52be0ed',1,'main.cpp']]],
-  ['velocity_1',['velocity',['../structAltimeter__Data.html#ad7f44fcc8ebd03e30aa7b35ce5fcf22e',1,'Altimeter_Data']]]
+  ['wifi_5fclient_0',['wifi_client',['../main_8cpp.html#afafd0fc922c17c38235820189e1d9b3b',1,'main.cpp']]]
 ];

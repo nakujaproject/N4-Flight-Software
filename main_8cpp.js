@@ -75,5 +75,5 @@ var main_8cpp =
     [ "subsystems_state_buffer", "main_8cpp.html#a12a374be19c9b55750097a0b9fad50fb", null ],
     [ "telemetry_data_qHandle", "main_8cpp.html#a0ed5ea94df7417ea494d69ca56aab490", null ],
     [ "value", "main_8cpp.html#ac4f474c82e82cbb89ca7c36dd52be0ed", null ],
-    [ "wifi_config", "main_8cpp.html#ab373e93ee373b64207ddef0991fcac9d", null ]
+    [ "wifi_client", "main_8cpp.html#afafd0fc922c17c38235820189e1d9b3b", null ]
 ];

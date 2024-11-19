@@ -24,6 +24,5 @@ var defs_8h =
     [ "TASK_DELAY", "defs_8h.html#a74959040d4f3fa78c373849d6f548ca4", null ],
     [ "TELEMETRY_DATA_QUEUE_LENGTH", "defs_8h.html#ab77e67e5549a753abae01ea033075768", null ],
     [ "XBEE", "defs_8h.html#a14aec3db1cd23e300c83cd79bdb2120c", null ],
-    [ "XBEE_BAUD_RATE", "defs_8h.html#a39a469a7d14e92b5f8a6cba126c62259", null ],
-    [ "MQTT_SERVER", "defs_8h.html#a0d45e39eafc2a2bc3793346648a89089", null ]
+    [ "XBEE_BAUD_RATE", "defs_8h.html#a39a469a7d14e92b5f8a6cba126c62259", null ]
 ];

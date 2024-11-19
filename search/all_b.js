@@ -14,8 +14,7 @@ var searchData=
   ['mqtt_20lora_20wifi_20telemetry_20selection_11',['XBEE, MQTT, LORA, WIFI telemetry selection',['../index.html#step8',1,'']]],
   ['mqtt_5fport_12',['MQTT_PORT',['../defs_8h.html#aa8632baff6bbb5004385998918f1e6bd',1,'defs.h']]],
   ['mqtt_5freconnect_13',['MQTT_Reconnect',['../main_8cpp.html#a5a48a88cefb37379fe58c0f58d0c274f',1,'main.cpp']]],
-  ['mqtt_5fserver_14',['MQTT_SERVER',['../defs_8h.html#a0d45e39eafc2a2bc3793346648a89089',1,'defs.h']]],
-  ['mqtt_5ftopic_5flength_15',['MQTT_TOPIC_LENGTH',['../defs_8h.html#a237252f3f1f9d37812d9ec005e3a3d6a',1,'defs.h']]],
-  ['mqtt_5ftransmittelemetry_16',['MQTT_TransmitTelemetry',['../main_8cpp.html#a623ea109418725f80cfc705f49fd7a55',1,'main.cpp']]],
-  ['mqttinit_17',['MQTTInit',['../main_8cpp.html#a582e3dadcae4266158f0516e7c264bb6',1,'main.cpp']]]
+  ['mqtt_5ftopic_5flength_14',['MQTT_TOPIC_LENGTH',['../defs_8h.html#a237252f3f1f9d37812d9ec005e3a3d6a',1,'defs.h']]],
+  ['mqtt_5ftransmittelemetry_15',['MQTT_TransmitTelemetry',['../main_8cpp.html#a623ea109418725f80cfc705f49fd7a55',1,'main.cpp']]],
+  ['mqttinit_16',['MQTTInit',['../main_8cpp.html#a582e3dadcae4266158f0516e7c264bb6',1,'main.cpp']]]
 ];
