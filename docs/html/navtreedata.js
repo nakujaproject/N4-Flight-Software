@@ -54,6 +54,9 @@ var NAVTREE =
     [ "Contributors", "index.html#step24", null ],
     [ "README", "md_n4-flight-software_2_r_e_a_d_m_e.html", null ],
     [ "Flight computer pin assignment", "md_n4-flight-software_2src_2pin__assignment.html", null ],
+    [ "Namespaces", "namespaces.html", [
+      [ "Namespace List", "namespaces.html", "namespaces_dup" ]
+    ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
       [ "Class Index", "classes.html", null ],

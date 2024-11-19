@@ -186,19 +186,59 @@ Here is the X-MODEM commands list for quick reference:
  6. LOG_TO_MEMORY - defs.h
 
   * @section step21 WIFI network configuration
-  * The software is written such that it allows the launch crew to connect to any WIFI they are using, without
-  hardcoding the WIFI credentials into the flight software.
-  Follow the procedure below to connect to the WIFI:
-  1. When powered on, the flight computer will create an open WIFI network called "flight-computer". This network will
+  * The software is written such that it allows connection to any WIFI being used, without
+  hardcoding the WIFI credentials into the flight software. This will make the launch preparation faster as no code uploading needs to 
+  be done on-site.
+  Follow the procedure below to connect to WIFI:
+  - After uploading the flight software to the computer, the serial terminal will show the following response. Note the 
+  marked are which is of interest. 
+
+@htmlonly
+    <div style="text-align: center;">
+
+        <img src="../images/step-1-serial.png" >
+
+    </div>
+ @endhtmlonly
+This shows that the flight computer has created a web portal and is waiting for connection from an external device.
+
+  - When powered on, the flight computer will create an open WIFI network called "flight-computer". This network will
   be visible on any device within range.
-  2. On the ground station computer, connect to "flight-computer".
-  3. Open the browser and go to the following IP address "192.168.4.1". This should open the following window in
+  - The FC sets itself as an Access Point and will provide its own WIFI network to the for other devices to connect to.
+  - On the ground station computer, or using a smartphone, connect to "flight-computer-1". (NOTE: The WIFI name will change depending on the name of the rocket being used )
+  - Open the browser and go to the following IP address "192.168.4.1". This should open the following window in
   your browser.
-  [image here]
-  4. Enter the WIFI SSID and password for the network you want to connect to. In this case it is the WIFI network used for telemetry
+
+  @htmlonly
+    <div style="text-align: center;" height=400 width=200>
+
+        <img src="../images/step-1-res.jpg" >
+
+    </div>
+ @endhtmlonly
+ - Click on Configure WiFi. The window below opens.
+ @htmlonly
+    <div style="text-align: center;">
+
+        <img src="../images/step-2.jpg" >
+
+    </div>
+ @endhtmlonly
+  
+  - Enter the WIFI SSID and password for the network you want to connect to. In this case it is the WIFI network used for telemetry
   transmission.
-  5. Press save. The flight computer will save the network credentials and auto-reconnect itself to the launch WIFI network. You can now
-  stream telemetry over the network.
+  - Press save. The flight computer will save the network credentials and auto-reconnect itself as a station to the launch WIFI network. 
+  @htmlonly
+    <div style="text-align: center;">
+
+        <img src="../images/step-3.jpg" >
+
+    </div>
+ @endhtmlonly
+
+  – Assuming that the you have supplied the correct login credentials, the ESP32 will now be connected to the WiFi network.
+  - You can now stream telemetry over that network.
+  - Make sure that the ground station PC and the flight computer are on the same network.
 
   * @section step22 MQTT configuration
 

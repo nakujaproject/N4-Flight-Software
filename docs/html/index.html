@@ -252,13 +252,51 @@ Pre-flight software checks</h1>
 </ol>
 <h1><a class="anchor" id="step21"></a>
 WIFI network configuration</h1>
-<p>The software is written such that it allows the launch crew to connect to any WIFI they are using, without hardcoding the WIFI credentials into the flight software. Follow the procedure below to connect to the WIFI:</p><ol type="1">
+<p>The software is written such that it allows connection to any WIFI being used, without hardcoding the WIFI credentials into the flight software. This will make the launch preparation faster as no code uploading needs to be done on-site. Follow the procedure below to connect to WIFI:</p><ul>
+<li>After uploading the flight software to the computer, the serial terminal will show the following response. Note the marked are which is of interest.</li>
+</ul>
+<p> 
+    <div style="text-align: center;">
+
+        <img src="../images/step-1-serial.png" >
+
+    </div>
+  This shows that the flight computer has created a web portal and is waiting for connection from an external device.</p>
+<ul>
 <li>When powered on, the flight computer will create an open WIFI network called "flight-computer". This network will be visible on any device within range.</li>
-<li>On the ground station computer, connect to "flight-computer".</li>
-<li>Open the browser and go to the following IP address "192.168.4.1". This should open the following window in your browser. [image here]</li>
+<li>The FC sets itself as an Access Point and will provide its own WIFI network to the for other devices to connect to.</li>
+<li>On the ground station computer, or using a smartphone, connect to "flight-computer-1". (NOTE: The WIFI name will change depending on the name of the rocket being used )</li>
+<li>Open the browser and go to the following IP address "192.168.4.1". This should open the following window in your browser.</li>
+</ul>
+<p> 
+    <div style="text-align: center;" height=400 width=200>
+
+        <img src="../images/step-1-res.jpg" >
+
+    </div>
+ </p><ul>
+<li><p class="startli">Click on Configure WiFi. The window below opens.  
+    <div style="text-align: center;">
+
+        <img src="../images/step-2.jpg" >
+
+    </div>
+ </p><ul>
 <li>Enter the WIFI SSID and password for the network you want to connect to. In this case it is the WIFI network used for telemetry transmission.</li>
-<li>Press save. The flight computer will save the network credentials and auto-reconnect itself to the launch WIFI network. You can now stream telemetry over the network.</li>
-</ol>
+<li>Press save. The flight computer will save the network credentials and auto-reconnect itself as a station to the launch WIFI network.  
+    <div style="text-align: center;">
+
+        <img src="../images/step-3.jpg" >
+
+    </div>
+ </li>
+</ul>
+<p class="startli">– Assuming that the you have supplied the correct login credentials, the ESP32 will now be connected to the WiFi network.</p><ul>
+<li>You can now stream telemetry over that network.</li>
+<li>Make sure that the ground station PC and the fligth computer are on the same network.</li>
+</ul>
+</li>
+</ul>
 <h1><a class="anchor" id="step22"></a>
 MQTT configuration</h1>
 <h1><a class="anchor" id="step23"></a>

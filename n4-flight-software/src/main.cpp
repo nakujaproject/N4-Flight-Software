@@ -34,6 +34,9 @@
 /* function prototypes definition */
 void drogueChuteDeploy();
 void mainChuteDeploy();
+void initDynamicWIFI();
+
+
 
 /* state machine variables*/
 uint8_t operation_mode = 0;                                     /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
@@ -138,20 +141,7 @@ uint8_t initTestGPIO();
 
 uint8_t InitSPIFFS();
 
-uint8_t 
-
-
-
-
-
-
-
-
-
-
-
-
-initSD(); // TODO: return a bool
+uint8_t initSD(); // TODO: return a bool
 void SwitchLEDs(uint8_t, uint8_t);
 
 void InitXMODEM();
@@ -175,6 +165,7 @@ void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
         debugln("- failed to open directory");
         return;
     }
+    
     if (!root.isDirectory()) {
         debugln(" - not a directory");
         return;
@@ -682,10 +673,9 @@ uint8_t main_pyro = 12;
 uint8_t flash_cs_pin = 5;           /*!< External flash memory chip select pin */
 uint8_t remote_switch = 27;
 
-
 /* Flight data logging */
 uint8_t flash_led_pin = 32;                  /*!< LED pin connected to indicate flash memory formatting  */
-char filename[] = "flight.bin";             /*!< data log filename - Filename must be less than 20 chars, including the file extension */
+char filename[] = "flight.txt";             /*!< data log filename - Filename must be less than 20 chars, including the file extension */
 uint32_t FILE_SIZE_512K = 524288L;          /*!< 512KB */
 uint32_t FILE_SIZE_1M  = 1048576L;          /*!< 1MB */
 uint32_t FILE_SIZE_4M  = 4194304L;          /*!< 4MB */
@@ -699,6 +689,18 @@ DataLogger data_logger(flash_cs_pin, flash_led_pin, filename, file,  FILE_SIZE_4
 /* position integration variables */
 long long current_time = 0;
 long long previous_time = 0;
+
+/**
+* @brief create dynamic WIFI
+*/
+void initDynamicWIFI() {
+    uint8_t wifi_connection_result = wifi_config.WifiConnect();
+    if(wifi_connection_result) {
+        debugln("Wifi config OK!");
+    } else {
+        debugln("Wifi config failed");
+    }
+}
 
 /**
  * Task synchronization variables
@@ -798,6 +800,11 @@ QueueHandle_t gps_data_qHandle;
 // QueueHandle_t flight_states_queue;
 
 
+/**
+ * @brief This is a fallback function in case we need to manually connect to the WIFI
+ * The right method to use when connecting is the WIFI provisioning method outlined above
+ *
+ */
 // void connectToWifi(){
 //     digitalWrite(LED_BUILTIN, HIGH);
 //     /* Connect to a Wi-Fi network */
@@ -1536,19 +1543,10 @@ void setup(){
 
         } else {
             debugln("current state undefined... ");
-
         }
 
-        /**
-         * create dynamic WIFI
-         *
-         */ 
-        // uint8_t wifi_connection_result = wifi_config.WifiConnect();
-        // if(wifi_connection_result) {
-        //     debugln("Wifi config OK!");
-        // } else {
-        //     debugln("Wifi config failed");
-        // }
+        // create and wait for dynamic WIFI connection
+        initDynamicWIFI();
 
         /* mode 0 resets the system log file by clearing all the current contents */
         // system_logger.logToFile(SPIFFS, 0, rocket_ID, level, system_log_file, "Game Time!"); // TODO: DEBUG
@@ -1766,13 +1764,6 @@ void setup(){
  * @brief Main loop
  *******************************************************************************/
 void loop() {
-    //     if(WiFi.status() != WL_CONNECTED){
-    //         WiFi.begin(SSID, PASSWORD);
-    //         delay(500);
-    //         debug(".");
-    //     }
-
-
     //////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -1790,6 +1781,9 @@ void loop() {
         if(current_test_state == TEST_STATES::DATA_CONSUME) {
             debugln("=============== Consuming test data ===============");
             readFile(SD, "/data.txt");
+
+            // feed into state machine 
+
         }
 
         // if( !mqtt_client.connected() ) {
