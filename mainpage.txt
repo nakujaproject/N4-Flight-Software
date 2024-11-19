@@ -212,7 +212,7 @@ This shows that the flight computer has created a web portal and is waiting for 
   @htmlonly
     <div style="text-align: center;" height=400 width=200>
 
-        <img src="../images/step-1-res.jpg" >
+        <img src="step-1-res.jpg" >
 
     </div>
  @endhtmlonly
