@@ -766,6 +766,11 @@ void readAccelerationTask(void* pvParameter) {
  *******************************************************************************/
 void readAltimeterTask(void* pvParameters){
     telemetry_type_t alt_data_lcl;
+    float prev_alt = 0;
+    float current_alt = 0;
+    unsigned long prev_time = 0;
+    unsigned long current_time = 0;
+    float vertical_velocity = 0;
 
     while(true){    
         // If you want to measure altitude, and not pressure, you will instead need
@@ -843,11 +848,29 @@ void readAltimeterTask(void* pvParameters){
         // delay(2000);
 
         // TODO: compute the velocity from the altimeter data
+         prev_alt = a;
+         prev_time = millis();
+
+        while(1){
+            current_alt = a;
+            current_time = millis();
+
+            float delta_time = (current_time - prev_time)/ 1000;
+
+            float delta_alt = current_alt - prev_alt;
+
+            vertical_velocity = delta_alt / delta_time;
+
+            prev_alt = current_alt;
+            prev_time = current_time;
+
+            delay(1000);
+        }
 
         // assign data to queue
         alt_data_lcl.alt_data.pressure = P;
         alt_data_lcl.alt_data.altitude = a;
-        alt_data_lcl.alt_data.velocity = 0;
+        alt_data_lcl.alt_data.velocity = vertical_velocity;
         alt_data_lcl.alt_data.temperature = T;
 
         // send this pressure data to queue
@@ -1194,71 +1217,91 @@ void MQTT_Reconnect() {
 //     /* This function sends data to the ground station */
 
 //      /*  create two pointers to the data structures to be transmitted */
-    
-//     char telemetry_data[180];
-//     struct Acceleration_Data gyroscope_data_receive;
-//     struct Altimeter_Data altimeter_data_receive;
-//     struct GPS_Data gps_data_receive;
-//     int32_t flight_state_receive;
+
+//     constexpr int INITIAL_BUFFER_SIZE = 512;  // typical buffer size of telemetry packet is 450 ~ 500 bytes
+//     char telemetry_data[INITIAL_BUFFER_SIZE];
+
+//     struct Telemetry_Data telemetry_data_receive;
+//     // struct Acceleration_Data gyroscope_data_receive;
+//     // struct Altimeter_Data altimeter_data_receive;
+//     // struct GPS_Data gps_data_receive;
+//     // int32_t flight_state_receive;
 //     int id = 0;
 
 //     while(true){
-//         file = SPIFFS.open("/log.csv", FILE_APPEND);
+//         File logFile = SPIFFS.open("/log.csv", FILE_APPEND);
 //         if(!file) debugln("[-] Failed to open file for appending");
 //         else debugln("[+] File opened for appending");
         
 //         /* receive data into respective queues */
-//         if(xQueueReceive(gyroscope_data_queue, &gyroscope_data_receive, portMAX_DELAY) == pdPASS){
-//             debugln("[+]Gyro data ready for sending ");
+//         if(xQueueReceive(telemetry_data_qHandle, &telemetry_data_receive, portMAX_DELAY) == pdPASS){
+//             debugln("[+]Telemetry data ready for sending ");
 //         }else{
-//             debugln("[-]Failed to receive gyro data");
+//             debugln("[-]Failed to receive telemetry data");
 //         }
 
-//         if(xQueueReceive(altimeter_data_queue, &altimeter_data_receive, portMAX_DELAY) == pdPASS){
-//             debugln("[+]Altimeter data ready for sending ");
-//         }else{
-//             debugln("[-]Failed to receive altimeter data");
-//         }
+//         // if(xQueueReceive(altimeter_data_queue, &altimeter_data_receive, portMAX_DELAY) == pdPASS){
+//         //     debugln("[+]Altimeter data ready for sending ");
+//         // }else{
+//         //     debugln("[-]Failed to receive altimeter data");
+//         // }
 
-//         if(xQueueReceive(gps_data_queue, &gps_data_receive, portMAX_DELAY) == pdPASS){
-//             debugln("[+]GPS data ready for sending ");
-//         }else{
-//             debugln("[-]Failed to receive GPS data");
-//         }
+//         // if(xQueueReceive(gps_data_queue, &gps_data_receive, portMAX_DELAY) == pdPASS){
+//         //     debugln("[+]GPS data ready for sending ");
+//         // }else{
+//         //     debugln("[-]Failed to receive GPS data");
+//         // }
 
-//         if(xQueueReceive(flight_states_queue, &flight_state_receive, portMAX_DELAY) == pdPASS){
-//             debugln("[+]Flight state ready for sending ");
-//         }else{
-//             debugln("[-]Failed to receive Flight state");
-//         }
+//         // if(xQueueReceive(flight_states_queue, &flight_state_receive, portMAX_DELAY) == pdPASS){
+//         //     debugln("[+]Flight state ready for sending ");
+//         // }else{
+//         //     debugln("[-]Failed to receive Flight state");
+//         // }
+
+
+//         // parse data in json format to telemetry_data packet
+//         // Example output -> { "id": 123, "state": 1, "operation_mode": 2, 
+//         // "acc_data": { "ax": 1.23, "ay": 4.56, "az": 7.89, "pitch": 10.11, "roll": 12.13 }, 
+//         // "gyro_data": { "gx": 14.15, "gy": 16.17, "gz": 18.19 }, 
+//         // "gps_data": { "latitude": 20.2, "longitude": 22.2, "gps_altitude": 24.23, "time": 25 }, 
+//         // "alt_data": { "pressure": 26.24, "temperature": 28.25, "AGL": 30.26, "velocity": 32.27 }, 
+//         // "chute_state": { "pyro1_state": 1, "pyro2_state": 0 }, "battery_voltage": 34.28 }
 
 //         sprintf(telemetry_data,
-//             "%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%i,%.16f,%.16f,%i,%i\n",
+//             "%i,"%i,"%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.8f,%.8f,%.2f,%.X,%.2f,%.2f,%.2f,%.2f,%i,%i,%.2f,\n",
 //             id,//0
-//             gyroscope_data_receive.ax,//1
-//             gyroscope_data_receive.ay,//2
-//             gyroscope_data_receive.az,//3
-//             gyroscope_data_receive.gx,//4
-//             gyroscope_data_receive.gy,//5
-//             gyroscope_data_receive.gz,//6
-//             altimeter_data_receive.AGL,//7
-//             altimeter_data_receive.altitude,//8
-//             altimeter_data_receive.velocity,//9
-//             altimeter_data_receive.pressure,//10
-//             gps_data_receive.latitude,//11
-//             gps_data_receive.longitude,//12
-//             gps_data_receive.time,//13
-//             flight_state_receive//14
+//             telemetry_data_receive.state, //1
+//             telemetry_data_receive.operation_mode, //2
+//             telemetry_data_receive.acc_data.ax,//3
+//             telemetry_data_receive.acc_data.ay,//4
+//             telemetry_data_receive.acc_data.az,//5
+//             telemetry_data_receive.acc_data.pitch,//6
+//             telemetry_data_receive.acc_data.roll,//7
+//             telemetry_data_receive.gyro_data.gx,//8
+//             telemetry_data_receive.gyro_data.gy,//9
+//             telemetry_data_receive.gyro_data.gz,//10
+//             telemetry_data_receive.gps_data.latitude,//11
+//             telemetry_data_receive.gps_data.longitude,//12
+//             telemetry_data_receive.gps_data.gps_altitude,//13
+//             telemetry_data_receive.gps_data.time,//14
+//             telemetry_data_receive.alt_data.pressure,//15
+//             telemetry_data_receive.alt_data.temperature,//16
+//             telemetry_data_receive.alt_data.AGL,//17
+//             telemetry_data_receive.alt_data.velocity,//18
+//             telemetry_data_receive.chute_state.pyro1_state,//19
+//             telemetry_data_receive.chute_state.pyro2_state,//20
+//             telemetry_data_receive.battery_voltage,//21 
 //         );
-//         if(file.print(telemetry_data)){
+
+//         if(logFile.print(telemetry_data)){
 //             debugln("[+] Message appended");
 //         } else {
 //             debugln("[-] Append failed");
 //         }
-//         file.close();
+//         logFile.close();
 //         id+=1;
 
-//         if(mqtt_client.publish("n3/telemetry", telemetry_data)) {
+//         if(mqtt_client.publish(MQTT_TOPIC, telemetry_data)) {
 //             debugln("[+]Data sent");
 //         } else{
 //             debugln("[-]Data not sent");
@@ -1409,14 +1452,14 @@ void setup(){
         debugln(F("============== CREATING QUEUES ==============="));
         debugln(F("=============================================="));
 
-        // this queue holds the data from MPU 6050 - this data is filtered already
-        accel_data_qHandle = xQueueCreate(GYROSCOPE_QUEUE_LENGTH, sizeof(accel_type_t)); 
+        // // this queue holds the data from MPU 6050 - this data is filtered already
+        // accel_data_qHandle = xQueueCreate(GYROSCOPE_QUEUE_LENGTH, sizeof(accel_type_t)); 
 
-        // this queue hold the data read from the BMP180
-        altimeter_data_qHandle = xQueueCreate(ALTIMETER_QUEUE_LENGTH, sizeof(altimeter_type_t)); 
+        // // this queue hold the data read from the BMP180
+        // altimeter_data_qHandle = xQueueCreate(ALTIMETER_QUEUE_LENGTH, sizeof(altimeter_type_t)); 
 
-        /* create gps_data_queue */   
-        gps_data_qHandle = xQueueCreate(GPS_QUEUE_LENGTH, sizeof(gps_type_t));
+        // /* create gps_data_queue */   
+        // gps_data_qHandle = xQueueCreate(GPS_QUEUE_LENGTH, sizeof(gps_type_t));
 
         // this queue holds the telemetry data packet
         telemetry_data_qHandle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_packet));
@@ -1424,24 +1467,24 @@ void setup(){
         // /* this queue will hold the flight states */
         // flight_states_queue = xQueueCreate(FLIGHT_STATES_QUEUE_LENGTH, sizeof(int32_t));
 
-        /* check if the queues were created successfully */
-        if(accel_data_qHandle == NULL){
-            debugln("[-]accel data queue creation failed");
-        } else{
-            debugln("[+]Acceleration data queue creation OK.");
-        }
+        // /* check if the queues were created successfully */
+        // if(accel_data_qHandle == NULL){
+        //     debugln("[-]accel data queue creation failed");
+        // } else{
+        //     debugln("[+]Acceleration data queue creation OK.");
+        // }
         
-        if(altimeter_data_qHandle == NULL){
-            debugln("[-]Altimeter data queue creation failed");
-        } else{
-            debugln("[+]Altimeter data queue creation OK.");
-        }
+        // if(altimeter_data_qHandle == NULL){
+        //     debugln("[-]Altimeter data queue creation failed");
+        // } else{
+        //     debugln("[+]Altimeter data queue creation OK.");
+        // }
 
-        if(gps_data_qHandle == NULL){
-            debugln("[-]GPS data queue creation failed");
-        } else{
-            debugln("[+]GPS data queue creation OK.");
-        }
+        // if(gps_data_qHandle == NULL){
+        //     debugln("[-]GPS data queue creation failed");
+        // } else{
+        //     debugln("[+]GPS data queue creation OK.");
+        // }
 
         if(telemetry_data_qHandle == NULL) {
             debugln("[-]Telemetry data queue creation failed");

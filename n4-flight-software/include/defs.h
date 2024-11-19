@@ -62,8 +62,8 @@ const char MQTT_TOPIC[20] = "n4/telemetry";
 #define MQTT_TOPIC_LENGTH           10      /*!< length of mqtt topic string */
 
 /* WIFI credentials */
-// const char* SSID = "Galaxy";             /*!< WIFi SSID */
-// const char* PASSWORD = "luwa2131";       /*!< WiFi password */
+// const char* SSID = "Nakuja";             /*!< WIFi SSID */
+// const char* PASSWORD = "987654321";       /*!< WiFi password */
 
 #define CALLIBRATION_READINGS   200         /*!< number of readings to take while calibrating the sensor */
 

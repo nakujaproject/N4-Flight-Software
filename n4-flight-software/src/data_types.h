@@ -50,16 +50,26 @@ typedef struct Altimeter_Data{
 } altimeter_type_t;
 
 /**
+ * A structure to represent the chute pyro state
+ */
+typedef struct ChutePyro_State{
+    uint8_t pyro1_state;             /*!< main chute pyro state */
+    uint8_t pyro2_state;             /*!< drogue chute pyro state */
+} chutepyro_type_t;
+
+/**
  * A structure to represent telemetry data. This is the data transmitted to ground
  */
 typedef struct Telemetry_Data {
     uint32_t record_number;     /*!< current row number for flight data logging  */
-    uint8_t operation_mode;     /*!< operation mode to tell whether we are in SAFE or FLIGHT mode */
     uint8_t state;              /*!< current flight state. See states.h */
-    altimeter_type_t alt_data;  /*!< altimeter data */
+    uint8_t operation_mode;     /*!< operation mode to tell whether we are in SAFE or FLIGHT mode */
     accel_type_t acc_data;      /*!< accelerometer data */
     gyro_type_t gyro_data;      /*!< gyroscope data */
     gps_type_t gps_data;        /*!< gps data */
+    altimeter_type_t alt_data;  /*!< altimeter data */
+    chutepyro_type_t chute_state;   /*!< state of the main and drogue chute pyro (whether ejected or active) */
+    uint32_t battery_voltage;   /*!< altimeter data */
 } telemetry_type_t;
 
 #endif
