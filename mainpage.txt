@@ -82,7 +82,7 @@
  @htmlonly
     <div >
 
-        <img src="../images/n4-flight-computer-pinout-link.png" >
+        <img src="n4-flight-computer-pinout-link.png" >
 
     </div>
  @endhtmlonly
@@ -101,7 +101,7 @@ The pin assignment to ESP32 are listed in the following file: https://github.com
  @htmlonly
     <div style="text-align: center;">
 
-        <img src="../images/test-run-mode.png" >
+        <img src="test-run-mode.png" >
 
     </div>
  @endhtmlonly
@@ -196,7 +196,7 @@ Here is the X-MODEM commands list for quick reference:
 @htmlonly
     <div style="text-align: center;">
 
-        <img src="../images/step-1-serial.png" >
+        <img src="step-1-serial.png" >
 
     </div>
  @endhtmlonly
@@ -220,7 +220,7 @@ This shows that the flight computer has created a web portal and is waiting for 
  @htmlonly
     <div style="text-align: center;">
 
-        <img src="../images/step-2.jpg" >
+        <img src="step-2.jpg" >
 
     </div>
  @endhtmlonly
@@ -231,7 +231,7 @@ This shows that the flight computer has created a web portal and is waiting for 
   @htmlonly
     <div style="text-align: center;">
 
-        <img src="../images/step-3.jpg" >
+        <img src="step-3.jpg" >
 
     </div>
  @endhtmlonly
