@@ -689,6 +689,9 @@ DataLogger data_logger(flash_cs_pin, flash_led_pin, filename, file,  FILE_SIZE_4
 long long current_time = 0;
 long long previous_time = 0;
 
+/* To store the main telemetry packet being sent over MQTT */
+char telemetry_packet_buffer[100];
+
 /**
 * @brief create dynamic WIFI
 */
@@ -869,7 +872,7 @@ void readAccelerationTask(void* pvParameter) {
  * so it is not valid to pass the address of a stack variable.
  * @return Sends altimeter data to altimeter queue
  *******************************************************************************/
-void readAltimeterTask(void* pvParameters){
+void readAltimeterTask(void* pvParameters) {
     telemetry_type_t alt_data_lcl;
 
     while(true){    
@@ -1268,8 +1271,67 @@ void logToMemory(void* pvParameter) {
  *
  *******************************************************************************/
 void MQTT_TransmitTelemetry(void* pvParameters) {
+    // variable to store the received packet to transmit
+    telemetry_type_t telemetry_received_packet;
+
     while(1) {
-        if( client.publish("n4/flight-computer-1", "Hello from FC1") ) {
+
+        // receive from telemetry queue
+        if(xQueuePeek(telemetry_data_qHandle, &telemetry_received_packet, portMAX_DELAY) == pdPASS) {
+            // rcvd_data.gps_data.latitude
+            /**
+             * record number
+             * operation_mode
+             * state
+             * ax
+             * ay
+             * az
+             * pitch
+             * roll
+             * gx
+             * gy
+             * gz
+             * latitude
+             * longitude
+             * gps_altitude
+             * gps_time
+             * pressure
+             * temperature
+             * altitude_agl
+             * velocity
+             * pyro1_state //
+             * pyro2_state //
+             * battery_voltage //
+             *
+             */
+            sprintf(telemetry_packet_buffer,
+                    "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%.2f,%.2f,%.2f,%.2f\n",
+                    telemetry_received_packet.record_number,
+                    telemetry_received_packet.operation_mode,
+                    telemetry_received_packet.state,
+                    telemetry_received_packet.acc_data.ax,
+                    telemetry_received_packet.acc_data.ay,
+                    telemetry_received_packet.acc_data.az,
+                    telemetry_received_packet.acc_data.pitch,
+                    telemetry_received_packet.acc_data.roll,
+                    telemetry_received_packet.gyro_data.gx,
+                    telemetry_received_packet.gyro_data.gy,
+                    telemetry_received_packet.gps_data.latitude,
+                    telemetry_received_packet.gps_data.longitude,
+                    telemetry_received_packet.gps_data.gps_altitude,
+                    telemetry_received_packet.gps_data.time,
+                    telemetry_received_packet.alt_data.pressure,
+                    telemetry_received_packet.alt_data.temperature,
+                    telemetry_received_packet.alt_data.AGL,
+                    telemetry_received_packet.alt_data.velocity
+                    );
+
+        } else {
+            /* no queue */
+        }
+
+        /* Send to MQTT topic  */
+        if( client.publish(MQTT_TOPIC, telemetry_packet_buffer) ) {
              debugln("[+]Data sent");
          } else {
              debugln("[-]Data not sent");
