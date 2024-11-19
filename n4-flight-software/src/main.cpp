@@ -659,11 +659,10 @@ void prepareForDataReceive() {
 /**
  * MQTT helper instances, if using MQTT to transmit telemetry
  */
-#if MQTT
-    WiFiClient wifi_client;
-    PubSubClient mqtt_client(wifi_client);
-    void MQTTInit(const char* broker_IP, uint16_t broker_port);
-#endif
+
+WiFiClient wifi_client;
+PubSubClient client(wifi_client);
+uint8_t MQTTInit(const char* broker_IP, uint16_t broker_port);
 
 /* WIFI configuration class object */
 WIFIConfig wifi_config;
@@ -1269,9 +1268,8 @@ void logToMemory(void* pvParameter) {
  *
  *******************************************************************************/
 void MQTT_TransmitTelemetry(void* pvParameters) {
-
     while(1) {
-        if(mqtt_client.publish(MQTT_TOPIC, "Hello from FC1")) {
+        if( client.publish("n4/flight-computer-1", "Hello from FC1") ) {
              debugln("[+]Data sent");
          } else {
              debugln("[-]Data not sent");
@@ -1285,12 +1283,12 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
  *
  */
 void MQTT_Reconnect() {
-     while(!mqtt_client.connected()){
+     while(!client.connected()){
          debug("[..]Attempting MQTT connection..."); // TODO: SYS L
-         String client_id = "[+]FC Client - ";
+         String client_id = "[+]Flight-computer-1 client: ";
          client_id += String(random(0XFFFF), HEX);
 
-         if(mqtt_client.connect(client_id.c_str())){
+         if(client.connect(client_id.c_str())){
              debugln("[+]MQTT connected");
          }
     }
@@ -1364,7 +1362,7 @@ void MQTT_Reconnect() {
 //         file.close();
 //         id+=1;
 
-//         if(mqtt_client.publish("n3/telemetry", telemetry_data)) {
+//         if(client.publish("n3/telemetry", telemetry_data)) {
 //             debugln("[+]Data sent");
 //         } else{
 //             debugln("[-]Data not sent");
@@ -1378,8 +1376,10 @@ void MQTT_Reconnect() {
  *
  *******************************************************************************/
 void MQTTInit(const char* broker_IP, int broker_port) {
-    // mqtt_client.setBufferSize(MQTT_BUFFER_SIZE);
-    mqtt_client.setServer(broker_IP, broker_port);
+    // client.setBufferSize(MQTT_BUFFER_SIZE);
+    debugln("[+]Initializing MQTT\n");
+    client.setServer(broker_IP, broker_port);
+    delay(2000);
 }
 
 /*!****************************************************************************
@@ -1410,9 +1410,9 @@ void drogueChuteDeploy() {
 
 /*!****************************************************************************
  * @brief fires the pyro-charge to deploy the main chute
- * Turn on the main chute ejection circuit by running the GPIO 
- * HIGH for a preset No. of seconds.  
- * Default no. of seconds to remain HIGH is 5 
+ * Turn on the main chute ejection circuit by running the GPIO
+ * HIGH for a preset No. of seconds
+ * Default no. of seconds to remain HIGH is 5
  * 
  *******************************************************************************/
 void mainChuteDeploy() {
@@ -1445,6 +1445,14 @@ void setup(){
 
     debugln();
     debugln(F("=============================================="));
+    debugln(F("========= CREATING DYNAMIC WIFI ==========="));
+    debugln(F("=============================================="));
+
+    // create and wait for dynamic WIFI connection
+    initDynamicWIFI();
+
+    debugln();
+    debugln(F("=============================================="));
     debugln(F("========= INITIALIZING PERIPHERALS ==========="));
     debugln(F("=============================================="));
 
@@ -1455,7 +1463,7 @@ void setup(){
     initDataFiles();
     uint8_t spiffs_init_state = InitSPIFFS();
     uint8_t test_gpio_init_state = initTestGPIO();
-    // uint8_t mqtt_init_state = MQTTInit(MQTT_SERVER, MQTT_PORT);    
+    MQTTInit(MQTT_SERVER, MQTT_PORT);
 
     /* update the susbsystems init state table */   
     // check if BMP init OK
@@ -1493,7 +1501,7 @@ void setup(){
         SUBSYSTEM_INIT_MASK |= (1 << TEST_HARDWARE_CHECK_BIT);
     }
 
-    debug("SUBSYSTEM_INIT_MASK: "); debugln(SUBSYSTEM_INIT_MASK);
+    debug("[]SUBSYSTEM_INIT_MASK: "); debugln(SUBSYSTEM_INIT_MASK);
 
     // delay(2000);
 
@@ -1507,7 +1515,7 @@ void setup(){
         // in test mode we only transfer test data from the testing PC to the SD card
         debugln();
         debugln(F("=============================================="));
-        debugln(F("=========FLIGHT COMPUTER DATA ACQUISITION MODE========="));
+        debugln(F("========= FLIGHT COMPUTER DATA ACQUISITION MODE ========="));
         debugln(F("=============================================="));
 
         debugln("Ready to receive data...");
@@ -1544,9 +1552,6 @@ void setup(){
         } else {
             debugln("current state undefined... ");
         }
-
-        // create and wait for dynamic WIFI connection
-        initDynamicWIFI();
 
         /* mode 0 resets the system log file by clearing all the current contents */
         // system_logger.logToFile(SPIFFS, 0, rocket_ID, level, system_log_file, "Game Time!"); // TODO: DEBUG
@@ -1663,7 +1668,7 @@ void setup(){
         }
 
         /* TASK 2: READ ALTIMETER DATA */
-        th = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*2,NULL,2,NULL,app_id);
+        th = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*2,NULL,1,NULL,app_id);
         if(th == pdPASS) {
             debugln("[+]Read altimeter task created OK.");
         } else {
@@ -1704,26 +1709,26 @@ void setup(){
             debugln("[-}Failed to create flightStateCallback task");
         }
 
+        /* TASK 8: TRANSMIT TELEMETRY DATA */
+        th = xTaskCreatePinnedToCore(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*2, NULL, 1, NULL, app_id);
+        if(th == pdPASS){
+            debugln("[+]Transmit task created OK!");
+        } else {
+            debugln("[-]Transmit task failed to create");
+        }
+
         #if DEBUG_TO_TERMINAL   // set DEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
 
         /* TASK 7: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
         th = xTaskCreatePinnedToCore(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE,NULL,1,NULL,app_id);
         
         if(th == pdPASS) {
-            debugln("[+}debugToTerminalTaskTask created");
+            debugln("[+}debugToTerminal Task created OK!");
         } else {
             debugln("[-}Task not created");
         }
 
         #endif // DEBUG_TO_TERMINAL_TASK
-
-        /* TASK 8: TRANSMIT TELEMETRY DATA */
-        th = xTaskCreatePinnedToCore(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*2, NULL, 2, NULL, app_id);
-        if(th == pdPASS){
-            debugln("[+]Transmit task created OK!");
-        } else {
-            debugln("[-]Transmit task failed to create");
-        }
 
         #if LOG_TO_MEMORY   // set LOG_TO_MEMORY to 1 to allow logging to memory 
             /* TASK 9: LOG DATA TO MEMORY */
@@ -1782,16 +1787,16 @@ void loop() {
             debugln("=============== Consuming test data ===============");
             readFile(SD, "/data.txt");
 
-            // feed into state machine 
-
+            // feed into state machine
         }
 
-        // if( !mqtt_client.connected() ) {
-        //     /* try to reconnect if connection is lost */
-        //     MQTT_Reconnect();
-        // }
+         if( !client.connected() ) {
+             /* try to reconnect if connection is lost */
+             debugln("Connection lost. Reconnecting to MQTT...");
+             MQTT_Reconnect();
+         }
 
-        // mqtt_client.loop();
+         client.loop();
 
     }
 

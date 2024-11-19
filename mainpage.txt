@@ -202,7 +202,7 @@ Here is the X-MODEM commands list for quick reference:
  @endhtmlonly
 This shows that the flight computer has created a web portal and is waiting for connection from an external device.
 
-  - When powered on, the flight computer will create an open WIFI network called "flight-computer". This network will
+  - When powered on, the flight computer will create an open WIFI network called "flight-computer-1". This network will
   be visible on any device within range.
   - The FC sets itself as an Access Point and will provide its own WIFI network to the for other devices to connect to.
   - On the ground station computer, or using a smartphone, connect to "flight-computer-1". (NOTE: The WIFI name will change depending on the name of the rocket being used )
@@ -241,6 +241,8 @@ This shows that the flight computer has created a web portal and is waiting for 
   - Make sure that the ground station PC and the flight computer are on the same network.
 
   * @section step22 MQTT configuration
+
+  
 
   * @section step23 Flight Data Collection and Kalman Filtering
   The main senors used in the flight computer are accelerometer and pressure sensors. We use the MPU6050 for acceleration and angular velocity measurements. We use the BMP180 for atmospheric pressure and altitude measurement. This data is collected as raw data which is then processed and filtered using the Kalman filter algorithm. 
