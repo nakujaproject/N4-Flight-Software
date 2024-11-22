@@ -1,6 +1,8 @@
 var searchData=
 [
-  ['xbee_0',['XBEE',['../defs_8h.html#a14aec3db1cd23e300c83cd79bdb2120c',1,'defs.h']]],
-  ['xbee_20mqtt_20lora_20wifi_20telemetry_20selection_1',['XBEE, MQTT, LORA, WIFI telemetry selection',['../index.html#step8',1,'']]],
-  ['xbee_5fbaud_5frate_2',['XBEE_BAUD_RATE',['../defs_8h.html#a39a469a7d14e92b5f8a6cba126c62259',1,'defs.h']]]
+  ['wifi_20network_20configuration_0',['WIFI network configuration',['../index.html#step21',1,'']]],
+  ['wifi_20telemetry_20selection_1',['XBEE, MQTT, LORA, WIFI telemetry selection',['../index.html#step8',1,'']]],
+  ['wifi_5fconfig_2',['wifi_config',['../main_8cpp.html#ab373e93ee373b64207ddef0991fcac9d',1,'main.cpp']]],
+  ['wificonfig_3',['WIFIConfig',['../class_w_i_f_i_config.html',1,'']]],
+  ['wificonnect_4',['WifiConnect',['../class_w_i_f_i_config.html#a4971db261d244a871303c9ee402b3ef9',1,'WIFIConfig']]]
 ];

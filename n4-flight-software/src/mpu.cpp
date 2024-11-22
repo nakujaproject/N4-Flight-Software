@@ -10,7 +10,7 @@ MPU6050::MPU6050(uint8_t address, uint32_t accel_fs_range, uint32_t gyro_fs_rang
 }
 
 // initialize the MPU6050 
-void MPU6050::init() {
+uint8_t  MPU6050::init() {
     // initialize the MPU6050 
     Wire.begin(static_cast<int>(SDA), static_cast<int>(SCL));
     Wire.beginTransmission(this->_address);
@@ -49,6 +49,7 @@ void MPU6050::init() {
     Wire.endTransmission(true);
 
     Serial.println(F("[+]MPU6050 init OK."));
+    return 1; // FIXME: what did you check?
 }
 
 /**

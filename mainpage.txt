@@ -70,20 +70,113 @@
 
  * @note If your ESP32 is note recognized, you have to install USB-TO-TTL chip driver manually. For ESP32 Boards using CH340 chip, download the driver here [CH340 Driver-SparkFun](https://learn.sparkfun.com/tutorials/how-to-install-ch340-drivers/all). Run the driver and it will be automatically installed on your machine. For ESP32 Boards using CP2102 chip, follow the procedure here [CP2102-driver-POLOLU](https://www.pololu.com/docs/0J7/all). Run the driver and it will be automatically installed on your machine.
 
- * - Upload and run 
+ * Upload and run 
  * Close any open serial ports connected to that ESP32 and run the command below
  * @code{.sh}
  * pio run -t upload 
  * @endcode
- * The firmware will be uploaded to the flight computer
+ * The firmware will be uploaded to the flight computer!
 
  * @section step13 Hardware, pin assignment and peripherals
- * @note In development
+ *
+ @htmlonly
+    <div >
 
+        <img src="n4-flight-computer-pinout-link.png" >
+
+    </div>
+ @endhtmlonly
+
+The pin assignment to ESP32 are listed in the following file: https://github.com/nakujaproject/N4-Flight-Software/blob/main/flight-computer-pin-assignment-version-1.xlsx
+
+
+ * 
  * @section step14 Integration and Testing Procedures
- * @note In development
+ * To perform testing and integration of the flight computer, follow the steps below:
 
- * @section step15 Pre-flight software checks
+ * @subsection step15 Hardware setup
+ 
+ * - Referring to the N4 flight computer pinout, make sure the Test/Run toggle is set to TEST-MODE
+
+ @htmlonly
+    <div style="text-align: center;">
+
+        <img src="test-run-mode.png" >
+
+    </div>
+ @endhtmlonly
+
+ * - Upload the n4-flight-software code to the flight computer as per the instructions in the [Upload and run] section above
+ *
+
+ @subsection step16 How to use the Nakuja Flight Computer Testing Engine
+ The testing engine is built to streamline the testing procedures and help inteprate the commands received from the Device Under Test 
+ during the testing phase. It also helps in downloading the test data to the Flight Computer for simulation. 
+
+ @subsection step17 Installation 
+    @note In development 
+
+@subsection step18 Downloading the test data
+- Double click on the app to open. The following window appears. 
+- Select the COM port that the flight computer is connected to. 
+- Select the baud rate 
+- Choose the test-data CSV file. 
+- Click Connect. The flight computer will be connected to the PC via serial. [Connected on COM[X] ] shows on the status bar. 
+- On the flight computer, press on the RESET/EN button and observe the serial Monitor. A code 21 should be received on the Serial Monitor every 4 seconds. 
+Here is the X-MODEM commands list for quick reference:
+
+
+<table>
+
+<caption>X-MODEM Commands</caption>
+<thead>
+<tr>
+<th>Command</th>
+<th>HEX</th>
+<th>DEC</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SOH</td>
+<td>01</td>
+<td>1</td>
+<td>Start of Heading</td>
+</tr>
+<tr>
+<td>ACK</td>
+<td>06</td>
+<td>6</td>
+<td>Positive acknowledge</td>
+</tr>
+<tr>
+<td>NAK</td>
+<td>15</td>
+<td>21</td>
+<td>Negative acknowledge</td>
+</tr>
+<tr>
+<td>CAN</td>
+<td>18</td>
+<td>24</td>
+<td>Cancel</td>
+</tr>
+<tr>
+<td>EOT</td>
+<td>04</td>
+<td>4</td>
+<td>End of transmission</td>
+</tr>
+</tbody>
+</table>
+
+- Click on Link Data. The test engine will download the test data to the flight computer, and the progress will be indicated on the serial Monitor
+
+
+
+ * 
+ * @section step20 Pre-flight software checks
  * The following checks MUST be performed pre-flight to ensure the software operates as designed:
  1. test mode pin toggle
  2. telemetry protocol selection
@@ -92,24 +185,66 @@
  5. DEBUG_to_terminal check - defs.h
  6. LOG_TO_MEMORY - defs.h
 
-  * @section step16 WIFI network configuration
-  * The software is written such that it allows the launch crew to connect to any WIFI they are using, without
-  hardcoding the WIFI credentials into the flight software.
-  Follow the procedure below to connect to the WIFI:
-  1. When powered on, the flight computer will create an open WIFI network called "flight-computer". This network will
+  * @section step21 WIFI network configuration
+  * The software is written such that it allows connection to any WIFI being used, without
+  hardcoding the WIFI credentials into the flight software. This will make the launch preparation faster as no code uploading needs to 
+  be done on-site.
+  Follow the procedure below to connect to WIFI:
+  - After uploading the flight software to the computer, the serial terminal will show the following response. Note the 
+  marked are which is of interest. 
+
+@htmlonly
+    <div style="text-align: center;">
+
+        <img src="step-1-serial.png" >
+
+    </div>
+ @endhtmlonly
+This shows that the flight computer has created a web portal and is waiting for connection from an external device.
+
+  - When powered on, the flight computer will create an open WIFI network called "flight-computer-1". This network will
   be visible on any device within range.
-  2. On the ground station computer, connect to "flight-computer".
-  3. Open the browser and go to the following IP address "192.168.4.1". This should open the following window in
+  - The FC sets itself as an Access Point and will provide its own WIFI network to the for other devices to connect to.
+  - On the ground station computer, or using a smartphone, connect to "flight-computer-1". (NOTE: The WIFI name will change depending on the name of the rocket being used )
+  - Open the browser and go to the following IP address "192.168.4.1". This should open the following window in
   your browser.
-  [image here]
-  4. Enter the WIFI SSID and password for the network you want to connect to. In this case it is the WIFI network used for telemetry
+
+  @htmlonly
+    <div style="text-align: center;" height=400 width=200>
+
+        <img src="step-1-res.jpg" >
+
+    </div>
+ @endhtmlonly
+ - Click on Configure WiFi. The window below opens.
+ @htmlonly
+    <div style="text-align: center;">
+
+        <img src="step-2.jpg" >
+
+    </div>
+ @endhtmlonly
+  
+  - Enter the WIFI SSID and password for the network you want to connect to. In this case it is the WIFI network used for telemetry
   transmission.
-  5. Press save. The flight computer will save the network credentials and auto-reconnect itself to the launch WIFI network. You can now
-  stream telemetry over the network.
+  - Press save. The flight computer will save the network credentials and auto-reconnect itself as a station to the launch WIFI network. 
+  @htmlonly
+    <div style="text-align: center;">
 
-  * @section step17 MQTT configuration
+        <img src="step-3.jpg" >
 
-  * @section step18 Flight Data Collection and Kalman Filtering
+    </div>
+ @endhtmlonly
+
+  – Assuming that the you have supplied the correct login credentials, the ESP32 will now be connected to the WiFi network.
+  - You can now stream telemetry over that network.
+  - Make sure that the ground station PC and the flight computer are on the same network.
+
+  * @section step22 MQTT configuration
+
+  
+
+  * @section step23 Flight Data Collection and Kalman Filtering
   The main senors used in the flight computer are accelerometer and pressure sensors. We use the MPU6050 for acceleration and angular velocity measurements. We use the BMP180 for atmospheric pressure and altitude measurement. This data is collected as raw data which is then processed and filtered using the Kalman filter algorithm. 
 
   The ***Kalman Filter*** allows us to perform predictive recursive low pass filtering which greatly improves our collected sensor data which is safe for the state machine to consume. 
@@ -117,7 +252,7 @@
   To learn more about the Kalman filter implementation, refer to the kalman.h and kalman.cpp files in the src folder of the n4-flight-software. 
 
 
- * @section step20 Contributors
+ * @section step24 Contributors
  * Our thanks go to the following current and previous avionics team members for their contribution:
 1. Edwin Mwiti
 2. Junn Hope 
@@ -127,7 +262,7 @@
 6. Tabby Achieng
 7. Sharlyn 
 8. Pat
-9. Emmanuel
+9. Emmanuel Nindo
 10. Fortune
 11. Newton 
 12. Rodney

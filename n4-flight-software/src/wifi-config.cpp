@@ -11,7 +11,6 @@
  * This effectively adds an improved layer of abstraction
  *******************************************************************************/
 
-
 #include "wifi-config.h"
 
 /*!****************************************************************************
@@ -21,10 +20,14 @@
 uint8_t WIFIConfig::WifiConnect() {
     WiFi.mode(WIFI_STA); // start in station mode
     WiFiManager wm;
+
+    // wipe stored credentials
+    // wm.resetSettings();
+
     bool connection_result = 0;
 
-    // generate password procteted acess point
-    connection_result = wm.autoConnect("flight-computer");
+    // generate open access point for devices to connect to
+    connection_result = wm.autoConnect("flight-computer-1"); // change with unique ID of the respective flight computer
 
     if(!connection_result) {
         return 0;
@@ -33,5 +36,7 @@ uint8_t WIFIConfig::WifiConnect() {
         // Wifi is connected here
         // we will check this in main.cpp to see if we have been connected successfully
         return 1;
+
     }
+
 }

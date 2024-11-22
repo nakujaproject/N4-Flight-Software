@@ -41,14 +41,22 @@ var NAVTREE =
       [ "Building the code", "index.html#step11", null ]
     ] ],
     [ "Hardware, pin assignment and peripherals", "index.html#step13", null ],
-    [ "Integration and Testing Procedures", "index.html#step14", null ],
-    [ "Pre-flight software checks", "index.html#step15", null ],
-    [ "WIFI network configuration", "index.html#step16", null ],
-    [ "MQTT configuration", "index.html#step17", null ],
-    [ "Flight Data Collection and Kalman Filtering", "index.html#step18", null ],
-    [ "Contributors", "index.html#step20", null ],
+    [ "Integration and Testing Procedures", "index.html#step14", [
+      [ "Hardware setup", "index.html#step15", null ],
+      [ "How to use the Nakuja Flight Computer Testing Engine", "index.html#step16", null ],
+      [ "Installation", "index.html#step17", null ],
+      [ "Downloading the test data", "index.html#step18", null ]
+    ] ],
+    [ "Pre-flight software checks", "index.html#step20", null ],
+    [ "WIFI network configuration", "index.html#step21", null ],
+    [ "MQTT configuration", "index.html#step22", null ],
+    [ "Flight Data Collection and Kalman Filtering", "index.html#step23", null ],
+    [ "Contributors", "index.html#step24", null ],
     [ "README", "md_n4-flight-software_2_r_e_a_d_m_e.html", null ],
     [ "Flight computer pin assignment", "md_n4-flight-software_2src_2pin__assignment.html", null ],
+    [ "Namespaces", "namespaces.html", [
+      [ "Namespace List", "namespaces.html", "namespaces_dup" ]
+    ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
       [ "Class Index", "classes.html", null ],

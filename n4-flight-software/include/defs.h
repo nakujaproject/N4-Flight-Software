@@ -54,7 +54,7 @@
 #define FLIGHT_STATES_QUEUE_LENGTH 1        /*!< length of the flight states queue */
 
 /* MQTT constants */
-const char MQTT_SERVER[50] = "192.168.1.135";         /*!< MQTT broker IP address */
+const char MQTT_SERVER[20] = "192.168.78.19";         /*!< MQTT broker IP address */
 const char MQTT_TOPIC[20] = "n4/telemetry";
 #define MQTT_PORT 1882                     /*!< MQTT broker port */
 
@@ -65,7 +65,7 @@ const char MQTT_TOPIC[20] = "n4/telemetry";
 // const char* SSID = "Nakuja";             /*!< WIFi SSID */
 // const char* PASSWORD = "987654321";       /*!< WiFi password */
 
-#define CALLIBRATION_READINGS   200         /*!< number of readings to take while calibrating the sensor */
+#define CALLIBRATION_READINGS       200         /*!< number of readings to take while calibrating the sensor */
 
 #define GPS_TX 17                           /*!< GPS TX pin */
 #define GPS_RX 16                           /*!< GPS RX pin */

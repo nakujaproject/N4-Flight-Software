@@ -34,6 +34,9 @@
 /* function prototypes definition */
 void drogueChuteDeploy();
 void mainChuteDeploy();
+void initDynamicWIFI();
+
+
 
 /* state machine variables*/
 uint8_t operation_mode = 0;                                     /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
@@ -52,12 +55,24 @@ const char* rocket_ID = "rocket-1";             /*!< Unique ID of the rocket. Ch
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
+char subsystems_state_buffer[10]; /*!< Holds the status of the subsystems. 1 if Init OK, 0 if init failed */
 
-uint8_t RUN_MODE = 0;
+#define BMP_CHECK_BIT           0
+#define IMU_CHECK_BIT           1   
+#define FLASH_CHECK_BIT         2
+#define GPS_CHECK_BIT           3
+#define SD_CHECK_BIT            4
+#define SPIFFS_CHECK_BIT        5
+#define TEST_HARDWARE_CHECK_BIT 6
+
+uint8_t SUBSYSTEM_INIT_MASK = 0b00000000;  /*!< Holds the status of the subsystems. 1 if Init OK, 0 if init failed */
+
+uint8_t DAQ_MODE = 0;
 uint8_t TEST_MODE = 0;
+uint8_t current_test_state;
 
 #define BAUDRATE        115200
-#define NAK_INTERVAL    4000 /*!< Interval in which to send the NAK command to the transmitter */
+#define NAK_INTERVAL    4000        /*!< Interval in which to send the NAK command to the transmitter */
 
 //  Flags
 uint8_t SOH_recvd_flag = 0; /*!< Transmitter acknowledged?  */
@@ -90,33 +105,43 @@ uint8_t recv_data_led = 2;          /*!< External flash memory chip select pin *
 uint8_t red_led = 15;               /*!< Red LED pin */
 uint8_t green_led = 4;              /*!< Green LED pin */
 uint8_t buzzer = 33;
-uint8_t SET_TEST_MODE_PIN = 14;     /*!< Pin to set the flight computer to TEST mode */
-uint8_t SET_RUN_MODE_PIN = 13;      /*!< Pin to set the flight computer to RUN mode */
+uint8_t SET_DAQ_MODE_PIN = 14;     /*!< Pin to set the flight computer to DAQ mode */
+uint8_t SET_TEST_MODE_PIN = 13;      /*!< Pin to set the flight computer to TEST mode */
 uint8_t SD_CS_PIN = 26;             /*!< Chip select pin for SD card */
 
 
 /*!*****************************************************************************
  * @brief This enum holds the states during flight computer test mode
  *******************************************************************************/
-enum TEST_STATE {
+enum DAQ_STATES {
     HANDSHAKE = 0,      /*!< state to establish initial communication with transmitter */
     RECEIVE_TEST_DATA,  /*!< sets the flight computer to receive test data over serial */
-    CONFIRM_TEST_DATA
+    CONFIRM_TEST_DATA,
+    FINISH_DATA_RECEIVE
 };
 
-uint8_t current_test_state = TEST_STATE::HANDSHAKE; /*!< Define current state the flight computer is in */
+/**
+ * 
+ * Holds the states used when consuming the test data in testing mode
+ * 
+ */
+enum TEST_STATES {
+    DATA_CONSUME = 0,
+    DONE_TESTING
+};
+
+uint8_t current_DAQ_state = DAQ_STATES::HANDSHAKE; /*!< Define current state the flight computer is in */
 
 /**
  * XMODEM serial function prototypes
- *
  */
 void listDir(fs::FS &fs, const char *dirname, uint8_t levels);
 
-void initTestGPIO();
+uint8_t initTestGPIO();
 
-void InitSPIFFS();
+uint8_t InitSPIFFS();
 
-void initSD(); // TODO: return a bool
+uint8_t initSD(); // TODO: return a bool
 void SwitchLEDs(uint8_t, uint8_t);
 
 void InitXMODEM();
@@ -131,6 +156,7 @@ void checkRunTestToggle();
 
 #define FORMAT_SPIFFS_IF_FAILED 1
 const char *test_data_file = "/data.csv";
+const char* run_state_file = "/state.txt";
 
 void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
     Serial.printf("Listing directory: %s\r\n", dirname);
@@ -139,6 +165,7 @@ void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
         debugln("- failed to open directory");
         return;
     }
+    
     if (!root.isDirectory()) {
         debugln(" - not a directory");
         return;
@@ -172,6 +199,28 @@ void readFile(fs::FS &fs, const char *path) {
     while (file.available()) {
         Serial.write(file.read());
     }
+    file.close();
+}
+
+char current_test_state_buffer[50] = ""; // TODO: use appropriate size, to hold the test state read from the SD card state.txt file 
+void readStateFile(fs::FS &fs, const char *path) {
+    Serial.printf("Reading file: %s\r\n", path);
+    File file = fs.open(path);
+    if (!file || file.isDirectory()) {
+        debugln("- failed to open file for reading");
+        return;
+    }
+
+    debugln("- read from file:");
+    int index = 0;
+    while (file.available()) {
+        // Serial.write(file.read());
+        current_test_state_buffer[index++] = file.read();
+        // sprintf(current_test_state_buf,"%s\n", file.read());
+    }
+
+    current_test_state_buffer[index] = '\0';
+
     file.close();
 }
 
@@ -215,56 +264,76 @@ void deleteFile(fs::FS &fs, const char *path) {
 }
 
 void readTestDataFile() {
-    File logFile = SPIFFS.open(test_data_file, "r");
-    if (logFile) {
-        debugln("Log file contents:");
-        while (logFile.available()) {
-            Serial.write(logFile.read());
-        }
-        logFile.close();
-    } else {
-        debugln("Failed to open log file for reading.");
-    }
+    // File logFile = SPIFFS.open(test_data_file, "r");
+    // if (logFile) {
+    //     debugln("Log file contents:");
+    //     while (logFile.available()) {
+    //         Serial.write(logFile.read());
+    //     }
+    //     logFile.close();
+    // } else {
+    //     debugln("Failed to open log file for reading.");
+    // }
 
     // read back the received data to confirm
+    readFile(SD, "/data.txt");
     
 }
 
-void InitSPIFFS() {
+uint8_t InitSPIFFS() {
     if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
         debugln("SPIFFS mount failed"); // TODO: Set a flag for test GUI
-        return;
+        return 0;
     } else {
         debugln("SPIFFS init success");
+        return 1;
     }
 }
 
-void initSD() {
+uint8_t initSD() {
     if (!SD.begin(SD_CS_PIN)) {
         delay(100);
         debugln(F("[-]SD Card mounting failed"));
-        return;
+        return 0;
     } else {
         debugln(F("[+]SD card Init OK!"));
+
+        /* check for card type */
+        uint8_t cardType = SD.cardType();
+        if (cardType == CARD_NONE) {
+            debugln("[-]No SD card attached");
+        } else {
+            debugln("[+]Valid card found");
+        }
+
+        // initialize test data file
+        File file = SD.open("/data.txt", FILE_WRITE); // TODO: change file name to const char*
+        if (!file) {
+            debugln("[File does not exist. Creating file]");
+            debugln("Test data file created");
+        } else {
+            debugln("[*]Data file already exists");
+        }
+        file.close();
+
+        // initialize test state file 
+        File state_file = SD.open("/state.txt", FILE_WRITE);
+        if(!state_file) {
+            debugln("State file does not exit. Creating file...");
+
+            debugln("state file created."); // TODO: move to system logger
+        }
+
+        state_file.close();
+
+        return 1;
     }
+}
 
-    uint8_t cardType = SD.cardType();
-    if (cardType == CARD_NONE) {
-        debugln("[-]No SD card attached");
-        return;
-    }
+void initDataFiles() {
 
-    // initialize test data file
-    File file = SD.open("/data.txt", FILE_WRITE); // TODO: change file name to const char*
-
-    if (!file) {
-        debugln("[File does not exist. Creating file]");
-        writeFile(SD, "/data.csv", "SSID, SECURITY, CHANNEL, LAT, LONG, TIME \r\n");
-    } else {
-        debugln("[*]Data file already exists");
-    }
-
-    file.close();
+    writeFile(SD, "/data.txt", "Test data\r\n");
+    writeFile(SD, "/state.txt", "DATA_CONSUME\r\n"); 
 
 }
 
@@ -273,16 +342,18 @@ void initSD() {
 /*!****************************************************************************
  * @brief Inititialize the GPIOs
  *******************************************************************************/
-void initTestGPIO() {
+uint8_t initTestGPIO() {
     pinMode(red_led, OUTPUT);
     pinMode(green_led, OUTPUT);
+    pinMode(SET_DAQ_MODE_PIN, INPUT);
     pinMode(SET_TEST_MODE_PIN, INPUT);
-    pinMode(SET_RUN_MODE_PIN, INPUT);
     pinMode(buzzer, OUTPUT);
 
     // set LEDs to a known starting state
     digitalWrite(red_led, LOW);
     digitalWrite(green_led, LOW);
+
+    return 1; /* FIXME: Do a proper check here! */
 }
 
 /*!****************************************************************************
@@ -343,6 +414,7 @@ void blink_200ms(uint8_t led_pin) {
 
 /*!****************************************************************************
  * @brief Sample the RUN/TEST toggle pins to check whether the flight computer is in test mode
+ * @brief Sample the RUN/TEST toggle pins to check whether the flight computer is in test mode
  * or run mode.
  * If in TEST mode, define the TEST flag
  * If in RUN mode, define the RUN flag
@@ -350,27 +422,27 @@ void blink_200ms(uint8_t led_pin) {
  *******************************************************************************/
 void checkRunTestToggle() {
 
-    if ((digitalRead(SET_RUN_MODE_PIN) == 0) && (digitalRead(SET_TEST_MODE_PIN) == 1)) {
+    if ((digitalRead(SET_TEST_MODE_PIN) == 0) && (digitalRead(SET_DAQ_MODE_PIN) == 1)) {
         // run mode
-        RUN_MODE = 1;
-        TEST_MODE = 0;
-        SwitchLEDs(TEST_MODE, RUN_MODE);
+        TEST_MODE = 1;
+        DAQ_MODE = 0;
+        SwitchLEDs(DAQ_MODE, TEST_MODE);
     }
 
-    if ((digitalRead(SET_RUN_MODE_PIN) == 1) && (digitalRead(SET_TEST_MODE_PIN) == 0)) {
+    if ((digitalRead(SET_TEST_MODE_PIN) == 1) && (digitalRead(SET_DAQ_MODE_PIN) == 0)) {
         // test mode
-        RUN_MODE = 0;
-        TEST_MODE = 1;
+        TEST_MODE = 0;
+        DAQ_MODE = 1;
 
-        SwitchLEDs(TEST_MODE, RUN_MODE);
+        SwitchLEDs(DAQ_MODE, TEST_MODE);
     }
 
     // here the jumper has been removed. we are neither in the TEST or RUN mode
     // INVALID STATE
-    if ((digitalRead(SET_RUN_MODE_PIN) == 1) && (digitalRead(SET_TEST_MODE_PIN) == 1)) {
+    if ((digitalRead(SET_TEST_MODE_PIN) == 1) && (digitalRead(SET_DAQ_MODE_PIN) == 1)) {
+        DAQ_MODE = 0;
         TEST_MODE = 0;
-        RUN_MODE = 0;
-        SwitchLEDs(!TEST_MODE, !RUN_MODE);
+        SwitchLEDs(!DAQ_MODE, !TEST_MODE);
     }
 
 }
@@ -410,7 +482,7 @@ void ParseSerialBuffer(char *buffer) {
         debugln(F("<SOH rcvd from receiver> Waiting for data..."));
 
         // put the MCU in data receive state
-        current_test_state = TEST_STATE::RECEIVE_TEST_DATA;
+        current_DAQ_state = DAQ_STATES::RECEIVE_TEST_DATA;
         SwitchLEDs(0, 1);
 
 
@@ -437,7 +509,7 @@ void ParseSerialNumeric(int value) {
         // put the MCU in data receive state
         // any serial data after this will be the actual test data being received
         SwitchLEDs(0, 1); // red off, green on
-        current_test_state = TEST_STATE::RECEIVE_TEST_DATA;
+        current_DAQ_state = DAQ_STATES::RECEIVE_TEST_DATA;
 
     } else if (value == 4) {
         // EOT: numeric 4
@@ -511,8 +583,10 @@ void receiveTestDataSerialEvent() {
     } else {
         // end of transmission
         debugln("EOT");
-        current_test_state = TEST_STATE::CONFIRM_TEST_DATA;
 
+        // current_test_state = TEST_STATE::CONFIRM_TEST_DATA;
+        current_DAQ_state = DAQ_STATES::FINISH_DATA_RECEIVE;
+        
     }   
 
     // file.close(); // close the file after receiving the test data is completed
@@ -536,12 +610,12 @@ void prepareForDataReceive() {
     //         break;
     // }
     
-    if(TEST_MODE) {
+    if(DAQ_MODE) {
         // we are in test mode 
-        switch (current_test_state)
+        switch (current_DAQ_state)
         {
             // this state tries to establish communication with the sending PC
-            case TEST_STATE::HANDSHAKE:
+            case DAQ_STATES::HANDSHAKE:
                 handshakeSerialEvent();
                 if(!SOH_recvd_flag) {
                     current_NAK_time = millis();
@@ -554,18 +628,23 @@ void prepareForDataReceive() {
                 break;
 
             // this state receives data sent from the transmitting PC
-            case TEST_STATE::RECEIVE_TEST_DATA:
+            case DAQ_STATES::RECEIVE_TEST_DATA:
                 // debugln("RECEIVE_TEST_DATA");
                 receiveTestDataSerialEvent();
                 break;
 
             // this state perfoms post transmission checks to see if we received the right data
             // packets
-            case TEST_STATE::CONFIRM_TEST_DATA:
+            case DAQ_STATES::CONFIRM_TEST_DATA:
                 readTestDataFile();
                 // debugln("CONFIRM_TEST_DATA");
                 break;
+
+            // this state stops the data transmission state 
+            case DAQ_STATES::FINISH_DATA_RECEIVE:
+                break;
             }
+
     } // end of test mode
     
 }
@@ -581,11 +660,10 @@ void prepareForDataReceive() {
 /**
  * MQTT helper instances, if using MQTT to transmit telemetry
  */
-#if MQTT
-    WiFiClient wifi_client;
-    PubSubClient mqtt_client(wifi_client);
-    void MQTTInit(const char* broker_IP, uint16_t broker_port);
-#endif
+
+WiFiClient wifi_client;
+PubSubClient client(wifi_client);
+uint8_t MQTTInit(const char* broker_IP, uint16_t broker_port);
 
 /* WIFI configuration class object */
 WIFIConfig wifi_config;
@@ -595,10 +673,9 @@ uint8_t main_pyro = 12;
 uint8_t flash_cs_pin = 5;           /*!< External flash memory chip select pin */
 uint8_t remote_switch = 27;
 
-
 /* Flight data logging */
 uint8_t flash_led_pin = 32;                  /*!< LED pin connected to indicate flash memory formatting  */
-char filename[] = "flight.bin";             /*!< data log filename - Filename must be less than 20 chars, including the file extension */
+char filename[] = "flight.txt";             /*!< data log filename - Filename must be less than 20 chars, including the file extension */
 uint32_t FILE_SIZE_512K = 524288L;          /*!< 512KB */
 uint32_t FILE_SIZE_1M  = 1048576L;          /*!< 1MB */
 uint32_t FILE_SIZE_4M  = 4194304L;          /*!< 4MB */
@@ -612,6 +689,21 @@ DataLogger data_logger(flash_cs_pin, flash_led_pin, filename, file,  FILE_SIZE_4
 /* position integration variables */
 long long current_time = 0;
 long long previous_time = 0;
+
+/* To store the main telemetry packet being sent over MQTT */
+char telemetry_packet_buffer[100];
+
+/**
+* @brief create dynamic WIFI
+*/
+void initDynamicWIFI() {
+    uint8_t wifi_connection_result = wifi_config.WifiConnect();
+    if(wifi_connection_result) {
+        debugln("Wifi config OK!");
+    } else {
+        debugln("Wifi config failed");
+    }
+}
 
 /**
  * Task synchronization variables
@@ -663,12 +755,14 @@ double T, P, p0, a;
  * @return TODO: 1 if init OK, 0 otherwise
  * 
  *******************************************************************************/
-void BMPInit() {
+uint8_t BMPInit() {
     if(altimeter.begin()) {
         debugln("[+]BMP init OK.");
         // TODO: update system table
+        return 1;
     } else {
         debugln("[+]BMP init failed");
+        return 0;
     }
 }
 
@@ -677,11 +771,21 @@ void BMPInit() {
  * @return 1 if init OK, 0 otherwise
  * 
  *******************************************************************************/
-void GPSInit() {
+uint8_t GPSInit() {
     Serial2.begin(GPS_BAUD_RATE);
     delay(100); // wait for GPS to init
 
-    debugln("[+]GPS init OK!"); // TODO: Proper GPS init check
+    debugln("[+]GPS init OK!"); 
+
+    /**
+     * FIXME: Proper GPS init check
+     * Look into if the GPS has acquired a LOCK on satelites 
+     * Only if it has a lock then can we return a 1
+     * 
+     * GPS is low priority at the time of writing this but make it work! 
+     * */ 
+
+    return 1;
 }
 
 /**
@@ -699,6 +803,11 @@ QueueHandle_t gps_data_qHandle;
 // QueueHandle_t flight_states_queue;
 
 
+/**
+ * @brief This is a fallback function in case we need to manually connect to the WIFI
+ * The right method to use when connecting is the WIFI provisioning method outlined above
+ *
+ */
 // void connectToWifi(){
 //     digitalWrite(LED_BUILTIN, HIGH);
 //     /* Connect to a Wi-Fi network */
@@ -764,7 +873,7 @@ void readAccelerationTask(void* pvParameter) {
  * so it is not valid to pass the address of a stack variable.
  * @return Sends altimeter data to altimeter queue
  *******************************************************************************/
-void readAltimeterTask(void* pvParameters){
+void readAltimeterTask(void* pvParameters) {
     telemetry_type_t alt_data_lcl;
     float prev_alt = 0;
     float current_alt = 0;
@@ -1186,9 +1295,67 @@ void logToMemory(void* pvParameter) {
  *
  *******************************************************************************/
 void MQTT_TransmitTelemetry(void* pvParameters) {
+    // variable to store the received packet to transmit
+    telemetry_type_t telemetry_received_packet;
 
     while(1) {
-        if(mqtt_client.publish(MQTT_TOPIC, "Hello from FC1")) {
+
+        // receive from telemetry queue
+        if(xQueuePeek(telemetry_data_qHandle, &telemetry_received_packet, portMAX_DELAY) == pdPASS) {
+            // rcvd_data.gps_data.latitude
+            /**
+             * record number
+             * operation_mode
+             * state
+             * ax
+             * ay
+             * az
+             * pitch
+             * roll
+             * gx
+             * gy
+             * gz
+             * latitude
+             * longitude
+             * gps_altitude
+             * gps_time
+             * pressure
+             * temperature
+             * altitude_agl
+             * velocity
+             * pyro1_state //
+             * pyro2_state //
+             * battery_voltage //
+             *
+             */
+            sprintf(telemetry_packet_buffer,
+                    "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%.2f,%.2f,%.2f,%.2f\n",
+                    telemetry_received_packet.record_number,
+                    telemetry_received_packet.operation_mode,
+                    telemetry_received_packet.state,
+                    telemetry_received_packet.acc_data.ax,
+                    telemetry_received_packet.acc_data.ay,
+                    telemetry_received_packet.acc_data.az,
+                    telemetry_received_packet.acc_data.pitch,
+                    telemetry_received_packet.acc_data.roll,
+                    telemetry_received_packet.gyro_data.gx,
+                    telemetry_received_packet.gyro_data.gy,
+                    telemetry_received_packet.gps_data.latitude,
+                    telemetry_received_packet.gps_data.longitude,
+                    telemetry_received_packet.gps_data.gps_altitude,
+                    telemetry_received_packet.gps_data.time,
+                    telemetry_received_packet.alt_data.pressure,
+                    telemetry_received_packet.alt_data.temperature,
+                    telemetry_received_packet.alt_data.AGL,
+                    telemetry_received_packet.alt_data.velocity
+                    );
+
+        } else {
+            /* no queue */
+        }
+
+        /* Send to MQTT topic  */
+        if( client.publish(MQTT_TOPIC, telemetry_packet_buffer) ) {
              debugln("[+]Data sent");
          } else {
              debugln("[-]Data not sent");
@@ -1202,12 +1369,12 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
  *
  */
 void MQTT_Reconnect() {
-     while(!mqtt_client.connected()){
+     while(!client.connected()){
          debug("[..]Attempting MQTT connection..."); // TODO: SYS L
-         String client_id = "[+]FC Client - ";
+         String client_id = "[+]Flight-computer-1 client: ";
          client_id += String(random(0XFFFF), HEX);
 
-         if(mqtt_client.connect(client_id.c_str())){
+         if(client.connect(client_id.c_str())){
              debugln("[+]MQTT connected");
          }
     }
@@ -1349,8 +1516,10 @@ void transmitTelemetry(void* pvParameters){
  *
  *******************************************************************************/
 void MQTTInit(const char* broker_IP, int broker_port) {
-    // mqtt_client.setBufferSize(MQTT_BUFFER_SIZE);
-    mqtt_client.setServer(broker_IP, broker_port);
+    // client.setBufferSize(MQTT_BUFFER_SIZE);
+    debugln("[+]Initializing MQTT\n");
+    client.setServer(broker_IP, broker_port);
+    delay(2000);
 }
 
 /*!****************************************************************************
@@ -1381,9 +1550,9 @@ void drogueChuteDeploy() {
 
 /*!****************************************************************************
  * @brief fires the pyro-charge to deploy the main chute
- * Turn on the main chute ejection circuit by running the GPIO 
- * HIGH for a preset No. of seconds.  
- * Default no. of seconds to remain HIGH is 5 
+ * Turn on the main chute ejection circuit by running the GPIO
+ * HIGH for a preset No. of seconds
+ * Default no. of seconds to remain HIGH is 5
  * 
  *******************************************************************************/
 void mainChuteDeploy() {
@@ -1414,20 +1583,79 @@ void setup(){
     Serial.begin(BAUDRATE);
     delay(100);
 
+    debugln();
+    debugln(F("=============================================="));
+    debugln(F("========= CREATING DYNAMIC WIFI ==========="));
+    debugln(F("=============================================="));
+
+    // create and wait for dynamic WIFI connection
+    initDynamicWIFI();
+
+    debugln();
+    debugln(F("=============================================="));
+    debugln(F("========= INITIALIZING PERIPHERALS ==========="));
+    debugln(F("=============================================="));
+
+    uint8_t bmp_init_state = BMPInit();
+    uint8_t imu_init_state = imu.init();
+    uint8_t gps_init_state = GPSInit();
+    uint8_t sd_init_state = initSD();
+    initDataFiles();
+    uint8_t spiffs_init_state = InitSPIFFS();
+    uint8_t test_gpio_init_state = initTestGPIO();
+    MQTTInit(MQTT_SERVER, MQTT_PORT);
+
+    /* update the susbsystems init state table */   
+    // check if BMP init OK
+    if(bmp_init_state) { 
+        SUBSYSTEM_INIT_MASK |= (1 << BMP_CHECK_BIT);
+    }
+
+    // check if MPU init OK
+    if(imu_init_state)  {
+        SUBSYSTEM_INIT_MASK |= (1 << IMU_CHECK_BIT);
+    }
+
+    // check if flash memory init OK
+    // if (flash_init_state) {
+    //     SUBSYSTEM_INIT_MASK |= (1 << FLASH_CHECK_BIT);
+    // }
+
+    // check if GPS init OK
+    if(gps_init_state) {
+        SUBSYSTEM_INIT_MASK |= (1 << GPS_CHECK_BIT);
+    }
+
+    // check if SD CARD init OK
+    if(sd_init_state) {
+        SUBSYSTEM_INIT_MASK |= (1 << SD_CHECK_BIT);
+    } 
+
+    // check if SPIFFS init OK
+    if(spiffs_init_state) {
+        SUBSYSTEM_INIT_MASK |= (1 << SPIFFS_CHECK_BIT);
+    }
+
+    // check if test hardware init OK
+    if(test_gpio_init_state) {
+        SUBSYSTEM_INIT_MASK |= (1 << TEST_HARDWARE_CHECK_BIT);
+    }
+
+    debug("[]SUBSYSTEM_INIT_MASK: "); debugln(SUBSYSTEM_INIT_MASK);
+
+    // delay(2000);
+
+    /* check whether we are in TEST or RUN mode */
+    checkRunTestToggle();
+
     //////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
-
-    // check whether we are in test mode or running mode
-    initSD();
-    initTestGPIO();
-    checkRunTestToggle();
-
-    if(TEST_MODE) {
+    if(DAQ_MODE) {
         // in test mode we only transfer test data from the testing PC to the SD card
         debugln();
         debugln(F("=============================================="));
-        debugln(F("=========FLIGHT COMPUTER TESTING MODE========="));
+        debugln(F("========= FLIGHT COMPUTER DATA ACQUISITION MODE ========="));
         debugln(F("=============================================="));
 
         debugln("Ready to receive data...");
@@ -1436,39 +1664,37 @@ void setup(){
         //////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  //////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////
             
-    }  else {
-
-        // in run mode we start all essential system functions 
+    }  else if (TEST_MODE) {
         debugln();
         debugln(F("=============================================="));
-        debugln(F("========= RUN MODE ========="));
+        debugln(F("=================== TEST MODE ================"));
         debugln(F("=============================================="));
 
-        // create dynamic WIFI
-        uint8_t wifi_connection_result = wifi_config.WifiConnect();
-        if(wifi_connection_result) {
-            debugln("Wifi config OK!");
+        /**
+         * We need to read the TEST state from a file in the SD card 
+         * This file stores the state we are in permanently, so that next time we reset while in run mode,
+         * we have a reference state to use
+         * 
+         * This file will be updated in the loop once we are done consuming the test data 
+         */
+        readStateFile(SD, "/state.txt");
+        debugln(current_test_state_buffer);
+
+        /**
+         * check what state we are in while in the test state. 
+         * If we are in the data consume state, set the current state to DATA_CONSUME
+         * The state is got from the SD card state.txt file
+         */
+        if (strcmp(current_test_state_buffer, "DATA_CONSUME\r\n") == 0) {
+            current_test_state = TEST_STATES::DATA_CONSUME;
+            debugln("STATE set to DATA CONSUME ");
+
         } else {
-            debugln("Wifi config failed");
+            debugln("current state undefined... ");
         }
-
-        /* initialize the system logger */
-        InitSPIFFS();
-
-        /* initialize MQTT */
-        MQTTInit(MQTT_SERVER, MQTT_PORT);
 
         /* mode 0 resets the system log file by clearing all the current contents */
         // system_logger.logToFile(SPIFFS, 0, rocket_ID, level, system_log_file, "Game Time!"); // TODO: DEBUG
-
-        debugln();
-        debugln(F("=============================================="));
-        debugln(F("========= INITIALIZING PERIPHERALS ==========="));
-        debugln(F("=============================================="));
-        imu.init();
-        BMPInit();
-        GPSInit();
-        
 
         debugln();
         debugln(F("=============================================="));
@@ -1480,7 +1706,6 @@ void setup(){
         uint8_t app_id = xPortGetCoreID();
         BaseType_t th; // task creation handle
             
-
         debugln();
         debugln(F("=============================================="));
         debugln(F("============== CREATING QUEUES ==============="));
@@ -1539,7 +1764,7 @@ void setup(){
         // }
 
 
-        // create  event group to sync flight data consumption
+        // create  event group to synchronize flight data consumption
         // see N4 flight software docs for more info
         debugln();
         debugln(F("=============================================="));
@@ -1583,7 +1808,7 @@ void setup(){
         }
 
         /* TASK 2: READ ALTIMETER DATA */
-        th = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*2,NULL,2,NULL,app_id);
+        th = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*2,NULL,1,NULL,app_id);
         if(th == pdPASS) {
             debugln("[+]Read altimeter task created OK.");
         } else {
@@ -1628,7 +1853,7 @@ void setup(){
 
         /* TASK 7: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
         th = xTaskCreatePinnedToCore(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE,NULL,1,NULL,app_id);
-            
+        
         if(th == pdPASS) {
             debugln("[+]debugToTerminalTask task created");
         } else {
@@ -1674,6 +1899,7 @@ void setup(){
         // }else{
         //     debugln("[+]FSM task created OK.");
         // }
+
     } // end of setup in running mode 
     
 }
@@ -1695,18 +1921,32 @@ void loop(){
         //////////////////////////////////////////////////////////////////////////////////////////////
         prepareForDataReceive();
 
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        //////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  ////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
+    } else if(TEST_MODE) {
+        debugln("DATA CONSUME");
 
+        /**
+         * Here is where we consume the test data stored in the data.txt file 
+         * 
+         */
+        if(current_test_state == TEST_STATES::DATA_CONSUME) {
+            debugln("=============== Consuming test data ===============");
+            readFile(SD, "/data.txt");
 
-    } else {
-        if(!mqtt_client.connected()){
-            /* try to reconnect if connection is lost */
-            MQTT_Reconnect();
+            // feed into state machine
         }
 
-        mqtt_client.loop();
+         if( !client.connected() ) {
+             /* try to reconnect if connection is lost */
+             debugln("Connection lost. Reconnecting to MQTT...");
+             MQTT_Reconnect();
+         }
+
+         client.loop();
+
     }
 
-}
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  ////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
+
+} // end of loop
