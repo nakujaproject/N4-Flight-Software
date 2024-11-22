@@ -342,11 +342,11 @@ void blink_200ms(uint8_t led_pin) {
 }
 
 /*!****************************************************************************
- * @brief Sample the RUN/TEST toggle pins to check whether the fligh tcomputer is in test mode
+ * @brief Sample the RUN/TEST toggle pins to check whether the flight computer is in test mode
  * or run mode.
  * If in TEST mode, define the TEST flag
  * If in RUN mode, define the RUN flag
- * TEST_MODE Pin and RUN_MODE pin are both pulled HIGH. When you set the jumper, you pull that pin to LOW.
+ * TEST_MODE Pin and RUN_MODE pin are both pulled HIGH. When you set the jumper, you pull that pin to LOW. Active LOW mechanism.
  *******************************************************************************/
 void checkRunTestToggle() {
 
@@ -884,7 +884,7 @@ void readAltimeterTask(void* pvParameters){
 
 /*!****************************************************************************
  * @brief Read the GPS location data and altitude and append to telemetry packet for transmission
- * @param pvParameters - A value that is passed as the paramater to the created task.
+ * @param pvParameters - A value that is passed as the parameter to the created task.
  * If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - 
  * so it is not valid to pass the address of a stack variable.
  * 
@@ -1234,7 +1234,7 @@ void transmitTelemetry(void* pvParameters){
         else debugln("[+] File opened for appending");
         
         /* receive data into respective queues */
-        if(xQueueReceive(telemetry_data_qHandle, &telemetry_data_receive, portMAX_DELAY) == pdPASS){
+        if(xQueueReceive(telemetry_data_qHandle, &telemetry_data_receive, portMAX_DELAY) == pdPASS){  // should telemetry values be in struct format?
             debugln("[+]Telemetry data ready for sending ");
         }else{
             debugln("[-]Failed to receive telemetry data");
@@ -1267,8 +1267,42 @@ void transmitTelemetry(void* pvParameters){
         // "alt_data": { "pressure": 26.24, "temperature": 28.25, "AGL": 30.26, "velocity": 32.27 }, 
         // "chute_state": { "pyro1_state": 1, "pyro2_state": 0 }, "battery_voltage": 34.28 }
 
-        sprintf(telemetry_data,
-            "%i,%i,%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.8f,%.8f,%.2f,%.X,%.2f,%.2f,%.2f,%.2f,%i,%i,%.2f\n",
+        snprintf(telemetry_data, sizeof(telemetry_data),
+            // "%i,%i,%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.8f,%.8f,%.2f,%.X,%.2f,%.2f,%.2f,%.2f,%i,%i,%.2f\n",
+            "{"
+            "\"id\": %i,"
+            "\"state\": %i,"
+            "\"operation_mode\": %i,"
+            "\"acc_data\": {"
+                "\"ax\": %.2f,"
+                "\"ay\": %.2f,"
+                "\"az\": %.2f,"
+                "\"pitch\": %.2f,"
+                "\"roll\": %.2f"
+            "},"
+            "\"gyro_data\": {"
+                "\"gx\": %.2f,"
+                "\"gy\": %.2f,"
+                "\"gz\": %.2f"
+            "},"
+            "\"gps_data\": {"
+                "\"latitude\": %.16f,"
+                "\"longitude\": %.16f,"
+                "\"gps_altitude\": %.2f,"
+                "\"time\": %i"
+            "},"
+            "\"alt_data\": {"
+                "\"pressure\": %.2f,"
+                "\"temperature\": %.2f,"
+                "\"AGL\": %.2f,"
+                "\"velocity\": %.2f"
+            "},"
+            "\"chute_state\": {"
+                "\"pyro1_state\": %i,"
+                "\"pyro2_state\": %i"
+            "},"
+            "\"battery_voltage\": %.2f"
+            "}\n",
             id,//0
             telemetry_data_receive.state, //1
             telemetry_data_receive.operation_mode, //2
@@ -1288,9 +1322,9 @@ void transmitTelemetry(void* pvParameters){
             telemetry_data_receive.alt_data.temperature,//16
             telemetry_data_receive.alt_data.AGL,//17
             telemetry_data_receive.alt_data.velocity,//18
-            telemetry_data_receive.chute_state.pyro1_state,//19
-            telemetry_data_receive.chute_state.pyro2_state,//20
-            telemetry_data_receive.battery_voltage,//21 
+            1,//telemetry_data_receive.chute_state.pyro1_state,//19
+            1,//telemetry_data_receive.chute_state.pyro2_state,//20
+            15.67//telemetry_data_receive.battery_voltage//21 
         );
 
         if(logFile.print(telemetry_data)){
@@ -1579,16 +1613,16 @@ void setup(){
         if(th == pdPASS) {
             debugln("[+]checkFlightState task created OK.");
         } else {
-            debugln("[-}Failed to create checkFlightState task");
+            debugln("[-]Failed to create checkFlightState task");
         }
 
         /* TASK 6: FLIGHT STATE CALLBACK TASK */    
-        th = xTaskCreatePinnedToCore(flightStateCallback,"flightStateCallback",STACK_SIZE*2,NULL,1, NULL,app_id);
-        if(th == pdPASS) {
-            debugln("[+]flightStateCallback task created OK.");
-        } else {
-            debugln("[-}Failed to create flightStateCallback task");
-        }
+        // th = xTaskCreatePinnedToCore(flightStateCallback,"flightStateCallback",STACK_SIZE*2,NULL,1, NULL,app_id);
+        // if(th == pdPASS) {
+        //     debugln("[+]flightStateCallback task created OK.");
+        // } else {
+        //     debugln("[-]Failed to create flightStateCallback task");
+        // }
 
         #if DEBUG_TO_TERMINAL   // set DEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
 
@@ -1596,15 +1630,15 @@ void setup(){
         th = xTaskCreatePinnedToCore(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE,NULL,1,NULL,app_id);
             
         if(th == pdPASS) {
-            debugln("[+}debugToTerminalTaskTask created");
+            debugln("[+]debugToTerminalTask task created");
         } else {
-            debugln("[-}Task not created");
+            debugln("[-]Task not created");
         }
 
         #endif // DEBUG_TO_TERMINAL_TASK
 
         /* TASK 8: TRANSMIT TELEMETRY DATA */
-        th = xTaskCreatePinnedToCore(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*2, NULL, 2, NULL, app_id);
+        th = xTaskCreatePinnedToCore(transmitTelemetry, "transmit_telemetry", STACK_SIZE*2, NULL, 2, NULL, app_id);
         if(th == pdPASS){
             debugln("[+]Transmit task created OK!");
         } else {
@@ -1649,11 +1683,11 @@ void setup(){
  * @brief Main loop
  *******************************************************************************/
 void loop(){
-    //     if(WiFi.status() != WL_CONNECTED){
-    //         WiFi.begin(SSID, PASSWORD);
-    //         delay(500);
-    //         debug(".");
-    //     }
+    if(WiFi.status() != WL_CONNECTED){
+        WiFi.begin("Nakuja", "987654321");
+        delay(500);
+        debug(".");
+        }
 
     if(TEST_MODE) {
         //////////////////////////////////////////////////////////////////////////////////////////////

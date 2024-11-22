@@ -20,7 +20,7 @@
 /* debug parameters for use during testing - set to 0 for production */
 #define DEBUGGING 1                           /*!< allow debugging to terminal. Set to 0 pre flight to disable serial terminal printing and improve speed  */
 #define LOG_TO_MEMORY 0                       /*!< allow data logging to memory. Set to 1 to log data to external flash memory. Must be set during flight */
-#define DEBUG_TO_TERMINAL 1                   /*!< allow create task that prints data to terminal. Set o 0 before flight  */
+#define DEBUG_TO_TERMINAL 1                   /*!< allow create task that prints data to terminal. Set to 0 before flight  */
 
 #if DEBUGGING
 #define debug(x) Serial.print(x)
@@ -49,16 +49,16 @@
 #define ALTIMETER_QUEUE_LENGTH 10           /*!< length of the altimeter queue */
 #define GYROSCOPE_QUEUE_LENGTH 10           /*!< length of the gyroscope queue */
 #define GPS_QUEUE_LENGTH 24                 /*!< length of the gps queue */
-#define TELEMETRY_DATA_QUEUE_LENGTH  10     /*!< length of the telemetry data queue */
+#define TELEMETRY_DATA_QUEUE_LENGTH  22     /*!< length of the telemetry data queue */
 #define FILTERED_DATA_QUEUE_LENGTH 10       /*!< length of the filtered data queue */
 #define FLIGHT_STATES_QUEUE_LENGTH 1        /*!< length of the flight states queue */
 
 /* MQTT constants */
-const char MQTT_SERVER[20] = "192.168.78.19";         /*!< MQTT broker IP address */
+const char MQTT_SERVER[50] = "192.168.1.135";         /*!< MQTT broker IP address */
 const char MQTT_TOPIC[20] = "n4/telemetry";
 #define MQTT_PORT 1882                     /*!< MQTT broker port */
 
-#define BROKER_IP_ADDRESS_LENGTH    20      /*!< length of broker ip address string */
+#define BROKER_IP_ADDRESS_LENGTH    50      /*!< length of broker ip address string */
 #define MQTT_TOPIC_LENGTH           10      /*!< length of mqtt topic string */
 
 /* WIFI credentials */
