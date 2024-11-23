@@ -64,6 +64,7 @@ var main_8cpp =
     [ "log_sample_interval", "main_8cpp.html#affaa6e6cce540b233b04e558e3d164b2", null ],
     [ "operation_mode", "main_8cpp.html#a59b33f351d47779eaaff510227075be1", null ],
     [ "previous_log_time", "main_8cpp.html#ac03f1f50d9e1452593353033c5b2b1b0", null ],
+    [ "readAccelerationTaskHandle", "main_8cpp.html#a9f30f7c913c2e35ebf44fbf77f416bbc", null ],
     [ "recv_data_led", "main_8cpp.html#a7047c2926a0671d98c6f80a4015f2c14", null ],
     [ "red_led", "main_8cpp.html#a450aab1d5c2ac17dd8a8fd346a47cf16", null ],
     [ "rocket_ID", "main_8cpp.html#a5bef7886537f878149917a29939a5cb0", null ],

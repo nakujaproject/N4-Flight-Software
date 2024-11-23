@@ -304,7 +304,7 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>MQTTInit</b> (cons
 <tr class="memdesc:a64be9ebbabd58a9b6d32b92ce607f2a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">This is a fallback function in case we need to manually connect to the WIFI The right method to use when connecting is the WIFI provisioning method outlined above.  <br /></td></tr>
 <tr class="separator:a64be9ebbabd58a9b6d32b92ce607f2a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5947e71102388e9d5bfd09f8e97d668c" id="r_a5947e71102388e9d5bfd09f8e97d668c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5947e71102388e9d5bfd09f8e97d668c">readAltimeterTask</a> (void *pvParameters)</td></tr>
-<tr class="memdesc:a5947e71102388e9d5bfd09f8e97d668c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read ar pressure data from the barometric sensor onboard.  <br /></td></tr>
+<tr class="memdesc:a5947e71102388e9d5bfd09f8e97d668c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read atm pressure data from the barometric sensor onboard.  <br /></td></tr>
 <tr class="separator:a5947e71102388e9d5bfd09f8e97d668c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa8ea491ed98b16bb5292ad184537f0b5" id="r_aa8ea491ed98b16bb5292ad184537f0b5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa8ea491ed98b16bb5292ad184537f0b5">readGPSTask</a> (void *pvParameters)</td></tr>
 <tr class="memdesc:aa8ea491ed98b16bb5292ad184537f0b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the GPS location data and altitude and append to telemetry packet for transmission.  <br /></td></tr>
@@ -499,6 +499,35 @@ long long&#160;</td><td class="memItemRight" valign="bottom"><b>previous_time</b
 <tr class="memitem:a64f18f67afc4a5f76f37c2be60e1cb29" id="r_a64f18f67afc4a5f76f37c2be60e1cb29"><td class="memItemLeft" align="right" valign="top"><a id="a64f18f67afc4a5f76f37c2be60e1cb29" name="a64f18f67afc4a5f76f37c2be60e1cb29"></a>
 char&#160;</td><td class="memItemRight" valign="bottom"><b>telemetry_packet_buffer</b> [100]</td></tr>
 <tr class="separator:a64f18f67afc4a5f76f37c2be60e1cb29"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f30f7c913c2e35ebf44fbf77f416bbc" id="r_a9f30f7c913c2e35ebf44fbf77f416bbc"><td class="memItemLeft" align="right" valign="top">TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9f30f7c913c2e35ebf44fbf77f416bbc">readAccelerationTaskHandle</a></td></tr>
+<tr class="separator:a9f30f7c913c2e35ebf44fbf77f416bbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac122c42a5bcc3f6c3e5f66969197f01a" id="r_ac122c42a5bcc3f6c3e5f66969197f01a"><td class="memItemLeft" align="right" valign="top"><a id="ac122c42a5bcc3f6c3e5f66969197f01a" name="ac122c42a5bcc3f6c3e5f66969197f01a"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>readAltimeterTaskHandle</b></td></tr>
+<tr class="separator:ac122c42a5bcc3f6c3e5f66969197f01a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aefe474c52c5a17b77358969a708cd491" id="r_aefe474c52c5a17b77358969a708cd491"><td class="memItemLeft" align="right" valign="top"><a id="aefe474c52c5a17b77358969a708cd491" name="aefe474c52c5a17b77358969a708cd491"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>readGPSTaskHandle</b></td></tr>
+<tr class="separator:aefe474c52c5a17b77358969a708cd491"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab135264cc58822cb9ebf9f9e02d06646" id="r_ab135264cc58822cb9ebf9f9e02d06646"><td class="memItemLeft" align="right" valign="top"><a id="ab135264cc58822cb9ebf9f9e02d06646" name="ab135264cc58822cb9ebf9f9e02d06646"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>clearTelemetryQueueTaskHandle</b></td></tr>
+<tr class="separator:ab135264cc58822cb9ebf9f9e02d06646"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0af6dabbb3a4501359d1375ea34a42c1" id="r_a0af6dabbb3a4501359d1375ea34a42c1"><td class="memItemLeft" align="right" valign="top"><a id="a0af6dabbb3a4501359d1375ea34a42c1" name="a0af6dabbb3a4501359d1375ea34a42c1"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>checkFlightStateTaskHandle</b></td></tr>
+<tr class="separator:a0af6dabbb3a4501359d1375ea34a42c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae94e513afc6287901f6369180bac5744" id="r_ae94e513afc6287901f6369180bac5744"><td class="memItemLeft" align="right" valign="top"><a id="ae94e513afc6287901f6369180bac5744" name="ae94e513afc6287901f6369180bac5744"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>flightStateCallbackTaskHandle</b></td></tr>
+<tr class="separator:ae94e513afc6287901f6369180bac5744"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa54b80dcf0f91cd69984e7798b77b49" id="r_afa54b80dcf0f91cd69984e7798b77b49"><td class="memItemLeft" align="right" valign="top"><a id="afa54b80dcf0f91cd69984e7798b77b49" name="afa54b80dcf0f91cd69984e7798b77b49"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_TransmitTelemetryTaskHandle</b></td></tr>
+<tr class="separator:afa54b80dcf0f91cd69984e7798b77b49"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd995b7d7a7534e7d748cef36558c3a2" id="r_afd995b7d7a7534e7d748cef36558c3a2"><td class="memItemLeft" align="right" valign="top"><a id="afd995b7d7a7534e7d748cef36558c3a2" name="afd995b7d7a7534e7d748cef36558c3a2"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>debugToTerminalTaskHandle</b></td></tr>
+<tr class="separator:afd995b7d7a7534e7d748cef36558c3a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd21a32ffaffe2ac671aa88aa315fb18" id="r_abd21a32ffaffe2ac671aa88aa315fb18"><td class="memItemLeft" align="right" valign="top"><a id="abd21a32ffaffe2ac671aa88aa315fb18" name="abd21a32ffaffe2ac671aa88aa315fb18"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>logToMemoryTaskHandle</b></td></tr>
+<tr class="separator:abd21a32ffaffe2ac671aa88aa315fb18"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae995281978356c3acf910647861397b1" id="r_ae995281978356c3acf910647861397b1"><td class="memItemLeft" align="right" valign="top"><a id="ae995281978356c3acf910647861397b1" name="ae995281978356c3acf910647861397b1"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>flight_state_checkTaskHandle</b></td></tr>
+<tr class="separator:ae995281978356c3acf910647861397b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1067333ef3d05fdb37de74977a972c61" id="r_a1067333ef3d05fdb37de74977a972c61"><td class="memItemLeft" align="right" valign="top"><a id="a1067333ef3d05fdb37de74977a972c61" name="a1067333ef3d05fdb37de74977a972c61"></a>
 EventGroupHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>tasksDataReceiveEventGroup</b></td></tr>
 <tr class="separator:a1067333ef3d05fdb37de74977a972c61"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1235,7 +1264,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
       </table>
 </div><div class="memdoc">
 
-<p>Read ar pressure data from the barometric sensor onboard. </p>
+<p>Read atm pressure data from the barometric sensor onboard. </p>
 <hr  />
  <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -1591,6 +1620,21 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
       </table>
 </div><div class="memdoc">
 <p>The last time we logged data to memory </p>
+
+</div>
+</div>
+<a id="a9f30f7c913c2e35ebf44fbf77f416bbc" name="a9f30f7c913c2e35ebf44fbf77f416bbc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9f30f7c913c2e35ebf44fbf77f416bbc">&#9670;&#160;</a></span>readAccelerationTaskHandle</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">TaskHandle_t readAccelerationTaskHandle</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Task creation handles </p>
 
 </div>
 </div>
