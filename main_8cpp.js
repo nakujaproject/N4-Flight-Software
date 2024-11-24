@@ -72,7 +72,7 @@ var main_8cpp =
     [ "SOH_recvd_flag", "main_8cpp.html#a6a02e76e786465c8d2fe8ba9ad3393da", null ],
     [ "SUBSYSTEM_INIT_MASK", "main_8cpp.html#a5fa0d939030a4ab773be75554017c4aa", null ],
     [ "subsystems_state_buffer", "main_8cpp.html#a12a374be19c9b55750097a0b9fad50fb", null ],
-    [ "telemetry_data_qHandle", "main_8cpp.html#a0ed5ea94df7417ea494d69ca56aab490", null ],
+    [ "telemetry_data_queue_handle", "main_8cpp.html#abe0f2d917a4d91446385606b903276ea", null ],
     [ "value", "main_8cpp.html#ac4f474c82e82cbb89ca7c36dd52be0ed", null ],
     [ "wifi_client", "main_8cpp.html#afafd0fc922c17c38235820189e1d9b3b", null ]
 ];
