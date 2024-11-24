@@ -839,20 +839,15 @@ void readAccelerationTask(void* pvParameter) {
         // get pitch and roll
         acc_data_lcl.acc_data.pitch = imu.getPitch();
         acc_data_lcl.acc_data.roll = imu.getRoll();
-
-        // debugln(acc_data_lcl.acc_data.ax);debug(",");
-        // debugln(acc_data_lcl.acc_data.ay);debug(",");
-        // debugln(acc_data_lcl.acc_data.az);
         
-        xQueueSend(telemetry_data_queue_handle, &acc_data_lcl, portMAX_DELAY);
-        xQueueSend(log_to_mem_queue_handle, &acc_data_lcl, portMAX_DELAY);
-        xQueueSend(check_state_queue_handle, &acc_data_lcl, portMAX_DELAY);
-        xQueueSend(debug_to_term_queue_handle, &acc_data_lcl, portMAX_DELAY);
 
+        xQueueSend(telemetry_data_queue_handle, &acc_data_lcl, 0);
+        xQueueSend(log_to_mem_queue_handle, &acc_data_lcl, 0);
+        xQueueSend(check_state_queue_handle, &acc_data_lcl, 0);
+        xQueueSend(debug_to_term_queue_handle, &acc_data_lcl, 0);
     }
 
 }
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////// ALTITUDE AND VELOCITY DETERMINATION /////////////////
@@ -1134,7 +1129,7 @@ void debugToTerminalTask(void* pvParameters){
 
     while(true){
         // get telemetry data
-        xQueueReceive(debug_to_term_queue_handle, &telemetry_received_packet, portMAX_DELAY);
+        xQueueReceive(log_to_mem_queue_handle, &telemetry_received_packet, portMAX_DELAY);
         
         /**
          * record number
@@ -1590,7 +1585,7 @@ void setup() {
         }
 
         /* TASK 5: CHECK FLIGHT STATE TASK */
-        BaseType_t cf = xTaskCreate(checkFlightState,"checkFlightState",STACK_SIZE*2,NULL,1, &checkFlightStateTaskHandle);
+        BaseType_t cf = xTaskCreate(checkFlightState,"checkFlightState",STACK_SIZE*2,NULL,2, &checkFlightStateTaskHandle);
         vTaskSuspend(checkFlightStateTaskHandle);
 
         if(cf == pdPASS) {
