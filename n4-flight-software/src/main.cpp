@@ -690,7 +690,7 @@ long long current_time = 0;
 long long previous_time = 0;
 
 /* To store the main telemetry packet being sent over MQTT */
-char telemetry_packet_buffer[100];
+char telemetry_packet_buffer[256];
 
 /**
 * @brief create dynamic WIFI
@@ -716,20 +716,19 @@ void initDynamicWIFI() {
  TaskHandle_t MQTT_TransmitTelemetryTaskHandle;
  TaskHandle_t debugToTerminalTaskHandle;
  TaskHandle_t logToMemoryTaskHandle;
- TaskHandle_t flight_state_checkTaskHandle;
 
 /**
  * Task synchronization variables
  */
 // event group bits 
-#define TRANSMIT_TELEMETRY_BIT  ((EventBits_t) 0x01 << 0)   // for bit 0
-#define CHECK_FLIGHT_STATE_BIT  ((EventBits_t) 0x01 << 1)   // for bit 1
-#define LOG_TO_MEMORY_BIT       ((EventBits_t) 0x01 << 2)   // for bit 2
-#define TRANSMIT_XBEE_BIT       ((EventBits_t) 0x01 << 3)   // for bit 3
-#define DEBUG_TO_TERM_BIT       ((EventBits_t) 0x01 << 4)   // for bit 4
+// #define TRANSMIT_TELEMETRY_BIT  ((EventBits_t) 0x01 << 0)   // for bit 0
+// #define CHECK_FLIGHT_STATE_BIT  ((EventBits_t) 0x01 << 1)   // for bit 1
+// #define LOG_TO_MEMORY_BIT       ((EventBits_t) 0x01 << 2)   // for bit 2
+// #define TRANSMIT_XBEE_BIT       ((EventBits_t) 0x01 << 3)   // for bit 3
+// #define DEBUG_TO_TERM_BIT       ((EventBits_t) 0x01 << 4)   // for bit 4
 
-// event group type for task synchronization
-EventGroupHandle_t tasksDataReceiveEventGroup;
+// // event group type for task synchronization
+// EventGroupHandle_t tasksDataReceiveEventGroup;
 
 /**
  * ///////////////////////// DATA TYPES /////////////////////////
@@ -816,6 +815,13 @@ QueueHandle_t gps_data_qHandle;
 // QueueHandle_t flight_states_queue;
 
 
+// a queue for each consuming task
+QueueHandle_t telemetry_data_queue_handle;
+QueueHandle_t log_to_mem_queue_handle;
+QueueHandle_t check_state_queue_handle;
+QueueHandle_t debug_to_term_queue_handle;
+QueueHandle_t kalman_filter_queue_handle;
+
 /**
  * @brief This is a fallback function in case we need to manually connect to the WIFI
  * The right method to use when connecting is the WIFI provisioning method outlined above
@@ -856,6 +862,7 @@ void readAccelerationTask(void* pvParameter) {
     telemetry_type_t acc_data_lcl;
 
     while(1) {
+        debugln("Reading acceleration");
         acc_data_lcl.operation_mode = operation_mode; // TODO: move these to check state function
         acc_data_lcl.record_number++;
         acc_data_lcl.state = 0;
@@ -868,11 +875,12 @@ void readAccelerationTask(void* pvParameter) {
         acc_data_lcl.acc_data.pitch = imu.getPitch();
         acc_data_lcl.acc_data.roll = imu.getRoll();
 
-        debugln(acc_data_lcl.acc_data.ax);debug(",");
-        debugln(acc_data_lcl.acc_data.ay);debug(",");
-        debugln(acc_data_lcl.acc_data.az);
+        // debugln(acc_data_lcl.acc_data.ax);debug(",");
+        // debugln(acc_data_lcl.acc_data.ay);debug(",");
+        // debugln(acc_data_lcl.acc_data.az);
         
-        xQueueSend(telemetry_data_qHandle, &acc_data_lcl, portMAX_DELAY);
+        xQueueSend(check_state_queue_handle, &acc_data, portMAX_DELAY);
+        xQueueSend(debug_to_term_queue_handle, &acc_data_lcl, portMAX_DELAY);
 
     }
 
@@ -894,6 +902,7 @@ void readAltimeterTask(void* pvParameters) {
     telemetry_type_t alt_data_lcl;
 
     while(1){
+        debugln("Reading altimeter");
         // If you want to measure altitude, and not pressure, you will instead need
         // to provide a known baseline pressure. This is shown at the end of the sketch.
 
@@ -902,84 +911,91 @@ void readAltimeterTask(void* pvParameters) {
         // Start a temperature measurement:
         // If request is successful, the number of ms to wait is returned.
         // If request is unsuccessful, 0 is returned.
-        status = altimeter.startTemperature();
-        if(status !=0 ) {
-            // wait for measurement to complete
-            delay(status);
+        // status = altimeter.startTemperature();
+        // if(status !=0 ) {
+        //     // wait for measurement to complete
+        //     delay(status);
 
-            // retrieve the completed temperature measurement 
-            // temperature is stored in variable T
+        //     // retrieve the completed temperature measurement 
+        //     // temperature is stored in variable T
 
-            status = altimeter.getTemperature(T);
-            if(status != 0) {
-                // print out the measurement 
-                // debug("temperature: ");
-                // debug(T, 2);
-                // debug(" \xB0 C, ");
+        //     status = altimeter.getTemperature(T);
+        //     if(status != 0) {
+        //         // print out the measurement 
+        //         // debug("temperature: ");
+        //         // debug(T, 2);
+        //         // debug(" \xB0 C, ");
 
-                // start pressure measurement 
-                // The parameter is the oversampling setting, from 0 to 3 (highest res, longest wait).
-                // If request is successful, the number of ms to wait is returned.
-                // If request is unsuccessful, 0 is returned.
-                status = altimeter.startPressure(3);
-                if(status != 0) {
-                    // wait for the measurement to complete
-                    delay(status);
+        //         // start pressure measurement 
+        //         // The parameter is the oversampling setting, from 0 to 3 (highest res, longest wait).
+        //         // If request is successful, the number of ms to wait is returned.
+        //         // If request is unsuccessful, 0 is returned.
+        //         status = altimeter.startPressure(3);
+        //         if(status != 0) {
+        //             // wait for the measurement to complete
+        //             delay(status);
 
-                    // Retrieve the completed pressure measurement:
-                    // Note that the measurement is stored in the variable P.
-                    // Note also that the function requires the previous temperature measurement (T).
-                    // (If temperature is stable, you can do one temperature measurement for a number of pressure measurements.)
-                    // Function returns 1 if successful, 0 if failure.
+        //             // Retrieve the completed pressure measurement:
+        //             // Note that the measurement is stored in the variable P.
+        //             // Note also that the function requires the previous temperature measurement (T).
+        //             // (If temperature is stable, you can do one temperature measurement for a number of pressure measurements.)
+        //             // Function returns 1 if successful, 0 if failure.
 
-                    status = altimeter.getPressure(P, T);
-                    if(status != 0) {
-                        // print out the measurement
-                        // debug("absolute pressure: ");
-                        // debug(P, 2);
-                        // debug(" mb, "); // in millibars
+        //             status = altimeter.getPressure(P, T);
+        //             if(status != 0) {
+        //                 // print out the measurement
+        //                 // debug("absolute pressure: ");
+        //                 // debug(P, 2);
+        //                 // debug(" mb, "); // in millibars
 
-                        p0 = altimeter.sealevel(P,ALTITUDE);
-                        // If you want to determine your altitude from the pressure reading,
-                        // use the altitude function along with a baseline pressure (sea-level or other).
-                        // Parameters: P = absolute pressure in mb, p0 = baseline pressure in mb.
-                        // Result: a = altitude in m.
+        //                 p0 = altimeter.sealevel(P,ALTITUDE);
+        //                 // If you want to determine your altitude from the pressure reading,
+        //                 // use the altitude function along with a baseline pressure (sea-level or other).
+        //                 // Parameters: P = absolute pressure in mb, p0 = baseline pressure in mb.
+        //                 // Result: a = altitude in m.
 
-                        a = altimeter.altitude(P, p0);
-                        // debug("computed altitude: ");
-                        // debug(a, 0);
-                        // debug(" meters, ");
+        //                 a = altimeter.altitude(P, p0);
+        //                 // debug("computed altitude: ");
+        //                 // debug(a, 0);
+        //                 // debug(" meters, ");
 
-                    } else {
-                        debugln("error retrieving pressure measurement\n");
-                    } 
+        //             } else {
+        //                 debugln("error retrieving pressure measurement\n");
+        //             } 
                 
-                } else {
-                    debugln("error starting pressure measurement\n");
-                }
+        //         } else {
+        //             debugln("error starting pressure measurement\n");
+        //         }
 
-            } else {
-                debugln("error retrieving temperature measurement\n");
-            }
+        //     } else {
+        //         debugln("error retrieving temperature measurement\n");
+        //     }
 
-        } else {
-            debugln("error starting temperature measurement\n");
-        }
+        // } else {
+        //     debugln("error starting temperature measurement\n");
+        // }
 
-        // delay(2000);
+        // // delay(2000);
 
-        // TODO: compute the velocity from the altimeter data
+        // // TODO: compute the velocity from the altimeter data
 
-        // assign data to queue
-        alt_data_lcl.alt_data.pressure = P;
-        alt_data_lcl.alt_data.altitude = a;
+        // // assign data to queue
+        // alt_data_lcl.alt_data.pressure = P;
+        // alt_data_lcl.alt_data.altitude = a;
+        // alt_data_lcl.alt_data.velocity = 0;
+        // alt_data_lcl.alt_data.temperature = T;
+
+        alt_data_lcl.alt_data.pressure = 0;
+        alt_data_lcl.alt_data.altitude = 0;
         alt_data_lcl.alt_data.velocity = 0;
-        alt_data_lcl.alt_data.temperature = T;
+        alt_data_lcl.alt_data.temperature = 0;
 
         // send this pressure data to queue
         // do not wait for the queue if it is full because the data rate is so high, 
         // we might lose some data as we wait for the queue to get space
-        xQueueSend(telemetry_data_qHandle, &alt_data_lcl, 0); // TODO: CHECK SUCCESS SENDING TO QUEUE
+
+        xQueueSend(check_state_queue_handle, &acc_data, portMAX_DELAY);
+        xQueueSend(debug_to_term_queue_handle, &alt_data_lcl, portMAX_DELAY);
 
     }
 
@@ -997,6 +1013,7 @@ void readGPSTask(void* pvParameters){
     telemetry_type_t gps_data_lcl;
 
     while(true){
+        debugln("Reading GPS");
 
         // if(Serial2.available()) {
         //     char c = Serial2.read();
@@ -1018,114 +1035,57 @@ void readGPSTask(void* pvParameters){
                     gps_data_lcl.gps_data.latitude = gps.location.lat();
                     gps_data_lcl.gps_data.longitude = gps.location.lng();
                 } else {
-                    debugln("Invalid GPS location");
+                    // debugln("Invalid GPS location");
+                    gps_data_lcl.gps_data.latitude = 0;
+                    gps_data_lcl.gps_data.longitude = 0;
                 }
 
-                if(gps.time.isValid()) {
-                    gps_data_lcl.gps_data.time = gps.time.value(); // decode this time value post flight - write a script for that
-                } else {
-                    debugln("Invalid GPS time");
-                }
+                // if(gps.time.isValid()) {
+                //     gps_data_lcl.gps_data.time = gps.time.value(); // decode this time value post flight - write a script for that
+                // } else {
+                //     debugln("Invalid GPS time");
+                // }
 
                 if(gps.altitude.isValid()) {
                     gps_data_lcl.gps_data.gps_altitude = gps.altitude.meters();
                 } else {
-                    debugln("Invalid altitude data"); // TODO: LOG to system logger
+                    // debugln("Invalid altitude data"); // TODO: LOG to system logger
+                    gps_data_lcl.gps_data.gps_altitude = 0;
                 }
             }
         }
 
-        // send to telemetry queue
-        if(xQueueSend(telemetry_data_qHandle, &gps_data_lcl, portMAX_DELAY) != pdPASS){
-            debugln("[-]GPS queue full"); // TODO: LOG TO SYSTEM LOGGER
-        } else {
-            // debugln("Sent to GPS Queue"); // TODO: LOG TO SYSTEM LOGGER
-        }
+        xQueueSend(check_state_queue_handle, &acc_data, portMAX_DELAY);
+        xQueueSend(debug_to_term_queue_handle, &gps_data_lcl, portMAX_DELAY);
+
     }
 
-}
-
-/*!****************************************************************************
- * @brief dequeue data from telemetry queue after all the tasks have consumed the data
- * @param pvParameters - A value that is passed as the parameter to the created task.
- * If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - 
- * so it is not valid to pass the address of a stack variable.
- * @return none
- * 
- *******************************************************************************/
-void clearTelemetryQueueTask(void* pvParameters) {
-    telemetry_type_t data_item; // data item to dequeue
-
-    #if DEBUG_TO_TERMINAL
-        const EventBits_t xBitsToWaitFor = (TRANSMIT_TELEMETRY_BIT | CHECK_FLIGHT_STATE_BIT | LOG_TO_MEMORY_BIT | DEBUG_TO_TERM_BIT); 
-    #else
-        const EventBits_t xBitsToWaitFor = (TRANSMIT_TELEMETRY_BIT | CHECK_FLIGHT_STATE_BIT | LOG_TO_MEMORY_BIT); 
-    #endif
-
-    EventBits_t xEventGroupValue;
-    
-    while (true) {
-        xEventGroupValue = xEventGroupWaitBits(
-                tasksDataReceiveEventGroup, 		// event group to use
-                xBitsToWaitFor, 	                // bit combo to wait for 
-                pdTRUE,				                // clear all bits on exit
-                pdTRUE, 			                // Wait for all bits (AND)
-                portMAX_DELAY		                // wait indefinitely
-        );
-
-        // Clear the data item from telemetry queue
-        // receiving pops the item from queue, hence removing it entirely
-        // which is what we want, after the data item has been distributed to other tasks
-        xQueueReceive(telemetry_data_qHandle, &data_item, portMAX_DELAY);
-
-        // check if all data consuming tasks have received the data
-        // check TRANSMIT_TELEMETRY TASK
-        if(xEventGroupValue & TRANSMIT_TELEMETRY_BIT != 0) {
-            // TODO: MUST LOG TO SYSTEM LOGGER
-            debugln("[transmit telemetry task receive data OK!]");
-        }
-
-        // check CHECK_FLIGHT_STATE_TASK
-        if(xEventGroupValue & CHECK_FLIGHT_STATE_BIT != 0) {
-            // TODO: MUST LOG TO SYSTEM LOGGER
-            debugln("[check state task receive data OK!]");
-        }
-
-        // check LOG_TO_MEMORY task 
-        if(xEventGroupValue & LOG_TO_MEMORY_BIT != 0) {
-            // TODO: MUST LOG TO SYSTEM LOGGER
-            debugln("[log to memory task receive data OK!]");
-        }
-
-        //TODO: XBEE, DEBUG TO TERM
-    }
-	
 }
 
 /*!****************************************************************************
  * @brief Check and update the current state of flight - refer to states.h
- * @param pvParameters - A value that is passed as the parameter to the created task.
- * If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - 
- * so it is not valid to pass the address of a stack variable.
- * @return Updates the telemetry data flight state value
- * 
+ *
  *******************************************************************************/
 void checkFlightState(void* pvParameters) {
     // get the flight state from the telemetry task
-    telemetry_type_t sensor_data; 
+    telemetry_type_t flight_data; 
     
     while (1) {
-        uint8_t s = xQueuePeek(telemetry_data_qHandle, &sensor_data, portMAX_DELAY);
-        xEventGroupSetBits(tasksDataReceiveEventGroup, CHECK_FLIGHT_STATE_BIT); // signal that we have received flight data
-        
+        // debugln("CHECKING STATE");
+        uint8_t s = xQueueReceive(check_state_queue_handle, &flight_data, portMAX_DELAY);
+      
 
-        // check the flight state based on the conditions 
-        // this is a dummy condition
-        if(sensor_data.acc_data.ax < 5 && sensor_data.acc_data.ay > 2){
-            // change flight state to POWERED FLIGHT
-            current_state = FLIGHT_STATE::POWERED_FLIGHT;
+        // // check the flight state based on the conditions 
+        // // extract the flight state from the data packet
+        uint8_t state = flight_data.state;
+
+        if(state == 0) {
+            current_state = FLIGHT_STATE::PRE_FLIGHT_GROUND;
+            // debugln("PREFLIGHT");
         } 
-        // else if() {}
+
+        // TODO: check other states
+
 
     }
 
@@ -1133,62 +1093,60 @@ void checkFlightState(void* pvParameters) {
 
 /*!****************************************************************************
  * @brief performs flight actions based on the current flight state
+
  * If the flight state neccessisates an operation, we perform it here
  * For example if the flight state is apogee, we perform MAIN_CHUTE ejection
  * 
- * @param pvParameter - A value that is passed as the parameter to the created task.
- * If pvParameter is set to the address of a variable then the variable must still exist when the created task executes - 
- * so it is not valid to pass the address of a stack variable.
- * 
  *******************************************************************************/
 void flightStateCallback(void* pvParameters) {
+    int curr = 0;
     while(1) {
-        switch (current_state) {
+        switch (curr) {
             // PRE_FLIGHT_GROUND
             case FLIGHT_STATE::PRE_FLIGHT_GROUND:
-//                debugln("PRE-FLIGHT STATE");
+            //    debugln("PRE-FLIGHT STATE");
                 break;
 
             // POWERED_FLIGHT
             case FLIGHT_STATE::POWERED_FLIGHT:
-//                debugln("POWERED FLIGHT STATE");
+            //    debugln("POWERED FLIGHT STATE");
                 break;
 
             // COASTING
             case FLIGHT_STATE::COASTING:
-//                debugln("COASTING");
+            //    debugln("COASTING");
                 break;
 
             // APOGEE
             case FLIGHT_STATE::APOGEE:
-//                debugln("APOGEE");
+            //    debugln("APOGEE");
                 break;
 
             // DROGUE_DEPLOY
             case FLIGHT_STATE::DROGUE_DEPLOY:
-//                debugln("DROGUE DEPLOY");
+            //    debugln("DROGUE DEPLOY");
                 drogueChuteDeploy();
                 break;
 
             // DROGUE_DESCENT
             case FLIGHT_STATE::DROGUE_DESCENT: 
-//                debugln("DROGUE DESCENT");
+            //    debugln("DROGUE DESCENT");
                 break;
 
             // MAIN_DEPLOY
             case FLIGHT_STATE::MAIN_DEPLOY:
-//                debugln("MAIN CHUTE DEPLOY");
+            //    debugln("MAIN CHUTE DEPLOY");
                 mainChuteDeploy();
                 break;
 
             // MAIN_DESCENT
             case FLIGHT_STATE::MAIN_DESCENT:
-//                debugln("MAIN CHUTE DESCENT");
+            //    debugln("MAIN CHUTE DESCENT");
                 break;
 
             // POST_FLIGHT_GROUND
             case FLIGHT_STATE::POST_FLIGHT_GROUND:
-//                debugln("POST FLIGHT GROUND");
+            //    debugln("POST FLIGHT GROUND");
                 break;
             
             // MAINTAIN AT PRE_FLIGHT_GROUND IF NO STATE IS SPECIFIED - NOT GONNA HAPPEN BUT BETTER SAFE THAN SORRY
@@ -1208,53 +1166,58 @@ void flightStateCallback(void* pvParameters) {
  * 
  *******************************************************************************/
 void debugToTerminalTask(void* pvParameters){
-    telemetry_type_t rcvd_data; // accelleration received from acceleration_queue
+    telemetry_type_t telemetry_received_packet; // acceleration received from acceleration_queue
 
     while(true){
-        if(xQueuePeek(telemetry_data_qHandle, &rcvd_data, portMAX_DELAY) == pdPASS){
-            // debug CSV to terminal 
-//             debug(rcvd_data.acc_data.ax); debug(",");
-//             debug(rcvd_data.acc_data.ay); debug(",");
-//             debug(rcvd_data.acc_data.az); debug(",");
-//             debug(rcvd_data.acc_data.pitch); debug(",");
-//             debug(rcvd_data.acc_data.roll); debug(",");
-//             debug(rcvd_data.alt_data.pressure); debug(",");
-//             debug(rcvd_data.alt_data.velocity); debug(",");
-//             debug(rcvd_data.alt_data.altitude); debug(",");
-//             debug(rcvd_data.alt_data.temperature); debug(",");
+        debugln("Debugging term");
+        // get telemetry data
+        xQueueReceive(debug_to_term_queue_handle, &telemetry_received_packet, portMAX_DELAY);
+        
+        /**
+         * record number
+         * operation_mode
+         * state
+         * ax
+         * ay
+         * az
+         * pitch
+         * roll
+         * gx
+         * gy
+         * gz
+         * latitude
+         * longitude
+         * gps_altitude
+         * pressure
+         * temperature
+         * altitude_agl
+         * velocity
+         *
+         */
+        sprintf(telemetry_packet_buffer,
+                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n",
 
-//            debug(rcvd_data.gps_data.latitude); debug(",");
-//            debug(rcvd_data.gps_data.longitude); debug(",");
-//            debug(rcvd_data.gps_data.gps_altitude); debug(",");
-//            debug(rcvd_data.gps_data.time); debug(",");
-
-            debugln();
-
-        }else{
-            /* no queue */
-            debugln("Failed to PEEK");
-        }
-
-        // if(xQueueReceive(altimeter_data_queue, &altimeter_buffer, portMAX_DELAY) == pdPASS){
-        //     debug("Pressure: "); debug(altimeter_buffer.pressure); debugln();
-        //     debug("Altitude: "); debug(altimeter_buffer.altitude); debugln();
-        //     debug("Velocity: "); debug(altimeter_buffer.velocity); debugln();
-        //     debug("AGL: "); debug(altimeter_buffer.AGL); debugln();
-            
-        // }else{
-        //     /* no queue */
-        // }
-
-        // if(xQueueReceive(gps_data_queue, &gps_buffer, portMAX_DELAY) == pdPASS){
-        //     debug("Latitude: "); debug(gps_buffer.latitude); debugln();
-        //     debug("Longitude: "); debug(gps_buffer.longitude); debugln();
-        //     debug("Time: "); debug(gps_buffer.time); debugln();
-            
-        // }else{
-        //     /* no queue */
-        // }
-
-        xEventGroupSetBits(tasksDataReceiveEventGroup, DEBUG_TO_TERM_BIT); // signal that we have received flight data
+                telemetry_received_packet.record_number,
+                telemetry_received_packet.operation_mode,
+                telemetry_received_packet.state,
+                telemetry_received_packet.acc_data.ax,
+                telemetry_received_packet.acc_data.ay,
+                telemetry_received_packet.acc_data.az,
+                telemetry_received_packet.acc_data.pitch,
+                telemetry_received_packet.acc_data.roll,
+                telemetry_received_packet.gyro_data.gx,
+                telemetry_received_packet.gyro_data.gy,
+                telemetry_received_packet.gps_data.latitude,
+                telemetry_received_packet.gps_data.longitude,
+                telemetry_received_packet.gps_data.gps_altitude,
+                telemetry_received_packet.alt_data.pressure,
+                telemetry_received_packet.alt_data.temperature,
+                telemetry_received_packet.alt_data.AGL,
+                telemetry_received_packet.alt_data.velocity
+                );
+        
+        debugln(telemetry_packet_buffer);
+        vTaskDelay(20/portTICK_PERIOD_MS);
 
     }
 }
@@ -1272,7 +1235,6 @@ void logToMemory(void* pvParameter) {
 
     while(1) {
         xQueuePeek(telemetry_data_qHandle, &received_packet, portMAX_DELAY);
-        xEventGroupSetBits(tasksDataReceiveEventGroup, LOG_TO_MEMORY_BIT); // signal that we have received flight data
 
         // received_packet.record_number++; 
 
@@ -1302,58 +1264,60 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
     while(1) {
 
         // receive from telemetry queue
-        if(xQueuePeek(telemetry_data_qHandle, &telemetry_received_packet, portMAX_DELAY) == pdPASS) {
-            // rcvd_data.gps_data.latitude
-            /**
-             * record number
-             * operation_mode
-             * state
-             * ax
-             * ay
-             * az
-             * pitch
-             * roll
-             * gx
-             * gy
-             * gz
-             * latitude
-             * longitude
-             * gps_altitude
-             * gps_time
-             * pressure
-             * temperature
-             * altitude_agl
-             * velocity
-             * pyro1_state //
-             * pyro2_state //
-             * battery_voltage //
-             *
-             */
-            sprintf(telemetry_packet_buffer,
-                    "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%.2f,%.2f,%.2f,%.2f\n",
-                    telemetry_received_packet.record_number,
-                    telemetry_received_packet.operation_mode,
-                    telemetry_received_packet.state,
-                    telemetry_received_packet.acc_data.ax,
-                    telemetry_received_packet.acc_data.ay,
-                    telemetry_received_packet.acc_data.az,
-                    telemetry_received_packet.acc_data.pitch,
-                    telemetry_received_packet.acc_data.roll,
-                    telemetry_received_packet.gyro_data.gx,
-                    telemetry_received_packet.gyro_data.gy,
-                    telemetry_received_packet.gps_data.latitude,
-                    telemetry_received_packet.gps_data.longitude,
-                    telemetry_received_packet.gps_data.gps_altitude,
-                    telemetry_received_packet.gps_data.time,
-                    telemetry_received_packet.alt_data.pressure,
-                    telemetry_received_packet.alt_data.temperature,
-                    telemetry_received_packet.alt_data.AGL,
-                    telemetry_received_packet.alt_data.velocity
-                    );
+        xQueueReceive(telemetry_data_queue_handle, &telemetry_received_packet, (TickType_t) 5);
 
-        } else {
-            /* no queue */
-        }
+        /**
+         * PACKAGE TELEMETRY PACKET
+         */
+
+        /**
+         * record number
+         * operation_mode
+         * state
+         * ax
+         * ay
+         * az
+         * pitch
+         * roll
+         * gx
+         * gy
+         * gz
+         * latitude
+         * longitude
+         * gps_altitude
+         * gps_time
+         * pressure
+         * temperature
+         * altitude_agl
+         * velocity
+         * pyro1_state // not used
+         * pyro2_state // not used
+         * battery_voltage // not used
+         *
+         */
+        sprintf(telemetry_packet_buffer,
+            "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n",
+
+            telemetry_received_packet.record_number,
+            telemetry_received_packet.operation_mode,
+            telemetry_received_packet.state,
+            telemetry_received_packet.acc_data.ax,
+            telemetry_received_packet.acc_data.ay,
+            telemetry_received_packet.acc_data.az,
+            telemetry_received_packet.acc_data.pitch,
+            telemetry_received_packet.acc_data.roll,
+            telemetry_received_packet.gyro_data.gx,
+            telemetry_received_packet.gyro_data.gy,
+            telemetry_received_packet.gps_data.latitude,
+            telemetry_received_packet.gps_data.longitude,
+            telemetry_received_packet.gps_data.gps_altitude,
+            telemetry_received_packet.alt_data.pressure,
+            telemetry_received_packet.alt_data.temperature,
+            telemetry_received_packet.alt_data.AGL,
+            telemetry_received_packet.alt_data.velocity
+            );
+
+    
 
         /* Send to MQTT topic  */
         if( client.publish(MQTT_TOPIC, telemetry_packet_buffer) ) {
@@ -1370,13 +1334,13 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
  *
  */
 void MQTT_Reconnect() {
-     while(!client.connected()){
-         debug("[..]Attempting MQTT connection..."); // TODO: SYS L
+     if(!client.connected()){
+         debug("[..]Attempting MQTT connection..."); // TODO: SYS LOGGER
          String client_id = "[+]Flight-computer-1 client: ";
          client_id += String(random(0XFFFF), HEX);
 
          if(client.connect(client_id.c_str())){
-             debugln("[+]MQTT connected");
+             debugln("[+]MQTT reconnected");
          }
     }
 }
@@ -1525,7 +1489,7 @@ void mainChuteDeploy() {
  * initialize system check table
  * 
  *******************************************************************************/
-void setup(){
+void setup() {
     /* initialize serial */
     Serial.begin(BAUDRATE);
     delay(100);
@@ -1670,6 +1634,34 @@ void setup(){
         // this queue holds the telemetry data packet
         telemetry_data_qHandle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_packet));
 
+
+        // new queue method
+        telemetry_data_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
+        log_to_mem_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
+        check_state_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
+        debug_to_term_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
+        kalman_filter_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
+
+        if(debug_to_term_queue_handle == NULL) {
+            debugln("[-]debug_to_term_queue_handle creation failed");
+        } else {
+            debugln("[+]debug_to_term_queue_handle creation OK.");
+        }
+
+        if(check_state_queue_handle == NULL) {
+            debugln("[-]check_state_queue_handle creation failed");
+        } else {
+            debugln("[+]check_state_queue_handle creation OK.");
+        }
+
+        if(telemetry_data_queue_handle == NULL) {
+            debugln("[-]telemetry_data_queue_handle creation failed");
+        } else {
+            debugln("[+]telemetry_data_queue_handle creation OK.");
+        }
+
+
+
         // /* this queue will hold the flight states */
         // flight_states_queue = xQueueCreate(FLIGHT_STATES_QUEUE_LENGTH, sizeof(int32_t));
 
@@ -1697,6 +1689,7 @@ void setup(){
         } else {
             debugln("[+]Telemetry data queue creation OK.");
         }
+         
 
         // if(filtered_data_queue == NULL){
         //     debugln("[-]Filtered data queue creation failed!");
@@ -1709,21 +1702,6 @@ void setup(){
         // } else{
         //     debugln("[+]Flight states queue creation OK.");
         // }
-
-
-        // create  event group to synchronize flight data consumption
-        // see N4 flight software docs for more info
-        debugln();
-        debugln(F("=============================================="));
-        debugln(F("===== CREATING DATA CONSUMER EVENT GROUP ===="));
-        debugln(F("==============================================\n"));
-
-        tasksDataReceiveEventGroup = xEventGroupCreate(); // pss! whatever u do, this line must come before creating the tasks!
-        if(tasksDataReceiveEventGroup == NULL) {
-            debugln("[-] data consumer event group failed to create");
-        } else {
-            debugln("[+] data consumer event group created OK.");
-        }
 
         debugln();
         debugln(F("=============================================="));
@@ -1740,91 +1718,77 @@ void setup(){
         * Function name - for debugging 
         * Stack depth in words 
         * parameter to be passed to the task 
-        * Task priority - in this case 1 
+        * Task priority 
         * task handle that can be passed to other tasks to reference the task 
         *
         * /
-        debugln("==============Creating tasks==============");
 
         /* TASK 1: READ ACCELERATION DATA */
-        th = xTaskCreatePinnedToCore(readAccelerationTask, "readGyroscope", STACK_SIZE*2, NULL, 2, &readAccelerationTaskHandle, app_id);
-        if(th == pdPASS) {
-            debugln("[+]Read acceleration task created");
-
-            // suspend the task
-            //
-
+        BaseType_t gr = xTaskCreate(readAccelerationTask, "readGyroscope", STACK_SIZE*2, NULL, 2, &readAccelerationTaskHandle);
+        if(gr == pdPASS) {
+            debugln("[+]Read acceleration task created OK.");
         } else {
             debugln("[-]Read acceleration task creation failed");
         }
 
         /* TASK 2: READ ALTIMETER DATA */
-        th = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*2,NULL,2, &readAltimeterTaskHandle, app_id);
-        if(th == pdPASS) {
+        BaseType_t ra = xTaskCreate(readAltimeterTask,"readAltimeter",STACK_SIZE*2,NULL,2, &readAltimeterTaskHandle);
+        if(ra == pdPASS) {
             debugln("[+]Read altimeter task created OK.");
-            // vTaskSuspend(readAltimeterTaskHandle);
         } else {
             debugln("[-]Failed to create read altimeter task");
         }
 
         /* TASK 3: READ GPS DATA */
-        th = xTaskCreatePinnedToCore(readGPSTask, "readGPS", STACK_SIZE*2, NULL,2, &readGPSTaskHandle, app_id);
-
-        if(th == pdPASS) {
-            debugln("[+]GPS task created OK.");
-            // vTaskSuspend(readGPSTaskHandle);
+        BaseType_t rg = xTaskCreate(readGPSTask, "readGPS", STACK_SIZE*2, NULL,2, &readGPSTaskHandle);
+        if(rg == pdPASS) {
+            debugln("[+]Read GPS task created OK.");
         } else {
             debugln("[-]Failed to create GPS task");
         }
 
-        /* TASK 4: CLEAR TELEMETRY QUEUE ITEM */
-        th = xTaskCreatePinnedToCore(clearTelemetryQueueTask, "clearTelemetryQueueTask",STACK_SIZE*2,NULL,2, &clearTelemetryQueueTaskHandle, app_id);
-        if(th == pdPASS) {
-            debugln("[+]clearTelemetryQueueTask task created OK.");
-            // vTaskSuspend(clearTelemetryQueueTaskHandle);
-        } else {
-            debugln("[-]Failed to create clearTelemetryQueueTask task");
-        }
-
         /* TASK 5: CHECK FLIGHT STATE TASK */
-        th = xTaskCreatePinnedToCore(checkFlightState,"checkFlightState",STACK_SIZE*2,NULL,2, &checkFlightStateTaskHandle,app_id);
-        if(th == pdPASS) {
+        BaseType_t cf = xTaskCreate(checkFlightState,"checkFlightState",STACK_SIZE*2,NULL,1, &checkFlightStateTaskHandle);
+        vTaskSuspend(checkFlightStateTaskHandle);
+
+        if(cf == pdPASS) {
             debugln("[+]checkFlightState task created OK.");
-            // vTaskSuspend(checkFlightStateTaskHandle);
         } else {
             debugln("[-}Failed to create checkFlightState task");
         }
 
         /* TASK 6: FLIGHT STATE CALLBACK TASK */    
-        th = xTaskCreatePinnedToCore(flightStateCallback, "flightStateCallback", STACK_SIZE*2, NULL, 2, &flightStateCallbackTaskHandle, app_id);
-        if(th == pdPASS) {
+        BaseType_t fs = xTaskCreate(flightStateCallback, "flightStateCallback", STACK_SIZE*2, NULL, 2, &flightStateCallbackTaskHandle);
+        vTaskSuspend(flightStateCallbackTaskHandle);
+        if(fs == pdPASS) {
             debugln("[+]flightStateCallback task created OK.");
-            // vTaskSuspend(flightStateCallbackTaskHandle);
         } else {
             debugln("[-}Failed to create flightStateCallback task");
         }
 
         /* TASK 8: TRANSMIT TELEMETRY DATA */
-        th = xTaskCreatePinnedToCore(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*2, NULL, 2, &MQTT_TransmitTelemetryTaskHandle, app_id);
+        th = xTaskCreate(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*4, NULL, 2, &MQTT_TransmitTelemetryTaskHandle);
+        vTaskSuspend(MQTT_TransmitTelemetryTaskHandle);
+
         if(th == pdPASS){
-            debugln("[+]Transmit task created OK!");
-            // vTaskSuspend(MQTT_TransmitTelemetryTaskHandle);
+            debugln("[+]MQTT transmit task created OK");
+            
         } else {
-            debugln("[-]Transmit task failed to create");
+            debugln("[-]MQTT transmit task failed to create");
         }
 
         #if DEBUG_TO_TERMINAL   // set DEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
 
             /* TASK 7: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
-            th = xTaskCreatePinnedToCore(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE,NULL,2,NULL,app_id);
+            BaseType_t dt = xTaskCreate(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE*4, NULL,2,&debugToTerminalTaskHandle);
+            vTaskSuspend(debugToTerminalTaskHandle);
 
-            if(th == pdPASS) {
-                debugln("[+]debugToTerminal Task created OK!");
-                // vTaskSuspend(debugToTerminalTaskHandle);
+            if(dt == pdPASS) {
+                debugln("[+]debugToTerminal task created OK");
             } else {
-                debugln("[-]Task not created");
+                debugln("[-]debugToTerminal task not created");
             }
-
+        
         #endif // DEBUG_TO_TERMINAL_TASK
 
         #if LOG_TO_MEMORY   // set LOG_TO_MEMORY to 1 to allow logging to memory 
@@ -1845,20 +1809,6 @@ void setup(){
             }
         #endif // LOG_TO_MEMORY
 
-        // if(xTaskCreate(
-        //         flight_state_check,
-        //         "testFSM",
-        //         STACK_SIZE,
-        //         NULL,
-        //         2,
-        //         &flight_state_checkTaskHandle
-        // ) != pdPASS){
-        //     debugln("[-]FSM task failed to create");
-        // }else{
-        //     debugln("[+]FSM task created OK.");
-//        vTaskSuspend(flight_state_checkTaskHandle);
-        // }
-
         debugln();
         debugln(F("=============================================="));
         debugln(F("========== FINISHED CREATING TASKS ==========="));
@@ -1866,7 +1816,13 @@ void setup(){
 
         delay(2000);
 
-        // done creating tasks -> resume all tasks
+        // done creating all tasks - resuming suspended tasks
+        debugln("Resuming all suspended tasks\n"); // TODO: log to sys logger
+        
+        vTaskResume(checkFlightStateTaskHandle);
+        vTaskResume(flightStateCallbackTaskHandle);
+        vTaskResume(MQTT_TransmitTelemetryTaskHandle);
+        vTaskResume(debugToTerminalTaskHandle);
 
     } // end of setup in running mode 
     
@@ -1885,23 +1841,19 @@ void loop() {
         prepareForDataReceive();
 
     } else if(TEST_MODE) {
-        debugln("DATA CONSUME");
+        // debugln("DATA CONSUME");
 
         /**
          * Here is where we consume the test data stored in the data.txt file
          */
-        if(current_test_state == TEST_STATES::DATA_CONSUME) {
-            debugln("=============== Consuming test data ===============");
-            readFile(SD, "/data.txt");
+        // if(current_test_state == TEST_STATES::DATA_CONSUME) {
+        //     debugln("=============== Consuming test data ===============");
+        //     // readFile(SD, "/data.txt");
 
-            // feed into state machine
-        }
+        //     // feed into state machine
+        // }
 
-         if( !client.connected() ) {
-             /* try to reconnect if connection is lost */
-             debugln("Connection lost. Reconnecting to MQTT...");
-             MQTT_Reconnect();
-         }
+         MQTT_Reconnect();
 
          client.loop();
 

@@ -22,7 +22,7 @@ uint8_t WIFIConfig::WifiConnect() {
     WiFiManager wm;
 
     // wipe stored credentials
-    wm.resetSettings();
+    // wm.resetSettings();
 
     bool connection_result = 0;
 

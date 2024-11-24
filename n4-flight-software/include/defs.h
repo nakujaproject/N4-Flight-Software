@@ -45,7 +45,7 @@
 #define BASE_ALTITUDE 1417                   /*!< this value is the altitude at rocket launch site - adjust accordingly */
 
 /*!<  tasks constants */
-#define STACK_SIZE 2048                     /*!< task stack size in words */
+#define STACK_SIZE 1024                     /*!< task stack size in words */
 #define ALTIMETER_QUEUE_LENGTH 10           /*!< length of the altimeter queue */
 #define GYROSCOPE_QUEUE_LENGTH 10           /*!< length of the gyroscope queue */
 #define GPS_QUEUE_LENGTH 24                 /*!< length of the gps queue */
@@ -55,7 +55,8 @@
 
 /* MQTT constants */
 //const char MQTT_SERVER[30] = "192.168.1.101";
-const char MQTT_SERVER[30] = "broker.emqx.io";
+// const char MQTT_SERVER[30] = "broker.emqx.io";
+const char MQTT_SERVER[30] = "192.168.1.113";
 const char MQTT_TOPIC[30] = "n4/flight-computer-1";             /* make this topic unique to every rocket */
 #define MQTT_PORT 1883                               /*!< MQTT broker port */
 
