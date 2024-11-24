@@ -54,7 +54,7 @@
 #define FLIGHT_STATES_QUEUE_LENGTH 1        /*!< length of the flight states queue */
 
 /* MQTT constants */
-const char MQTT_SERVER[20] = "192.168.78.19";         /*!< MQTT broker IP address */
+const char MQTT_SERVER[20] = "10.16.1.118";         /*!< MQTT broker IP address */
 const char MQTT_TOPIC[20] = "n4/telemetry";
 #define MQTT_PORT 1882                     /*!< MQTT broker port */
 

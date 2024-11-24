@@ -445,6 +445,9 @@ void checkRunTestToggle() {
         SwitchLEDs(!DAQ_MODE, !TEST_MODE);
     }
 
+    debugln(digitalRead(SET_TEST_MODE_PIN));
+    debugln(digitalRead(SET_DAQ_MODE_PIN));
+
 }
 
 
@@ -663,7 +666,7 @@ void prepareForDataReceive() {
 
 WiFiClient wifi_client;
 PubSubClient client(wifi_client);
-uint8_t MQTTInit(const char* broker_IP, uint16_t broker_port);
+uint8_t MQTT_Init(const char* broker_IP, uint16_t broker_port);
 
 /* WIFI configuration class object */
 WIFIConfig wifi_config;
@@ -802,30 +805,7 @@ QueueHandle_t gps_data_qHandle;
 // QueueHandle_t filtered_data_queue;
 // QueueHandle_t flight_states_queue;
 
-
-/**
- * @brief This is a fallback function in case we need to manually connect to the WIFI
- * The right method to use when connecting is the WIFI provisioning method outlined above
- *
- */
-// void connectToWifi(){
-//     digitalWrite(LED_BUILTIN, HIGH);
-//     /* Connect to a Wi-Fi network */
-//     debugln("[..]Scanning for network...");
-
-//     WiFi.begin(SSID, PASSWORD);
-
-//     while (WiFi.status() != WL_CONNECTED)
-//     {
-//         delay(500);
-//         debugln("[..]Scanning for network...");
-//     }
-
-//     debugln("[+]Network found");debug("[+]My IP address: "); debugln();
-//     debugln(WiFi.localIP());
-//     digitalWrite(LED_BUILTIN, LOW);
-// }
-
+const TickType_t xDelay100ms = pdMS_TO_TICKS( 100 );
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////// ACCELERATION AND ROCKET ATTITUDE DETERMINATION /////////////////
@@ -858,6 +838,8 @@ void readAccelerationTask(void* pvParameter) {
         
         xQueueSend(telemetry_data_qHandle, &acc_data_lcl, portMAX_DELAY);
 
+        vTaskDelay(xDelay100ms);
+
     }
 }
 
@@ -875,11 +857,7 @@ void readAccelerationTask(void* pvParameter) {
  *******************************************************************************/
 void readAltimeterTask(void* pvParameters) {
     telemetry_type_t alt_data_lcl;
-    float prev_alt = 0;
-    float current_alt = 0;
-    unsigned long prev_time = 0;
-    unsigned long current_time = 0;
-    float vertical_velocity = 0;
+    
 
     while(true){    
         // If you want to measure altitude, and not pressure, you will instead need
@@ -957,35 +935,21 @@ void readAltimeterTask(void* pvParameters) {
         // delay(2000);
 
         // TODO: compute the velocity from the altimeter data
-         prev_alt = a;
-         prev_time = millis();
-
-        while(1){
-            current_alt = a;
-            current_time = millis();
-
-            float delta_time = (current_time - prev_time)/ 1000;
-
-            float delta_alt = current_alt - prev_alt;
-
-            vertical_velocity = delta_alt / delta_time;
-
-            prev_alt = current_alt;
-            prev_time = current_time;
-
-            delay(1000);
-        }
+        
 
         // assign data to queue
         alt_data_lcl.alt_data.pressure = P;
         alt_data_lcl.alt_data.altitude = a;
-        alt_data_lcl.alt_data.velocity = vertical_velocity;
+        alt_data_lcl.alt_data.velocity = 0;
         alt_data_lcl.alt_data.temperature = T;
 
         // send this pressure data to queue
         // do not wait for the queue if it is full because the data rate is so high, 
         // we might lose some data as we wait for the queue to get space
         xQueueSend(telemetry_data_qHandle, &alt_data_lcl, 0); // TODO: CHECK SUCCESS SENDING TO QUEUE
+
+        vTaskDelay(xDelay100ms);
+
 
     }
 
@@ -1047,6 +1011,8 @@ void readGPSTask(void* pvParameters){
         } else {
             // debugln("Sent to GPS Queue"); // TODO: LOG TO SYSTEM LOGGER
         }
+        vTaskDelay(xDelay100ms);
+
     }
 
 }
@@ -1099,6 +1065,8 @@ void clearTelemetryQueueTask(void* pvParameters) {
         }
 
         //TODO: XBEE, DEBUG TO TERM
+        vTaskDelay(xDelay100ms);
+
     }
 	
 }
@@ -1111,7 +1079,7 @@ void clearTelemetryQueueTask(void* pvParameters) {
  * @return Updates the telemetry data flight state value
  * 
  *******************************************************************************/
-void checkFlightState(void* pvParameters) {
+void checkFlightStateTask(void* pvParameters) {
     // get the flight state from the telemetry tasi
     telemetry_type_t sensor_data; 
     
@@ -1127,6 +1095,9 @@ void checkFlightState(void* pvParameters) {
             current_state = FLIGHT_STATE::POWERED_FLIGHT;
         } 
         // else if() {}
+
+        vTaskDelay(xDelay100ms);
+
     }
 
 }
@@ -1141,7 +1112,7 @@ void checkFlightState(void* pvParameters) {
  * so it is not valid to pass the address of a stack variable.
  * 
  *******************************************************************************/
-void flightStateCallback(void* pvParameters) {
+void flightStateCallbackTask(void* pvParameters) {
     while(1) {
         switch (current_state) {
             // PRE_FLIGHT_GROUND
@@ -1197,6 +1168,9 @@ void flightStateCallback(void* pvParameters) {
                 break;
 
         }
+
+        vTaskDelay(xDelay100ms);
+
     }
 }
 
@@ -1222,16 +1196,16 @@ void debugToTerminalTask(void* pvParameters){
             // debug(rcvd_data.alt_data.velocity); debug(","); 
             // debug(rcvd_data.alt_data.altitude); debug(","); 
             // debug(rcvd_data.alt_data.temperature); debug(","); 
-
-            debug(rcvd_data.gps_data.latitude); debug(","); 
-            debug(rcvd_data.gps_data.longitude); debug(",");
-            debug(rcvd_data.gps_data.gps_altitude); debug(",");
-            debug(rcvd_data.gps_data.time); debug(","); 
+            // debug(rcvd_data.gps_data.latitude); debug(","); 
+            // debug(rcvd_data.gps_data.longitude); debug(",");
+            // debug(rcvd_data.gps_data.gps_altitude); debug(",");
+            // debug(rcvd_data.gps_data.time); debug(","); 
 
             debugln();
 
         }else{
             /* no queue */
+            debugln("Failed to PEEK.");
         }
 
         // if(xQueueReceive(altimeter_data_queue, &altimeter_buffer, portMAX_DELAY) == pdPASS){
@@ -1255,6 +1229,8 @@ void debugToTerminalTask(void* pvParameters){
 
         xEventGroupSetBits(tasksDataReceiveEventGroup, DEBUG_TO_TERM_BIT); // signal that we have received flight data
 
+        vTaskDelay(xDelay100ms);
+
     }
 }
 
@@ -1266,7 +1242,7 @@ void debugToTerminalTask(void* pvParameters){
  * so it is not valid to pass the address of a stack variable.
  * 
  *******************************************************************************/
-void logToMemory(void* pvParameter) {
+void logToMemoryTask(void* pvParameter) {
     telemetry_type_t received_packet;
 
     while(1) {
@@ -1282,7 +1258,9 @@ void logToMemory(void* pvParameter) {
             previous_log_time = current_log_time;
             data_logger.loggerWrite(received_packet);
         }
-        
+
+        vTaskDelay(xDelay100ms);
+
     }
 
 }
@@ -1294,93 +1272,77 @@ void logToMemory(void* pvParameter) {
  * so it is not valid to pass the address of a stack variable.
  *
  *******************************************************************************/
-void MQTT_TransmitTelemetry(void* pvParameters) {
-    // variable to store the received packet to transmit
-    telemetry_type_t telemetry_received_packet;
+// void MQTT_TransmitTelemetry(void* pvParameters) {
+//     // variable to store the received packet to transmit
+//     telemetry_type_t telemetry_received_packet;
 
-    while(1) {
+//     while(1) {
 
-        // receive from telemetry queue
-        if(xQueuePeek(telemetry_data_qHandle, &telemetry_received_packet, portMAX_DELAY) == pdPASS) {
-            // rcvd_data.gps_data.latitude
-            /**
-             * record number
-             * operation_mode
-             * state
-             * ax
-             * ay
-             * az
-             * pitch
-             * roll
-             * gx
-             * gy
-             * gz
-             * latitude
-             * longitude
-             * gps_altitude
-             * gps_time
-             * pressure
-             * temperature
-             * altitude_agl
-             * velocity
-             * pyro1_state //
-             * pyro2_state //
-             * battery_voltage //
-             *
-             */
-            sprintf(telemetry_packet_buffer,
-                    "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%.2f,%.2f,%.2f,%.2f\n",
-                    telemetry_received_packet.record_number,
-                    telemetry_received_packet.operation_mode,
-                    telemetry_received_packet.state,
-                    telemetry_received_packet.acc_data.ax,
-                    telemetry_received_packet.acc_data.ay,
-                    telemetry_received_packet.acc_data.az,
-                    telemetry_received_packet.acc_data.pitch,
-                    telemetry_received_packet.acc_data.roll,
-                    telemetry_received_packet.gyro_data.gx,
-                    telemetry_received_packet.gyro_data.gy,
-                    telemetry_received_packet.gps_data.latitude,
-                    telemetry_received_packet.gps_data.longitude,
-                    telemetry_received_packet.gps_data.gps_altitude,
-                    telemetry_received_packet.gps_data.time,
-                    telemetry_received_packet.alt_data.pressure,
-                    telemetry_received_packet.alt_data.temperature,
-                    telemetry_received_packet.alt_data.AGL,
-                    telemetry_received_packet.alt_data.velocity
-                    );
+//         // receive from telemetry queue
+//         if(xQueuePeek(telemetry_data_qHandle, &telemetry_received_packet, portMAX_DELAY) == pdPASS) {
+//             // rcvd_data.gps_data.latitude
+//             /**
+//              * record number
+//              * operation_mode
+//              * state
+//              * ax
+//              * ay
+//              * az
+//              * pitch
+//              * roll
+//              * gx
+//              * gy
+//              * gz
+//              * latitude
+//              * longitude
+//              * gps_altitude
+//              * gps_time
+//              * pressure
+//              * temperature
+//              * altitude_agl
+//              * velocity
+//              * pyro1_state //
+//              * pyro2_state //
+//              * battery_voltage //
+//              *
+//              */
+//             sprintf(telemetry_packet_buffer,
+//                     "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%.2f,%.2f,%.2f,%.2f\n",
+//                     telemetry_received_packet.record_number,
+//                     telemetry_received_packet.operation_mode,
+//                     telemetry_received_packet.state,
+//                     telemetry_received_packet.acc_data.ax,
+//                     telemetry_received_packet.acc_data.ay,
+//                     telemetry_received_packet.acc_data.az,
+//                     telemetry_received_packet.acc_data.pitch,
+//                     telemetry_received_packet.acc_data.roll,
+//                     telemetry_received_packet.gyro_data.gx,
+//                     telemetry_received_packet.gyro_data.gy,
+//                     telemetry_received_packet.gps_data.latitude,
+//                     telemetry_received_packet.gps_data.longitude,
+//                     telemetry_received_packet.gps_data.gps_altitude,
+//                     telemetry_received_packet.gps_data.time,
+//                     telemetry_received_packet.alt_data.pressure,
+//                     telemetry_received_packet.alt_data.temperature,
+//                     telemetry_received_packet.alt_data.AGL,
+//                     telemetry_received_packet.alt_data.velocity
+//                     );
 
-        } else {
-            /* no queue */
-        }
+//         } else {
+//             /* no queue */
+//         }
 
-        /* Send to MQTT topic  */
-        if( client.publish(MQTT_TOPIC, telemetry_packet_buffer) ) {
-             debugln("[+]Data sent");
-         } else {
-             debugln("[-]Data not sent");
-         }
-    }
+//         /* Send to MQTT topic  */
+//         if( client.publish(MQTT_TOPIC, telemetry_packet_buffer) ) {
+//              debugln("[+]Data sent");
+//          } else {
+//              debugln("[-]Data not sent");
+//          }
+//     }
 
-}
+// }
 
-/*!
- * @brief Try reconnecting to MQTT if connection is lost
- *
- */
-void MQTT_Reconnect() {
-     while(!client.connected()){
-         debug("[..]Attempting MQTT connection..."); // TODO: SYS L
-         String client_id = "[+]Flight-computer-1 client: ";
-         client_id += String(random(0XFFFF), HEX);
-
-         if(client.connect(client_id.c_str())){
-             debugln("[+]MQTT connected");
-         }
-    }
-}
-
-void transmitTelemetry(void* pvParameters){
+void transmitTelemetryTask(void* pvParameters){
     /* This function sends data to the ground station */
 
      /*  create two pointers to the data structures to be transmitted */
@@ -1393,120 +1355,97 @@ void transmitTelemetry(void* pvParameters){
     // struct Altimeter_Data altimeter_data_receive;
     // struct GPS_Data gps_data_receive;
     // int32_t flight_state_receive;
-    int id = 0;
+    uint8_t pyro1_state = 1;
+    uint8_t pyro2_state = 1;
+    float battery_voltage = 21.09;
+
+
 
     while(true){
-        File logFile = SPIFFS.open("/log.csv", FILE_APPEND);
-        if(!file) debugln("[-] Failed to open file for appending");
-        else debugln("[+] File opened for appending");
         
         /* receive data into respective queues */
-        if(xQueueReceive(telemetry_data_qHandle, &telemetry_data_receive, portMAX_DELAY) == pdPASS){  // should telemetry values be in struct format?
+        if(xQueuePeek(telemetry_data_qHandle, &telemetry_data_receive, portMAX_DELAY) == pdPASS){  // should telemetry values be in struct format?
             debugln("[+]Telemetry data ready for sending ");
+            
+            // parse data in json format to telemetry_data packet
+            // Example output -> { "id": 123, "state": 1, "operation_mode": 2, 
+            // "acc_data": { "ax": 1.23, "ay": 4.56, "az": 7.89, "pitch": 10.11, "roll": 12.13 }, 
+            // "gyro_data": { "gx": 14.15, "gy": 16.17, "gz": 18.19 }, 
+            // "gps_data": { "latitude": 20.2, "longitude": 22.2, "gps_altitude": 24.23, "time": 25 }, 
+            // "alt_data": { "pressure": 26.24, "temperature": 28.25, "AGL": 30.26, "velocity": 32.27 }, 
+            // "chute_state": { "pyro1_state": 1, "pyro2_state": 0 }, "battery_voltage": 34.28 }
+
+            snprintf(telemetry_data, sizeof(telemetry_data),
+                // "%i,%i,%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.8f,%.8f,%.2f,%.X,%.2f,%.2f,%.2f,%.2f,%i,%i,%.2f\n",
+                "{"
+                "\"id\": %i,"
+                "\"state\": %i,"
+                "\"operation_mode\": %i,"
+                "\"acc_data\": {"
+                    "\"ax\": %.2f,"
+                    "\"ay\": %.2f,"
+                    "\"az\": %.2f,"
+                    "\"pitch\": %.2f,"
+                    "\"roll\": %.2f"
+                "},"
+                "\"gyro_data\": {"
+                    "\"gx\": %.2f,"
+                    "\"gy\": %.2f,"
+                    "\"gz\": %.2f"
+                "},"
+                "\"gps_data\": {"
+                    "\"latitude\": %.16f,"
+                    "\"longitude\": %.16f,"
+                    "\"gps_altitude\": %.2f,"
+                    "\"time\": %i"
+                "},"
+                "\"alt_data\": {"
+                    "\"pressure\": %.2f,"
+                    "\"temperature\": %.2f,"
+                    "\"AGL\": %.2f,"
+                    "\"velocity\": %.2f"
+                "},"
+                "\"chute_state\": {"
+                    "\"pyro1_state\": %i,"
+                    "\"pyro2_state\": %i"
+                "},"
+                "\"battery_voltage\": %.2f"
+                "}\n",
+                telemetry_data_receive.record_number,//0
+                telemetry_data_receive.state, //1
+                telemetry_data_receive.operation_mode, //2
+                telemetry_data_receive.acc_data.ax,//3
+                telemetry_data_receive.acc_data.ay,//4
+                telemetry_data_receive.acc_data.az,//5
+                telemetry_data_receive.acc_data.pitch,//6
+                telemetry_data_receive.acc_data.roll,//7
+                telemetry_data_receive.gyro_data.gx,//8
+                telemetry_data_receive.gyro_data.gy,//9
+                telemetry_data_receive.gyro_data.gz,//10
+                telemetry_data_receive.gps_data.latitude,//11
+                telemetry_data_receive.gps_data.longitude,//12
+                telemetry_data_receive.gps_data.gps_altitude,//13
+                telemetry_data_receive.gps_data.time,//14
+                telemetry_data_receive.alt_data.pressure,//15
+                telemetry_data_receive.alt_data.temperature,//16
+                telemetry_data_receive.alt_data.AGL,//17
+                telemetry_data_receive.alt_data.velocity,//18
+                pyro1_state,//telemetry_data_receive.chute_state.pyro1_state,//19
+                pyro2_state,//telemetry_data_receive.chute_state.pyro2_state,//20
+                battery_voltage//telemetry_data_receive.battery_voltage//21 
+            );
+            
         }else{
             debugln("[-]Failed to receive telemetry data");
         }
 
-        // if(xQueueReceive(altimeter_data_queue, &altimeter_data_receive, portMAX_DELAY) == pdPASS){
-        //     debugln("[+]Altimeter data ready for sending ");
-        // }else{
-        //     debugln("[-]Failed to receive altimeter data");
-        // }
-
-        // if(xQueueReceive(gps_data_queue, &gps_data_receive, portMAX_DELAY) == pdPASS){
-        //     debugln("[+]GPS data ready for sending ");
-        // }else{
-        //     debugln("[-]Failed to receive GPS data");
-        // }
-
-        // if(xQueueReceive(flight_states_queue, &flight_state_receive, portMAX_DELAY) == pdPASS){
-        //     debugln("[+]Flight state ready for sending ");
-        // }else{
-        //     debugln("[-]Failed to receive Flight state");
-        // }
-
-
-        // parse data in json format to telemetry_data packet
-        // Example output -> { "id": 123, "state": 1, "operation_mode": 2, 
-        // "acc_data": { "ax": 1.23, "ay": 4.56, "az": 7.89, "pitch": 10.11, "roll": 12.13 }, 
-        // "gyro_data": { "gx": 14.15, "gy": 16.17, "gz": 18.19 }, 
-        // "gps_data": { "latitude": 20.2, "longitude": 22.2, "gps_altitude": 24.23, "time": 25 }, 
-        // "alt_data": { "pressure": 26.24, "temperature": 28.25, "AGL": 30.26, "velocity": 32.27 }, 
-        // "chute_state": { "pyro1_state": 1, "pyro2_state": 0 }, "battery_voltage": 34.28 }
-
-        snprintf(telemetry_data, sizeof(telemetry_data),
-            // "%i,%i,%i,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.8f,%.8f,%.2f,%.X,%.2f,%.2f,%.2f,%.2f,%i,%i,%.2f\n",
-            "{"
-            "\"id\": %i,"
-            "\"state\": %i,"
-            "\"operation_mode\": %i,"
-            "\"acc_data\": {"
-                "\"ax\": %.2f,"
-                "\"ay\": %.2f,"
-                "\"az\": %.2f,"
-                "\"pitch\": %.2f,"
-                "\"roll\": %.2f"
-            "},"
-            "\"gyro_data\": {"
-                "\"gx\": %.2f,"
-                "\"gy\": %.2f,"
-                "\"gz\": %.2f"
-            "},"
-            "\"gps_data\": {"
-                "\"latitude\": %.16f,"
-                "\"longitude\": %.16f,"
-                "\"gps_altitude\": %.2f,"
-                "\"time\": %i"
-            "},"
-            "\"alt_data\": {"
-                "\"pressure\": %.2f,"
-                "\"temperature\": %.2f,"
-                "\"AGL\": %.2f,"
-                "\"velocity\": %.2f"
-            "},"
-            "\"chute_state\": {"
-                "\"pyro1_state\": %i,"
-                "\"pyro2_state\": %i"
-            "},"
-            "\"battery_voltage\": %.2f"
-            "}\n",
-            id,//0
-            telemetry_data_receive.state, //1
-            telemetry_data_receive.operation_mode, //2
-            telemetry_data_receive.acc_data.ax,//3
-            telemetry_data_receive.acc_data.ay,//4
-            telemetry_data_receive.acc_data.az,//5
-            telemetry_data_receive.acc_data.pitch,//6
-            telemetry_data_receive.acc_data.roll,//7
-            telemetry_data_receive.gyro_data.gx,//8
-            telemetry_data_receive.gyro_data.gy,//9
-            telemetry_data_receive.gyro_data.gz,//10
-            telemetry_data_receive.gps_data.latitude,//11
-            telemetry_data_receive.gps_data.longitude,//12
-            telemetry_data_receive.gps_data.gps_altitude,//13
-            telemetry_data_receive.gps_data.time,//14
-            telemetry_data_receive.alt_data.pressure,//15
-            telemetry_data_receive.alt_data.temperature,//16
-            telemetry_data_receive.alt_data.AGL,//17
-            telemetry_data_receive.alt_data.velocity,//18
-            1,//telemetry_data_receive.chute_state.pyro1_state,//19
-            1,//telemetry_data_receive.chute_state.pyro2_state,//20
-            15.67//telemetry_data_receive.battery_voltage//21 
-        );
-
-        if(logFile.print(telemetry_data)){
-            debugln("[+] Message appended");
-        } else {
-            debugln("[-] Append failed");
-        }
-        logFile.close();
-        id+=1;
-
-        if(mqtt_client.publish(MQTT_TOPIC, telemetry_data)) {
+        if(client.publish(MQTT_TOPIC, telemetry_data)) {
             debugln("[+]Data sent");
         } else{
             debugln("[-]Data not sent");
         }
+
+        vTaskDelay(xDelay100ms);
     }
 }
 
@@ -1514,13 +1453,56 @@ void transmitTelemetry(void* pvParameters){
  * @brief Initialize MQTT
  *
  *
- *******************************************************************************/
-void MQTTInit(const char* broker_IP, int broker_port) {
-    // client.setBufferSize(MQTT_BUFFER_SIZE);
+ ******************************************************************************/
+void MQTT_Init(const char* broker_IP, int broker_port) {
+    const uint16_t MQTT_BUFFER_SIZE = 512;
+    client.setBufferSize(MQTT_BUFFER_SIZE);
     debugln("[+]Initializing MQTT\n");
     client.setServer(broker_IP, broker_port);
-    delay(2000);
+    // delay(2000);
 }
+
+
+/*!*****************************************************************************
+ * @brief Try reconnecting to MQTT if connection is lost
+ *
+ *******************************************************************************/
+void MQTT_Reconnect() {
+     while(!client.connected()){
+         debugln("[..]Attempting MQTT connection..."); // TODO: SYS L
+         String client_id = "[+]Flight-computer-1 client: ";
+         client_id += String(random(0XFFFF), HEX);
+
+
+         if(client.connect(client_id.c_str())){
+             debugln("[+]MQTT connected");
+         }
+    }
+}
+
+/**
+ * @brief This is a fallback function in case we need to manually connect to the WIFI
+ * The right method to use when connecting is the WIFI provisioning method outlined above
+ *
+ */
+// void connectToWifi(){
+//     digitalWrite(LED_BUILTIN, HIGH);
+//     /* Connect to a Wi-Fi network */
+//     debugln("[..]Scanning for network...");
+
+//     WiFi.begin(SSID, PASSWORD);
+
+//     while (WiFi.status() != WL_CONNECTED)
+//     {
+//         delay(500);
+//         debugln("[..]Scanning for network...");
+//     }
+
+//     debugln("[+]Network found");debug("[+]My IP address: "); debugln();
+//     debugln(WiFi.localIP());
+//     digitalWrite(LED_BUILTIN, LOW);
+// }
+
 
 /*!****************************************************************************
  * @brief fires the pyro-charge to deploy the drogue chute
@@ -1581,7 +1563,7 @@ void mainChuteDeploy() {
 void setup(){
     /* initialize serial */
     Serial.begin(BAUDRATE);
-    delay(100);
+    // delay(100);
 
     debugln();
     debugln(F("=============================================="));
@@ -1603,7 +1585,13 @@ void setup(){
     initDataFiles();
     uint8_t spiffs_init_state = InitSPIFFS();
     uint8_t test_gpio_init_state = initTestGPIO();
-    MQTTInit(MQTT_SERVER, MQTT_PORT);
+
+    debugln();
+    debugln(F("=============================================="));
+    debugln(F("========= INITIALIZING MQTT =================="));
+    debugln(F("=============================================="));
+
+    MQTT_Init(MQTT_SERVER, MQTT_PORT);
 
     /* update the susbsystems init state table */   
     // check if BMP init OK
@@ -1641,7 +1629,7 @@ void setup(){
         SUBSYSTEM_INIT_MASK |= (1 << TEST_HARDWARE_CHECK_BIT);
     }
 
-    debug("[]SUBSYSTEM_INIT_MASK: "); debugln(SUBSYSTEM_INIT_MASK);
+    debug("[+]SUBSYSTEM_INIT_MASK: "); debugln(SUBSYSTEM_INIT_MASK);
 
     // delay(2000);
 
@@ -1654,9 +1642,9 @@ void setup(){
     if(DAQ_MODE) {
         // in test mode we only transfer test data from the testing PC to the SD card
         debugln();
-        debugln(F("=============================================="));
+        debugln(F("========================================================="));
         debugln(F("========= FLIGHT COMPUTER DATA ACQUISITION MODE ========="));
-        debugln(F("=============================================="));
+        debugln(F("========================================================="));
 
         debugln("Ready to receive data...");
 
@@ -1768,7 +1756,7 @@ void setup(){
         // see N4 flight software docs for more info
         debugln();
         debugln(F("=============================================="));
-        debugln(F("===== CREATING DATA CONSUMER EVENT GROUP ===="));
+        debugln(F("===== CREATING DATA CONSUMER EVENT GROUP ====="));
         debugln(F("=============================================="));
 
         tasksDataReceiveEventGroup = xEventGroupCreate(); // pss! whatever u do, this line must come before creating the tasks!
@@ -1780,7 +1768,7 @@ void setup(){
 
         debugln();
         debugln(F("=============================================="));
-        debugln(F("============== CREATING TASKS ==============="));
+        debugln(F("============== CREATING TASKS ================"));
         debugln(F("=============================================="));
 
         /* Create tasks
@@ -1800,15 +1788,15 @@ void setup(){
         debugln("==============Creating tasks==============");
 
         /* TASK 1: READ ACCELERATION DATA */
-        th = xTaskCreatePinnedToCore(readAccelerationTask, "readGyroscope", STACK_SIZE*2, NULL, 1, NULL,app_id);
+        th = xTaskCreatePinnedToCore(readAccelerationTask, "readGyroscope", STACK_SIZE*2, NULL, 1, NULL, app_id);
         if(th == pdPASS) {
-            debugln("[+]Read acceleration task created");
+            debugln("[+]Read acceleration task created OK.");
         } else {
-            debugln("[-]Read acceleration task creation failed");
+            debugln("[-]Failed to create read acceleration task.");
         }
 
         /* TASK 2: READ ALTIMETER DATA */
-        th = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*2,NULL,1,NULL,app_id);
+        th = xTaskCreatePinnedToCore(readAltimeterTask, "readAltimeter", STACK_SIZE*2, NULL, 1, NULL, app_id);
         if(th == pdPASS) {
             debugln("[+]Read altimeter task created OK.");
         } else {
@@ -1816,58 +1804,59 @@ void setup(){
         }
 
         /* TASK 3: READ GPS DATA */
-        th = xTaskCreatePinnedToCore(readGPSTask, "readGPS", STACK_SIZE*2, NULL,1,NULL, app_id);
+        th = xTaskCreatePinnedToCore(readGPSTask, "readGPS", STACK_SIZE*2, NULL, 1, NULL, app_id);
 
         if(th == pdPASS) {
             debugln("[+]GPS task created OK.");
         } else {
-            debugln("[-]Failed to create GPS task");
+            debugln("[-]Failed to create read GPS task");
         }
 
-        /* TASK 4: CLEAR TELEMETRY QUEUE ITEM */
-        th = xTaskCreatePinnedToCore(clearTelemetryQueueTask,"clearTelemetryQueueTask",STACK_SIZE*2,NULL,1, NULL,app_id);
+        /* TASK 4: CLEAR TELEMTRY QUEUE TASK */
+        th = xTaskCreatePinnedToCore(clearTelemetryQueueTask, "clearTelemetryQueueTask", STACK_SIZE*2, NULL, 1, NULL, app_id);
 
         if(th == pdPASS) {
             debugln("[+]clearTelemetryQueueTask task created OK.");
         } else {
-            debugln("[-]Failed to create clearTelemetryQueueTask task");
+            debugln("[-]Failed to create clearTelemetryQueueTask task.");
         }
-
+        
         /* TASK 5: CHECK FLIGHT STATE TASK */
-        th = xTaskCreatePinnedToCore(checkFlightState,"checkFlightState",STACK_SIZE*2,NULL,1, NULL,app_id);
+        th = xTaskCreatePinnedToCore(checkFlightStateTask, "checkFlightStateTask", STACK_SIZE*2, NULL, 1, NULL, app_id);
         if(th == pdPASS) {
             debugln("[+]checkFlightState task created OK.");
         } else {
-            debugln("[-]Failed to create checkFlightState task");
+            debugln("[-]Failed to create check FlightState task.");
         }
 
         /* TASK 6: FLIGHT STATE CALLBACK TASK */    
-        // th = xTaskCreatePinnedToCore(flightStateCallback,"flightStateCallback",STACK_SIZE*2,NULL,1, NULL,app_id);
-        // if(th == pdPASS) {
-        //     debugln("[+]flightStateCallback task created OK.");
-        // } else {
-        //     debugln("[-]Failed to create flightStateCallback task");
-        // }
+        th = xTaskCreatePinnedToCore(flightStateCallbackTask, "flightStateCallbackTask", STACK_SIZE*2, NULL, 1, NULL, app_id);
+        if(th == pdPASS) {
+            debugln("[+]flightStateCallback task created OK.");
+        } else {
+            debugln("[-]Failed to create flightStateCallback task.");
+        }
 
         #if DEBUG_TO_TERMINAL   // set DEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
 
         /* TASK 7: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
-        th = xTaskCreatePinnedToCore(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE,NULL,1,NULL,app_id);
+        th = xTaskCreatePinnedToCore(debugToTerminalTask, "debugToTerminalTask", STACK_SIZE, NULL, 1, NULL, app_id);
         
         if(th == pdPASS) {
-            debugln("[+]debugToTerminalTask task created");
+            debugln("[+]debugToTerminalTask task created OK.");
         } else {
-            debugln("[-]Task not created");
+            debugln("[-]Failed to create debugToTerminal task.");
         }
 
         #endif // DEBUG_TO_TERMINAL_TASK
 
         /* TASK 8: TRANSMIT TELEMETRY DATA */
-        th = xTaskCreatePinnedToCore(transmitTelemetry, "transmit_telemetry", STACK_SIZE*2, NULL, 2, NULL, app_id);
+        th = xTaskCreatePinnedToCore(transmitTelemetryTask, "transmit_telemetry", STACK_SIZE*2, NULL, 2, NULL, app_id);
         if(th == pdPASS){
-            debugln("[+]Transmit task created OK!");
+            debugln("[+]Transmit telemetry task created OK.");
         } else {
-            debugln("[-]Transmit task failed to create");
+            debugln("[-]Failed to create transmit Telemetry task.");
+
         }
 
         #if LOG_TO_MEMORY   // set LOG_TO_MEMORY to 1 to allow logging to memory 
@@ -1909,16 +1898,11 @@ void setup(){
  * @brief Main loop
  *******************************************************************************/
 void loop(){
-    if(WiFi.status() != WL_CONNECTED){
-        WiFi.begin("Nakuja", "987654321");
-        delay(500);
-        debug(".");
-        }
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    if(TEST_MODE) {
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////////////////////
+    if(DAQ_MODE) {
         prepareForDataReceive();
 
     } else if(TEST_MODE) {
@@ -1935,16 +1919,16 @@ void loop(){
             // feed into state machine
         }
 
-         if( !client.connected() ) {
-             /* try to reconnect if connection is lost */
-             debugln("Connection lost. Reconnecting to MQTT...");
-             MQTT_Reconnect();
-         }
+        if( !client.connected() ) {
+        /* try to reconnect if connection is lost */
+        debugln("Connection lost. Reconnecting to MQTT...");
+        MQTT_Reconnect();
+        }
 
-         client.loop();
+        client.loop();
 
     }
-
+    
     //////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  ////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
