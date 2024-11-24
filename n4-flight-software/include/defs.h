@@ -52,6 +52,7 @@
 #define TELEMETRY_DATA_QUEUE_LENGTH  10     /*!< length of the telemetry data queue */
 #define FILTERED_DATA_QUEUE_LENGTH 10       /*!< length of the filtered data queue */
 #define FLIGHT_STATES_QUEUE_LENGTH 1        /*!< length of the flight states queue */
+#define CONSUME_TASK_DELAY    10
 
 /* MQTT constants */
 //const char MQTT_SERVER[30] = "192.168.1.101";
