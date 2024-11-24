@@ -174,20 +174,6 @@ Macros</h2></td></tr>
 <tr class="memitem:a8677cc3aaa35e7f860928085b74c161c" id="r_a8677cc3aaa35e7f860928085b74c161c"><td class="memItemLeft" align="right" valign="top"><a id="a8677cc3aaa35e7f860928085b74c161c" name="a8677cc3aaa35e7f860928085b74c161c"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>FORMAT_SPIFFS_IF_FAILED</b>&#160;&#160;&#160;1</td></tr>
 <tr class="separator:a8677cc3aaa35e7f860928085b74c161c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3101d6fdbdc9f9b1d5395471a32e23c9" id="r_a3101d6fdbdc9f9b1d5395471a32e23c9"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3101d6fdbdc9f9b1d5395471a32e23c9">TRANSMIT_TELEMETRY_BIT</a>&#160;&#160;&#160;((EventBits_t) 0x01 &lt;&lt; 0)</td></tr>
-<tr class="separator:a3101d6fdbdc9f9b1d5395471a32e23c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae233f856159856a9ca59d9008c5c2300" id="r_ae233f856159856a9ca59d9008c5c2300"><td class="memItemLeft" align="right" valign="top"><a id="ae233f856159856a9ca59d9008c5c2300" name="ae233f856159856a9ca59d9008c5c2300"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>CHECK_FLIGHT_STATE_BIT</b>&#160;&#160;&#160;((EventBits_t) 0x01 &lt;&lt; 1)</td></tr>
-<tr class="separator:ae233f856159856a9ca59d9008c5c2300"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab69bc384be6a2e1a245ecaefb6e4dc78" id="r_ab69bc384be6a2e1a245ecaefb6e4dc78"><td class="memItemLeft" align="right" valign="top"><a id="ab69bc384be6a2e1a245ecaefb6e4dc78" name="ab69bc384be6a2e1a245ecaefb6e4dc78"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>LOG_TO_MEMORY_BIT</b>&#160;&#160;&#160;((EventBits_t) 0x01 &lt;&lt; 2)</td></tr>
-<tr class="separator:ab69bc384be6a2e1a245ecaefb6e4dc78"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8d3ad2db9742b7636091f2b0aaf8f520" id="r_a8d3ad2db9742b7636091f2b0aaf8f520"><td class="memItemLeft" align="right" valign="top"><a id="a8d3ad2db9742b7636091f2b0aaf8f520" name="a8d3ad2db9742b7636091f2b0aaf8f520"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>TRANSMIT_XBEE_BIT</b>&#160;&#160;&#160;((EventBits_t) 0x01 &lt;&lt; 3)</td></tr>
-<tr class="separator:a8d3ad2db9742b7636091f2b0aaf8f520"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0ec10f245f5e20b2b59c42beecaf26b9" id="r_a0ec10f245f5e20b2b59c42beecaf26b9"><td class="memItemLeft" align="right" valign="top"><a id="a0ec10f245f5e20b2b59c42beecaf26b9" name="a0ec10f245f5e20b2b59c42beecaf26b9"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DEBUG_TO_TERM_BIT</b>&#160;&#160;&#160;((EventBits_t) 0x01 &lt;&lt; 4)</td></tr>
-<tr class="separator:a0ec10f245f5e20b2b59c42beecaf26b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a074ee5e3b81c7240e5e3488f89e62397" id="r_a074ee5e3b81c7240e5e3488f89e62397"><td class="memItemLeft" align="right" valign="top"><a id="a074ee5e3b81c7240e5e3488f89e62397" name="a074ee5e3b81c7240e5e3488f89e62397"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>ALTITUDE</b>&#160;&#160;&#160;1525.0</td></tr>
 <tr class="separator:a074ee5e3b81c7240e5e3488f89e62397"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -309,14 +295,11 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>MQTTInit</b> (cons
 <tr class="memitem:aa8ea491ed98b16bb5292ad184537f0b5" id="r_aa8ea491ed98b16bb5292ad184537f0b5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa8ea491ed98b16bb5292ad184537f0b5">readGPSTask</a> (void *pvParameters)</td></tr>
 <tr class="memdesc:aa8ea491ed98b16bb5292ad184537f0b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the GPS location data and altitude and append to telemetry packet for transmission.  <br /></td></tr>
 <tr class="separator:aa8ea491ed98b16bb5292ad184537f0b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2eee545cf4af91a694e63ac4940276a4" id="r_a2eee545cf4af91a694e63ac4940276a4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2eee545cf4af91a694e63ac4940276a4">clearTelemetryQueueTask</a> (void *pvParameters)</td></tr>
-<tr class="memdesc:a2eee545cf4af91a694e63ac4940276a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">dequeue data from telemetry queue after all the tasks have consumed the data  <br /></td></tr>
-<tr class="separator:a2eee545cf4af91a694e63ac4940276a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a152aa3ad3c21993eb70968de75219174" id="r_a152aa3ad3c21993eb70968de75219174"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a152aa3ad3c21993eb70968de75219174">checkFlightState</a> (void *pvParameters)</td></tr>
 <tr class="memdesc:a152aa3ad3c21993eb70968de75219174"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check and update the current state of flight - refer to <a class="el" href="states_8h.html">states.h</a>.  <br /></td></tr>
 <tr class="separator:a152aa3ad3c21993eb70968de75219174"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6648d201a9f47aa836d36e5339e78ef3" id="r_a6648d201a9f47aa836d36e5339e78ef3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6648d201a9f47aa836d36e5339e78ef3">flightStateCallback</a> (void *pvParameters)</td></tr>
-<tr class="memdesc:a6648d201a9f47aa836d36e5339e78ef3"><td class="mdescLeft">&#160;</td><td class="mdescRight">performs flight actions based on the current flight state If the flight state neccessisates an operation, we perform it here For example if the flight state is apogee, we perform MAIN_CHUTE ejection  <br /></td></tr>
+<tr class="memdesc:a6648d201a9f47aa836d36e5339e78ef3"><td class="mdescLeft">&#160;</td><td class="mdescRight">performs flight actions based on the current flight state  <br /></td></tr>
 <tr class="separator:a6648d201a9f47aa836d36e5339e78ef3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaa1a5716bd567e8c37465dabe33e6396" id="r_aaa1a5716bd567e8c37465dabe33e6396"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aaa1a5716bd567e8c37465dabe33e6396">debugToTerminalTask</a> (void *pvParameters)</td></tr>
 <tr class="memdesc:aaa1a5716bd567e8c37465dabe33e6396"><td class="mdescLeft">&#160;</td><td class="mdescRight">debug flight/test data to terminal, this task is called if the DEBUG_TO_TERMINAL is set to 1 (see <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a>)  <br /></td></tr>
@@ -496,9 +479,9 @@ long long&#160;</td><td class="memItemRight" valign="bottom"><b>current_time</b>
 <tr class="memitem:ab7fecbb46b75525f3e282dcba952255d" id="r_ab7fecbb46b75525f3e282dcba952255d"><td class="memItemLeft" align="right" valign="top"><a id="ab7fecbb46b75525f3e282dcba952255d" name="ab7fecbb46b75525f3e282dcba952255d"></a>
 long long&#160;</td><td class="memItemRight" valign="bottom"><b>previous_time</b> = 0</td></tr>
 <tr class="separator:ab7fecbb46b75525f3e282dcba952255d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a64f18f67afc4a5f76f37c2be60e1cb29" id="r_a64f18f67afc4a5f76f37c2be60e1cb29"><td class="memItemLeft" align="right" valign="top"><a id="a64f18f67afc4a5f76f37c2be60e1cb29" name="a64f18f67afc4a5f76f37c2be60e1cb29"></a>
-char&#160;</td><td class="memItemRight" valign="bottom"><b>telemetry_packet_buffer</b> [100]</td></tr>
-<tr class="separator:a64f18f67afc4a5f76f37c2be60e1cb29"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a976afc0ee6d7398658e8aa5d52030927" id="r_a976afc0ee6d7398658e8aa5d52030927"><td class="memItemLeft" align="right" valign="top"><a id="a976afc0ee6d7398658e8aa5d52030927" name="a976afc0ee6d7398658e8aa5d52030927"></a>
+char&#160;</td><td class="memItemRight" valign="bottom"><b>telemetry_packet_buffer</b> [256]</td></tr>
+<tr class="separator:a976afc0ee6d7398658e8aa5d52030927"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9f30f7c913c2e35ebf44fbf77f416bbc" id="r_a9f30f7c913c2e35ebf44fbf77f416bbc"><td class="memItemLeft" align="right" valign="top">TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9f30f7c913c2e35ebf44fbf77f416bbc">readAccelerationTaskHandle</a></td></tr>
 <tr class="separator:a9f30f7c913c2e35ebf44fbf77f416bbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac122c42a5bcc3f6c3e5f66969197f01a" id="r_ac122c42a5bcc3f6c3e5f66969197f01a"><td class="memItemLeft" align="right" valign="top"><a id="ac122c42a5bcc3f6c3e5f66969197f01a" name="ac122c42a5bcc3f6c3e5f66969197f01a"></a>
@@ -525,12 +508,6 @@ TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>debugToTermin
 <tr class="memitem:abd21a32ffaffe2ac671aa88aa315fb18" id="r_abd21a32ffaffe2ac671aa88aa315fb18"><td class="memItemLeft" align="right" valign="top"><a id="abd21a32ffaffe2ac671aa88aa315fb18" name="abd21a32ffaffe2ac671aa88aa315fb18"></a>
 TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>logToMemoryTaskHandle</b></td></tr>
 <tr class="separator:abd21a32ffaffe2ac671aa88aa315fb18"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae995281978356c3acf910647861397b1" id="r_ae995281978356c3acf910647861397b1"><td class="memItemLeft" align="right" valign="top"><a id="ae995281978356c3acf910647861397b1" name="ae995281978356c3acf910647861397b1"></a>
-TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>flight_state_checkTaskHandle</b></td></tr>
-<tr class="separator:ae995281978356c3acf910647861397b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1067333ef3d05fdb37de74977a972c61" id="r_a1067333ef3d05fdb37de74977a972c61"><td class="memItemLeft" align="right" valign="top"><a id="a1067333ef3d05fdb37de74977a972c61" name="a1067333ef3d05fdb37de74977a972c61"></a>
-EventGroupHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>tasksDataReceiveEventGroup</b></td></tr>
-<tr class="separator:a1067333ef3d05fdb37de74977a972c61"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5db507f1ef37ed2d76f24c064e4e6a85" id="r_a5db507f1ef37ed2d76f24c064e4e6a85"><td class="memItemLeft" align="right" valign="top"><a class="el" href="data__types_8h.html#a610a63dae0c8ed502103c93c5aa63db0">accel_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5db507f1ef37ed2d76f24c064e4e6a85">acc_data</a></td></tr>
 <tr class="separator:a5db507f1ef37ed2d76f24c064e4e6a85"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af91b409a7eb60f99def9aa1515c3d33c" id="r_af91b409a7eb60f99def9aa1515c3d33c"><td class="memItemLeft" align="right" valign="top"><a id="af91b409a7eb60f99def9aa1515c3d33c" name="af91b409a7eb60f99def9aa1515c3d33c"></a>
@@ -576,6 +553,21 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>altimeter_da
 <tr class="memitem:ac659af111261400ebb2b566a7b250ca3" id="r_ac659af111261400ebb2b566a7b250ca3"><td class="memItemLeft" align="right" valign="top"><a id="ac659af111261400ebb2b566a7b250ca3" name="ac659af111261400ebb2b566a7b250ca3"></a>
 QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHandle</b></td></tr>
 <tr class="separator:ac659af111261400ebb2b566a7b250ca3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe0f2d917a4d91446385606b903276ea" id="r_abe0f2d917a4d91446385606b903276ea"><td class="memItemLeft" align="right" valign="top"><a id="abe0f2d917a4d91446385606b903276ea" name="abe0f2d917a4d91446385606b903276ea"></a>
+QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>telemetry_data_queue_handle</b></td></tr>
+<tr class="separator:abe0f2d917a4d91446385606b903276ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2f8c4f2ee1334dd033c60dd025894e08" id="r_a2f8c4f2ee1334dd033c60dd025894e08"><td class="memItemLeft" align="right" valign="top"><a id="a2f8c4f2ee1334dd033c60dd025894e08" name="a2f8c4f2ee1334dd033c60dd025894e08"></a>
+QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>log_to_mem_queue_handle</b></td></tr>
+<tr class="separator:a2f8c4f2ee1334dd033c60dd025894e08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa83cdae2e8888de432c228da0499dfc3" id="r_aa83cdae2e8888de432c228da0499dfc3"><td class="memItemLeft" align="right" valign="top"><a id="aa83cdae2e8888de432c228da0499dfc3" name="aa83cdae2e8888de432c228da0499dfc3"></a>
+QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>check_state_queue_handle</b></td></tr>
+<tr class="separator:aa83cdae2e8888de432c228da0499dfc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a985cd1e93901ecec04891dee6380b455" id="r_a985cd1e93901ecec04891dee6380b455"><td class="memItemLeft" align="right" valign="top"><a id="a985cd1e93901ecec04891dee6380b455" name="a985cd1e93901ecec04891dee6380b455"></a>
+QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>debug_to_term_queue_handle</b></td></tr>
+<tr class="separator:a985cd1e93901ecec04891dee6380b455"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5dd5aebc1596576f6a57a5c95148e3dd" id="r_a5dd5aebc1596576f6a57a5c95148e3dd"><td class="memItemLeft" align="right" valign="top"><a id="a5dd5aebc1596576f6a57a5c95148e3dd" name="a5dd5aebc1596576f6a57a5c95148e3dd"></a>
+QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalman_filter_queue_handle</b></td></tr>
+<tr class="separator:a5dd5aebc1596576f6a57a5c95148e3dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This contains the main driver code for the flight computer. </p>
@@ -704,21 +696,6 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 
 </div>
 </div>
-<a id="a3101d6fdbdc9f9b1d5395471a32e23c9" name="a3101d6fdbdc9f9b1d5395471a32e23c9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3101d6fdbdc9f9b1d5395471a32e23c9">&#9670;&#160;</a></span>TRANSMIT_TELEMETRY_BIT</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define TRANSMIT_TELEMETRY_BIT&#160;&#160;&#160;((EventBits_t) 0x01 &lt;&lt; 0)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Task synchronization variables </p>
-
-</div>
-</div>
 <h2 class="groupheader">Enumeration Type Documentation</h2>
 <a id="aae0dcb6f6e84dab5b57ab3ba5ea559b4" name="aae0dcb6f6e84dab5b57ab3ba5ea559b4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aae0dcb6f6e84dab5b57ab3ba5ea559b4">&#9670;&#160;</a></span>DAQ_STATES</h2>
@@ -837,14 +814,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 
 <p>Check and update the current state of flight - refer to <a class="el" href="states_8h.html">states.h</a>. </p>
 <hr  />
- <dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">pvParameters</td><td>- A value that is passed as the parameter to the created task. If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - so it is not valid to pass the address of a stack variable. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Updates the telemetry data flight state value </dd></dl>
-
+  
 </div>
 </div>
 <a id="a36d26be00724540c08411ce54b01a49b" name="a36d26be00724540c08411ce54b01a49b"></a>
@@ -865,33 +835,6 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 <p>Sample the RUN/TEST toggle pins to check whether the flight computer is in test mode or run mode. If in TEST mode, define the TEST flag If in RUN mode, define the RUN flag TEST_MODE Pin and RUN_MODE pin are both pulled HIGH. When you set the jumper, you pull that pin to LOW. </p>
 <hr  />
   
-</div>
-</div>
-<a id="a2eee545cf4af91a694e63ac4940276a4" name="a2eee545cf4af91a694e63ac4940276a4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2eee545cf4af91a694e63ac4940276a4">&#9670;&#160;</a></span>clearTelemetryQueueTask()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void clearTelemetryQueueTask </td>
-          <td>(</td>
-          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>pvParameters</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>dequeue data from telemetry queue after all the tasks have consumed the data </p>
-<hr  />
- <dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">pvParameters</td><td>- A value that is passed as the parameter to the created task. If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - so it is not valid to pass the address of a stack variable. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>none </dd></dl>
-
 </div>
 </div>
 <a id="aaa1a5716bd567e8c37465dabe33e6396" name="aaa1a5716bd567e8c37465dabe33e6396"></a>
@@ -917,6 +860,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
   </table>
   </dd>
 </dl>
+<p>record number operation_mode state ax ay az pitch roll gx gy gz latitude longitude gps_altitude pressure temperature altitude_agl velocity</p>
 
 </div>
 </div>
@@ -956,14 +900,9 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
       </table>
 </div><div class="memdoc">
 
-<p>performs flight actions based on the current flight state If the flight state neccessisates an operation, we perform it here For example if the flight state is apogee, we perform MAIN_CHUTE ejection </p>
+<p>performs flight actions based on the current flight state </p>
 <hr  />
- <dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">pvParameter</td><td>- A value that is passed as the parameter to the created task. If pvParameter is set to the address of a variable then the variable must still exist when the created task executes - so it is not valid to pass the address of a stack variable. </td></tr>
-  </table>
-  </dd>
-</dl>
+ <p>If the flight state neccessisates an operation, we perform it here For example if the flight state is apogee, we perform MAIN_CHUTE ejection </p>
 
 </div>
 </div>
@@ -1174,7 +1113,8 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
   </table>
   </dd>
 </dl>
-<p>record number operation_mode state ax ay az pitch roll gx gy gz latitude longitude gps_altitude gps_time pressure temperature altitude_agl velocity pyro1_state // pyro2_state // battery_voltage //</p>
+<p>PACKAGE TELEMETRY PACKET</p>
+<p>record number operation_mode state ax ay az pitch roll gx gy gz latitude longitude gps_altitude gps_time pressure temperature altitude_agl velocity pyro1_state // not used pyro2_state // not used battery_voltage // not used</p>
 
 </div>
 </div>
@@ -1381,7 +1321,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
         </tr>
       </table>
 </div><div class="memdoc">
-<p>///////////////////////// DATA TYPES ///////////////////////// </p>
+<p>Task synchronization variables ///////////////////////// DATA TYPES ///////////////////////// </p>
 
 </div>
 </div>

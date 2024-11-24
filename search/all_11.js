@@ -17,6 +17,5 @@ var searchData=
   ['the_20test_20data_14',['Downloading the test data',['../index.html#step18',1,'']]],
   ['time_15',['time',['../structGPS__Data.html#a6c84e2c899da790cc005c3bf3bda6d42',1,'GPS_Data']]],
   ['to_20use_20the_20nakuja_20flight_20computer_20testing_20engine_16',['How to use the Nakuja Flight Computer Testing Engine',['../index.html#step16',1,'']]],
-  ['transmit_5ftelemetry_5fbit_17',['TRANSMIT_TELEMETRY_BIT',['../main_8cpp.html#a3101d6fdbdc9f9b1d5395471a32e23c9',1,'main.cpp']]],
-  ['tstamp_18',['tstamp',['../custom__time_8h.html#af763bb4748c9c0460eab15663d0472bb',1,'custom_time.cpp']]]
+  ['tstamp_17',['tstamp',['../custom__time_8h.html#af763bb4748c9c0460eab15663d0472bb',1,'custom_time.cpp']]]
 ];

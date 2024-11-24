@@ -8,7 +8,6 @@ var main_8cpp =
     [ "NAK", "main_8cpp.html#a7ff3e502ffb5d509612c6c6741de45cc", null ],
     [ "NAK_INTERVAL", "main_8cpp.html#a394162e74bbeb9bf67d3009cc38e0466", null ],
     [ "SOH", "main_8cpp.html#ab3796cca360697d3658162dba5965e28", null ],
-    [ "TRANSMIT_TELEMETRY_BIT", "main_8cpp.html#a3101d6fdbdc9f9b1d5395471a32e23c9", null ],
     [ "DAQ_STATES", "main_8cpp.html#aae0dcb6f6e84dab5b57ab3ba5ea559b4", [
       [ "HANDSHAKE", "main_8cpp.html#aae0dcb6f6e84dab5b57ab3ba5ea559b4acc6ddcaa36bd57e5aec12749cb5ce29c", null ],
       [ "RECEIVE_TEST_DATA", "main_8cpp.html#aae0dcb6f6e84dab5b57ab3ba5ea559b4a078eb5ef5383567cdf7a9b36f49289d6", null ],
@@ -24,7 +23,6 @@ var main_8cpp =
     [ "buzz", "main_8cpp.html#a28b1eb955e6e2f5e83599536f6bf4d2f", null ],
     [ "checkFlightState", "main_8cpp.html#a152aa3ad3c21993eb70968de75219174", null ],
     [ "checkRunTestToggle", "main_8cpp.html#a36d26be00724540c08411ce54b01a49b", null ],
-    [ "clearTelemetryQueueTask", "main_8cpp.html#a2eee545cf4af91a694e63ac4940276a4", null ],
     [ "debugToTerminalTask", "main_8cpp.html#aaa1a5716bd567e8c37465dabe33e6396", null ],
     [ "drogueChuteDeploy", "main_8cpp.html#aee373e9d6ea48f0b376bdaa1c2970510", null ],
     [ "flightStateCallback", "main_8cpp.html#a6648d201a9f47aa836d36e5339e78ef3", null ],
