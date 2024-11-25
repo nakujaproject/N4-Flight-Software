@@ -2,6 +2,7 @@ var dir_d09072d1c94fe000833aa47d92501a74 =
 [
     [ "custom_time.h", "custom__time_8h.html", "custom__time_8h" ],
     [ "data_types.h", "data__types_8h.html", "data__types_8h" ],
+    [ "kalman_filter.h", "kalman__filter_8h.html", "kalman__filter_8h" ],
     [ "logger.cpp", "logger_8cpp.html", null ],
     [ "logger.h", "logger_8h.html", "logger_8h" ],
     [ "main.cpp", "main_8cpp.html", "main_8cpp" ],

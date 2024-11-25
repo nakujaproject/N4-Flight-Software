@@ -3,7 +3,6 @@ var annotated_dup =
     [ "Acceleration_Data", "structAcceleration__Data.html", "structAcceleration__Data" ],
     [ "Altimeter_Data", "structAltimeter__Data.html", "structAltimeter__Data" ],
     [ "DataLogger", "classDataLogger.html", "classDataLogger" ],
-    [ "Filtered_Data", "structFiltered__Data.html", null ],
     [ "GPS_Data", "structGPS__Data.html", "structGPS__Data" ],
     [ "Gyroscope_Data", "structGyroscope__Data.html", "structGyroscope__Data" ],
     [ "MPU6050", "classMPU6050.html", "classMPU6050" ],

@@ -128,6 +128,7 @@ $(function(){initNavTree('main_8cpp.html',''); initResizable(true); });
 <code>#include &quot;system_logger.h&quot;</code><br />
 <code>#include &quot;system_log_levels.h&quot;</code><br />
 <code>#include &quot;wifi-config.h&quot;</code><br />
+<code>#include &quot;<a class="el" href="kalman__filter_8h_source.html">kalman_filter.h</a>&quot;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
@@ -205,6 +206,10 @@ Functions</h2></td></tr>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>initDynamicWIFI</b> ()</td></tr>
 <tr class="memdesc:a29b878fa9aee771a49679759f9f10da1"><td class="mdescLeft">&#160;</td><td class="mdescRight">create dynamic WIFI <br /></td></tr>
 <tr class="separator:a29b878fa9aee771a49679759f9f10da1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d009c484353785c540503d359e22097" id="r_a9d009c484353785c540503d359e22097"><td class="memItemLeft" align="right" valign="top"><a id="a9d009c484353785c540503d359e22097" name="a9d009c484353785c540503d359e22097"></a>
+float&#160;</td><td class="memItemRight" valign="bottom"><b>kalmanFilter</b> (float z)</td></tr>
+<tr class="memdesc:a9d009c484353785c540503d359e22097"><td class="mdescLeft">&#160;</td><td class="mdescRight">Kalman filter estimated value calculation. <br /></td></tr>
+<tr class="separator:a9d009c484353785c540503d359e22097"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8841578fe91cace6206676f0e751cab5" id="r_a8841578fe91cace6206676f0e751cab5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8841578fe91cace6206676f0e751cab5">listDir</a> (fs::FS &amp;fs, const char *dirname, uint8_t levels)</td></tr>
 <tr class="separator:a8841578fe91cace6206676f0e751cab5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7e2d538eec5c54386e40bbc0b99d0ac1" id="r_a7e2d538eec5c54386e40bbc0b99d0ac1"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7e2d538eec5c54386e40bbc0b99d0ac1">initTestGPIO</a> ()</td></tr>
@@ -295,6 +300,9 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>MQTTInit</b> (cons
 <tr class="memitem:aa8ea491ed98b16bb5292ad184537f0b5" id="r_aa8ea491ed98b16bb5292ad184537f0b5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa8ea491ed98b16bb5292ad184537f0b5">readGPSTask</a> (void *pvParameters)</td></tr>
 <tr class="memdesc:aa8ea491ed98b16bb5292ad184537f0b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the GPS location data and altitude and append to telemetry packet for transmission.  <br /></td></tr>
 <tr class="separator:aa8ea491ed98b16bb5292ad184537f0b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ce5e586674f4cd4260bd2aaba246757" id="r_a7ce5e586674f4cd4260bd2aaba246757"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7ce5e586674f4cd4260bd2aaba246757">kalmanFilterTask</a> (void *pvParameters)</td></tr>
+<tr class="memdesc:a7ce5e586674f4cd4260bd2aaba246757"><td class="mdescLeft">&#160;</td><td class="mdescRight">Filter data using the Kalman Filter.  <br /></td></tr>
+<tr class="separator:a7ce5e586674f4cd4260bd2aaba246757"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a152aa3ad3c21993eb70968de75219174" id="r_a152aa3ad3c21993eb70968de75219174"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a152aa3ad3c21993eb70968de75219174">checkFlightState</a> (void *pvParameters)</td></tr>
 <tr class="memdesc:a152aa3ad3c21993eb70968de75219174"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check and update the current state of flight - refer to <a class="el" href="states_8h.html">states.h</a>.  <br /></td></tr>
 <tr class="separator:a152aa3ad3c21993eb70968de75219174"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -471,7 +479,7 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>remote_switch</b> 
 <tr class="memitem:affaa6e6cce540b233b04e558e3d164b2" id="r_affaa6e6cce540b233b04e558e3d164b2"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#affaa6e6cce540b233b04e558e3d164b2">log_sample_interval</a> = 10</td></tr>
 <tr class="separator:affaa6e6cce540b233b04e558e3d164b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aadbd0ea0f3d5254e26185b5b0eb39b7d" id="r_aadbd0ea0f3d5254e26185b5b0eb39b7d"><td class="memItemLeft" align="right" valign="top"><a id="aadbd0ea0f3d5254e26185b5b0eb39b7d" name="aadbd0ea0f3d5254e26185b5b0eb39b7d"></a>
-<a class="el" href="classDataLogger.html">DataLogger</a>&#160;</td><td class="memItemRight" valign="bottom"><b>data_logger</b> (<a class="el" href="#a974c70ac5c2f6156bf0e7fafd973d803">flash_cs_pin</a>, <a class="el" href="#ab506410443108766020e011a3c9293af">flash_led_pin</a>, <a class="el" href="#a6c2affe0788e6ba12dce7a51e1bd35c3">filename</a>, <a class="el" href="#ada14cbbf98490eb3cb49b5d1cb0c0056">file</a>, <a class="el" href="#aef692c53edfa11997d3470f8ed1d6a26">FILE_SIZE_4M</a>)</td></tr>
+<a class="el" href="classDataLogger.html">DataLogger</a>&#160;</td><td class="memItemRight" valign="bottom"><b>data_logger</b> (<a class="el" href="#a974c70ac5c2f6156bf0e7fafd973d803">flash_cs_pin</a>, <a class="el" href="#ab506410443108766020e011a3c9293af">flash_led_pin</a>, filename, <a class="el" href="#ada14cbbf98490eb3cb49b5d1cb0c0056">file</a>, <a class="el" href="#aef692c53edfa11997d3470f8ed1d6a26">FILE_SIZE_4M</a>)</td></tr>
 <tr class="separator:aadbd0ea0f3d5254e26185b5b0eb39b7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a360ab113ec4a96f9238590114d9b36a2" id="r_a360ab113ec4a96f9238590114d9b36a2"><td class="memItemLeft" align="right" valign="top"><a id="a360ab113ec4a96f9238590114d9b36a2" name="a360ab113ec4a96f9238590114d9b36a2"></a>
 long long&#160;</td><td class="memItemRight" valign="bottom"><b>current_time</b> = 0</td></tr>
@@ -502,6 +510,9 @@ TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>flightStateCa
 <tr class="memitem:afa54b80dcf0f91cd69984e7798b77b49" id="r_afa54b80dcf0f91cd69984e7798b77b49"><td class="memItemLeft" align="right" valign="top"><a id="afa54b80dcf0f91cd69984e7798b77b49" name="afa54b80dcf0f91cd69984e7798b77b49"></a>
 TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_TransmitTelemetryTaskHandle</b></td></tr>
 <tr class="separator:afa54b80dcf0f91cd69984e7798b77b49"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab69d0ec0e0c7dfd9bcd9d2b4af4b820c" id="r_ab69d0ec0e0c7dfd9bcd9d2b4af4b820c"><td class="memItemLeft" align="right" valign="top"><a id="ab69d0ec0e0c7dfd9bcd9d2b4af4b820c" name="ab69d0ec0e0c7dfd9bcd9d2b4af4b820c"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalmanFilterTaskHandle</b></td></tr>
+<tr class="separator:ab69d0ec0e0c7dfd9bcd9d2b4af4b820c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afd995b7d7a7534e7d748cef36558c3a2" id="r_afd995b7d7a7534e7d748cef36558c3a2"><td class="memItemLeft" align="right" valign="top"><a id="afd995b7d7a7534e7d748cef36558c3a2" name="afd995b7d7a7534e7d748cef36558c3a2"></a>
 TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>debugToTerminalTaskHandle</b></td></tr>
 <tr class="separator:afd995b7d7a7534e7d748cef36558c3a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -533,9 +544,9 @@ char&#160;</td><td class="memItemRight" valign="bottom"><b>status</b></td></tr>
 <tr class="memitem:ac94a6e5794c2d7b59588b14025cfba20" id="r_ac94a6e5794c2d7b59588b14025cfba20"><td class="memItemLeft" align="right" valign="top"><a id="ac94a6e5794c2d7b59588b14025cfba20" name="ac94a6e5794c2d7b59588b14025cfba20"></a>
 double&#160;</td><td class="memItemRight" valign="bottom"><b>T</b></td></tr>
 <tr class="separator:ac94a6e5794c2d7b59588b14025cfba20"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8019aa9167c19c810aefa4cd5c0b0ab5" id="r_a8019aa9167c19c810aefa4cd5c0b0ab5"><td class="memItemLeft" align="right" valign="top"><a id="a8019aa9167c19c810aefa4cd5c0b0ab5" name="a8019aa9167c19c810aefa4cd5c0b0ab5"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>P</b></td></tr>
-<tr class="separator:a8019aa9167c19c810aefa4cd5c0b0ab5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0ce89f1ccf18d4f5fd88839572b29c1" id="r_ac0ce89f1ccf18d4f5fd88839572b29c1"><td class="memItemLeft" align="right" valign="top"><a id="ac0ce89f1ccf18d4f5fd88839572b29c1" name="ac0ce89f1ccf18d4f5fd88839572b29c1"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>PRESSURE</b></td></tr>
+<tr class="separator:ac0ce89f1ccf18d4f5fd88839572b29c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8be9de5ac626cddcd15c5ec181619694" id="r_a8be9de5ac626cddcd15c5ec181619694"><td class="memItemLeft" align="right" valign="top"><a id="a8be9de5ac626cddcd15c5ec181619694" name="a8be9de5ac626cddcd15c5ec181619694"></a>
 double&#160;</td><td class="memItemRight" valign="bottom"><b>p0</b></td></tr>
 <tr class="separator:a8be9de5ac626cddcd15c5ec181619694"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -984,6 +995,26 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalman_filte
 
 </div>
 </div>
+<a id="a7ce5e586674f4cd4260bd2aaba246757" name="a7ce5e586674f4cd4260bd2aaba246757"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ce5e586674f4cd4260bd2aaba246757">&#9670;&#160;</a></span>kalmanFilterTask()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kalmanFilterTask </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>pvParameters</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Filter data using the Kalman Filter. </p>
+<hr  />
+  
+</div>
+</div>
 <a id="a8841578fe91cace6206676f0e751cab5" name="a8841578fe91cace6206676f0e751cab5"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8841578fe91cace6206676f0e751cab5">&#9670;&#160;</a></span>listDir()</h2>
 
@@ -1302,7 +1333,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalman_filte
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Task synchronization variables ///////////////////////// DATA TYPES ///////////////////////// </p>
+<p>///////////////////////// DATA TYPES ///////////////////////// </p>
 
 </div>
 </div>

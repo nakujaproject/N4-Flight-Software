@@ -31,6 +31,8 @@ var main_8cpp =
     [ "initDynamicWIFI", "main_8cpp.html#a29b878fa9aee771a49679759f9f10da1", null ],
     [ "initTestGPIO", "main_8cpp.html#a7e2d538eec5c54386e40bbc0b99d0ac1", null ],
     [ "InitXMODEM", "main_8cpp.html#abf447a0860a5fec74fecf8654172fec0", null ],
+    [ "kalmanFilter", "main_8cpp.html#a9d009c484353785c540503d359e22097", null ],
+    [ "kalmanFilterTask", "main_8cpp.html#a7ce5e586674f4cd4260bd2aaba246757", null ],
     [ "listDir", "main_8cpp.html#a8841578fe91cace6206676f0e751cab5", null ],
     [ "logToMemory", "main_8cpp.html#a7df146b43e503e23146e698154d5096d", null ],
     [ "loop", "main_8cpp.html#afe461d27b9c48d5921c00d521181f12f", null ],
