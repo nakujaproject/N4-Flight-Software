@@ -20,7 +20,7 @@
 /* debug parameters for use during testing - set to 0 for production */
 #define DEBUGGING 1                           /*!< allow debugging to terminal. Set to 0 pre flight to disable serial terminal printing and improve speed  */
 #define LOG_TO_MEMORY 0                       /*!< allow data logging to memory. Set to 1 to log data to external flash memory. Must be set during flight */
-#define DEBUG_TO_TERMINAL 1                   /*!< allow create task that prints data to terminal. Set o 0 before flight  */
+#define DEBUG_TO_TERMINAL 0                   /*!< allow create task that prints data to terminal. Set o 0 before flight  */
 
 #if DEBUGGING
 #define debug(x) Serial.print(x)
@@ -72,6 +72,8 @@ const char MQTT_TOPIC[30] = "n4/flight-computer-1";             /* make this top
 
 #define GPS_TX 17                           /*!< GPS TX pin */
 #define GPS_RX 16                           /*!< GPS RX pin */
+
+#define MB_SIZE_DIVISOR 1048576
 
 #endif // DEFS_H
 

@@ -6,6 +6,7 @@
 
 #include "logger.h"
 #include "data_types.h"
+#include "defs.h"
 
 telemetry_type_t t;
 char pckt_buff[50];
@@ -121,7 +122,7 @@ bool DataLogger::loggerInit() {
 
             } else {
                 // open the created file 
-                Serial.println(F("Created flight bin file"));
+                Serial.println(F("Created flight txt file"));
                 this->_file = SerialFlash.open(this->_filename);
             }
 
@@ -243,7 +244,8 @@ void DataLogger::loggerInfo() {
     SerialFlash.readID(id);
     Serial.println(F("Data logging system OK!"));
     Serial.print(F("Capacity: "));
-    Serial.println(SerialFlash.capacity( id ));
+    Serial.print(SerialFlash.capacity( id ) / MB_SIZE_DIVISOR);
+    Serial.println(" MB");
 
 }
 

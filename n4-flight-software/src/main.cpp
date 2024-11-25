@@ -30,13 +30,13 @@
 #include "system_logger.h"  // system logging functions
 #include "system_log_levels.h"  // system logging log levels
 #include "wifi-config.h"    // handle wifi connection
+#include "kalman_filter.h"  // handle kalman filter functions 
 
 /* function prototypes definition */
 void drogueChuteDeploy();
 void mainChuteDeploy();
 void initDynamicWIFI();
-
-
+float kalmanFilter(float z);
 
 /* state machine variables*/
 uint8_t operation_mode = 0;                                     /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
@@ -714,21 +714,10 @@ void initDynamicWIFI() {
  TaskHandle_t checkFlightStateTaskHandle;
  TaskHandle_t flightStateCallbackTaskHandle;
  TaskHandle_t MQTT_TransmitTelemetryTaskHandle;
+ TaskHandle_t kalmanFilterTaskHandle;
  TaskHandle_t debugToTerminalTaskHandle;
  TaskHandle_t logToMemoryTaskHandle;
 
-/**
- * Task synchronization variables
- */
-// event group bits 
-// #define TRANSMIT_TELEMETRY_BIT  ((EventBits_t) 0x01 << 0)   // for bit 0
-// #define CHECK_FLIGHT_STATE_BIT  ((EventBits_t) 0x01 << 1)   // for bit 1
-// #define LOG_TO_MEMORY_BIT       ((EventBits_t) 0x01 << 2)   // for bit 2
-// #define TRANSMIT_XBEE_BIT       ((EventBits_t) 0x01 << 3)   // for bit 3
-// #define DEBUG_TO_TERM_BIT       ((EventBits_t) 0x01 << 4)   // for bit 4
-
-// // event group type for task synchronization
-// EventGroupHandle_t tasksDataReceiveEventGroup;
 
 /**
  * ///////////////////////// DATA TYPES /////////////////////////
@@ -742,7 +731,6 @@ telemetry_type_t telemetry_packet;
 /**
  * ///////////////////////// END OF DATA VARIABLES /////////////////////////
 */
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////// PERIPHERALS INIT                              /////////////////
@@ -759,7 +747,7 @@ MPU6050 imu(0x68, 16, 1000);
 // create BMP object 
 SFE_BMP180 altimeter;
 char status;
-double T, P, p0, a;
+double T, PRESSURE, p0, a;
 #define ALTITUDE 1525.0 // altitude of iPIC building, JKUAT, Juja. TODO: Change to launch site altitude
 
 /*!****************************************************************************
@@ -898,23 +886,26 @@ void readAltimeterTask(void* pvParameters) {
                     // (If temperature is stable, you can do one temperature measurement for a number of pressure measurements.)
                     // Function returns 1 if successful, 0 if failure.
 
-                    status = altimeter.getPressure(P, T);
+                    status = altimeter.getPressure(PRESSURE, T);
                     if(status != 0) {
                         // print out the measurement
                         // debug("absolute pressure: ");
                         // debug(P, 2);
                         // debug(" mb, "); // in millibars
 
-                        p0 = altimeter.sealevel(P,ALTITUDE);
+                        p0 = altimeter.sealevel(PRESSURE,ALTITUDE);
                         // If you want to determine your altitude from the pressure reading,
                         // use the altitude function along with a baseline pressure (sea-level or other).
                         // Parameters: P = absolute pressure in mb, p0 = baseline pressure in mb.
                         // Result: a = altitude in m.
 
-                        a = altimeter.altitude(P, p0);
-                        // debug("computed altitude: ");
-                        // debug(a, 0);
-                        // debug(" meters, ");
+                        a = altimeter.altitude(PRESSURE, p0);
+                        debug(a);
+
+                        // feed the altitude into the kalman filter
+                        estimated_altitude = kalmanFilter(a);
+                        debug(",");
+                        debugln(estimated_altitude);
 
                     } else {
                         debugln("error retrieving pressure measurement\n");
@@ -937,7 +928,7 @@ void readAltimeterTask(void* pvParameters) {
         // TODO: compute the velocity from the altimeter data
 
         // assign data to queue
-        alt_data_lcl.alt_data.pressure = P;
+        alt_data_lcl.alt_data.pressure = PRESSURE;
         alt_data_lcl.alt_data.altitude = a;
         alt_data_lcl.alt_data.velocity = 0;
         alt_data_lcl.alt_data.temperature = T;
@@ -956,6 +947,7 @@ void readAltimeterTask(void* pvParameters) {
         xQueueSend(check_state_queue_handle, &alt_data_lcl, 0);
         xQueueSend(debug_to_term_queue_handle, &alt_data_lcl, 0);
 
+        vTaskDelay(CONSUME_TASK_DELAY / portTICK_PERIOD_MS);
     }
 
 }
@@ -1017,6 +1009,32 @@ void readGPSTask(void* pvParameters){
         xQueueSend(check_state_queue_handle, &gps_data_lcl, portMAX_DELAY);
         xQueueSend(debug_to_term_queue_handle, &gps_data_lcl, portMAX_DELAY);
 
+    }
+
+}
+
+/**
+ * @brief Kalman filter estimated value calculation
+ * 
+ */
+float kalmanFilter(float z) {
+    float estimatedAltitude_pred = estimated_altitude;
+    float errorCovariance_pred = error_covariance_bmp + process_variance_bmp;
+    kalman_gain_bmp = errorCovariance_pred + kalman_gain_bmp * (z - estimatedAltitude_pred);
+    errorCovariance_pred = (1 - kalman_gain_bmp) * errorCovariance_pred;
+
+    return estimated_altitude;
+
+}
+
+/*!***************************************************************************
+ * @brief Filter data using the Kalman Filter 
+ * 
+ */
+void kalmanFilterTask(void* pvParameters) {
+    
+    while (1) {
+        vTaskDelay(CONSUME_TASK_DELAY/portTICK_PERIOD_MS);
     }
 
 }
@@ -1114,6 +1132,8 @@ void flightStateCallback(void* pvParameters) {
                 break;
 
         }
+        
+        vTaskDelay(CONSUME_TASK_DELAY / portTICK_PERIOD_MS);
     }
 }
 
@@ -1176,7 +1196,6 @@ void debugToTerminalTask(void* pvParameters){
         
         debugln(telemetry_packet_buffer);
         vTaskDelay(CONSUME_TASK_DELAY/portTICK_PERIOD_MS);
-
     }
 }
 
@@ -1276,11 +1295,13 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
             );
 
         /* Send to MQTT topic  */
-        if(client.publish(MQTT_TOPIC, telemetry_packet_buffer) ) {
-            debugln("[+]Data sent");
-        } else {
-            debugln("[-]Data not sent");
-        }
+        // if(client.publish(MQTT_TOPIC, telemetry_packet_buffer) ) {
+        //     debugln("[+]Data sent");
+        // } else {
+        //     debugln("[-]Data not sent");
+        // }
+
+        client.publish(MQTT_TOPIC, telemetry_packet_buffer);
     }
 
     vTaskDelay(CONSUME_TASK_DELAY/ portTICK_PERIOD_MS);
@@ -1496,7 +1517,6 @@ void setup() {
         data_logger.loggerInit();
 
         uint8_t app_id = xPortGetCoreID();
-        BaseType_t th; // task create status check variable
             
         debugln();
         debugln(F("=============================================="));
@@ -1604,7 +1624,7 @@ void setup() {
         }
 
         /* TASK 8: TRANSMIT TELEMETRY DATA */
-        th = xTaskCreate(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*4, NULL, 2, &MQTT_TransmitTelemetryTaskHandle);
+        BaseType_t th = xTaskCreate(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*4, NULL, 2, &MQTT_TransmitTelemetryTaskHandle);
         vTaskSuspend(MQTT_TransmitTelemetryTaskHandle);
 
         if(th == pdPASS){
@@ -1612,6 +1632,15 @@ void setup() {
             
         } else {
             debugln("[-]MQTT transmit task failed to create");
+        }
+
+        BaseType_t kf = xTaskCreate(kalmanFilterTask, "kalman filter", STACK_SIZE*2, NULL, 2, &kalmanFilterTaskHandle);
+        vTaskSuspend(kalmanFilterTaskHandle);
+
+        if(kf == pdPASS) {
+            debugln("[+]kalmanFilter task created OK.");
+        } else {
+            debugln("[-]kalmanFilter task failed to create");
         }
 
         #if DEBUG_TO_TERMINAL   // set DEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
@@ -1657,7 +1686,11 @@ void setup() {
         // vTaskResume(checkFlightStateTaskHandle);
         vTaskResume(flightStateCallbackTaskHandle);
         vTaskResume(MQTT_TransmitTelemetryTaskHandle);
-        vTaskResume(debugToTerminalTaskHandle);
+        vTaskResume(kalmanFilterTaskHandle);
+        
+        #if DEBUG_TO_TERMINAL 
+            vTaskResume(debugToTerminalTaskHandle);
+        #endif
 
         delay(2000);
 
