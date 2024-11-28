@@ -114,17 +114,67 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><b>getLogLevelSt
 <tr class="memitem:a6450f92cb0c7ec55ce13ad68e6e47add" id="r_a6450f92cb0c7ec55ce13ad68e6e47add"><td class="memItemLeft" align="right" valign="top"><a id="a6450f92cb0c7ec55ce13ad68e6e47add" name="a6450f92cb0c7ec55ce13ad68e6e47add"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>logToConsole</b> (const uint32_t timestamp, const char *client, uint8_t log_level, const char *msg)</td></tr>
 <tr class="separator:a6450f92cb0c7ec55ce13ad68e6e47add"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac2ec03f175633189362a08955a29a5ad" id="r_ac2ec03f175633189362a08955a29a5ad"><td class="memItemLeft" align="right" valign="top"><a id="ac2ec03f175633189362a08955a29a5ad" name="ac2ec03f175633189362a08955a29a5ad"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>logToFile</b> (fs::FS &amp;fs, uint8_t mode, const char *client, uint8_t log_level, const char *<a class="el" href="main_8cpp.html#ada14cbbf98490eb3cb49b5d1cb0c0056">file</a>, const char *msg)</td></tr>
+<tr class="memitem:ac2ec03f175633189362a08955a29a5ad" id="r_ac2ec03f175633189362a08955a29a5ad"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac2ec03f175633189362a08955a29a5ad">logToFile</a> (fs::FS &amp;fs, uint8_t mode, const char *client, uint8_t log_level, const char *<a class="el" href="main_8cpp.html#ada14cbbf98490eb3cb49b5d1cb0c0056">file</a>, const char *msg)</td></tr>
+<tr class="memdesc:ac2ec03f175633189362a08955a29a5ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">write event logs to file  <br /></td></tr>
 <tr class="separator:ac2ec03f175633189362a08955a29a5ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0755dee42eafc8a8f7a6a6d027b880f2" id="r_a0755dee42eafc8a8f7a6a6d027b880f2"><td class="memItemLeft" align="right" valign="top"><a id="a0755dee42eafc8a8f7a6a6d027b880f2" name="a0755dee42eafc8a8f7a6a6d027b880f2"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>readLogFile</b> (fs::FS &amp;fs, const char *<a class="el" href="main_8cpp.html#ada14cbbf98490eb3cb49b5d1cb0c0056">file</a>)</td></tr>
 <tr class="memdesc:a0755dee42eafc8a8f7a6a6d027b880f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">read log file to console <br /></td></tr>
 <tr class="separator:a0755dee42eafc8a8f7a6a6d027b880f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="ac2ec03f175633189362a08955a29a5ad" name="ac2ec03f175633189362a08955a29a5ad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac2ec03f175633189362a08955a29a5ad">&#9670;&#160;</a></span>logToFile()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SystemLogger::logToFile </td>
+          <td>(</td>
+          <td class="paramtype">fs::FS &amp;</td>          <td class="paramname"><span class="paramname"><em>fs</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>mode</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>client</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>log_level</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>file</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>msg</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>write event logs to file </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname"></td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>n4-flight-software/src/<a class="el" href="system__logger_8h_source.html">system_logger.h</a></li>
-<li>n4-flight-software/src/<b>system_logger.cpp</b></li>
+<li>n4-flight-software/src/<a class="el" href="system__logger_8cpp.html">system_logger.cpp</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

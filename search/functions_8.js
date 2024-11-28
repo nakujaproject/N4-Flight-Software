@@ -9,6 +9,7 @@ var searchData=
   ['loggerspaces_6',['loggerSpaces',['../classDataLogger.html#aa2e189964fbebc28dc2a327fdccc5684',1,'DataLogger']]],
   ['loggertest_7',['loggerTest',['../classDataLogger.html#ae8a69bf0cc965365057e93a164ca9239',1,'DataLogger']]],
   ['loggerwrite_8',['loggerWrite',['../classDataLogger.html#a411ac6fd751d3a87cef0375fccaad028',1,'DataLogger']]],
-  ['logtomemory_9',['logToMemory',['../main_8cpp.html#a7df146b43e503e23146e698154d5096d',1,'main.cpp']]],
-  ['loop_10',['loop',['../main_8cpp.html#afe461d27b9c48d5921c00d521181f12f',1,'main.cpp']]]
+  ['logtofile_9',['logToFile',['../classSystemLogger.html#ac2ec03f175633189362a08955a29a5ad',1,'SystemLogger']]],
+  ['logtomemory_10',['logToMemory',['../main_8cpp.html#a7df146b43e503e23146e698154d5096d',1,'main.cpp']]],
+  ['loop_11',['loop',['../main_8cpp.html#afe461d27b9c48d5921c00d521181f12f',1,'main.cpp']]]
 ];

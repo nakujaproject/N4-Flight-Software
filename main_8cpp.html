@@ -123,10 +123,9 @@ $(function(){initNavTree('main_8cpp.html',''); initResizable(true); });
 <code>#include &quot;SerialFlash.h&quot;</code><br />
 <code>#include &quot;<a class="el" href="logger_8h_source.html">logger.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="data__types_8h_source.html">data_types.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="custom__time_8h_source.html">custom_time.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="states_8h_source.html">states.h</a>&quot;</code><br />
-<code>#include &quot;system_logger.h&quot;</code><br />
-<code>#include &quot;system_log_levels.h&quot;</code><br />
+<code>#include &quot;<a class="el" href="system__logger_8h_source.html">system_logger.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="system__log__levels_8h_source.html">system_log_levels.h</a>&quot;</code><br />
 <code>#include &quot;wifi-config.h&quot;</code><br />
 <code>#include &quot;<a class="el" href="kalman__filter_8h_source.html">kalman_filter.h</a>&quot;</code><br />
 </div><table class="memberdecls">
@@ -341,16 +340,16 @@ Variables</h2></td></tr>
 <tr class="memitem:a169c53997a7da1d0fb99aec1b4675ce8" id="r_a169c53997a7da1d0fb99aec1b4675ce8"><td class="memItemLeft" align="right" valign="top"><a id="a169c53997a7da1d0fb99aec1b4675ce8" name="a169c53997a7da1d0fb99aec1b4675ce8"></a>
 TinyGPSPlus&#160;</td><td class="memItemRight" valign="bottom"><b>gps</b></td></tr>
 <tr class="separator:a169c53997a7da1d0fb99aec1b4675ce8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4591a82d6df23b62ed33717b89cf9bb8" id="r_a4591a82d6df23b62ed33717b89cf9bb8"><td class="memItemLeft" align="right" valign="top"><a id="a4591a82d6df23b62ed33717b89cf9bb8" name="a4591a82d6df23b62ed33717b89cf9bb8"></a>
-<a class="el" href="classSystemLogger.html">SystemLogger</a>&#160;</td><td class="memItemRight" valign="bottom"><b>system_logger</b></td></tr>
-<tr class="separator:a4591a82d6df23b62ed33717b89cf9bb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad172a32bd5320bedcec6d6537a76f0a9" id="r_ad172a32bd5320bedcec6d6537a76f0a9"><td class="memItemLeft" align="right" valign="top"><a id="ad172a32bd5320bedcec6d6537a76f0a9" name="ad172a32bd5320bedcec6d6537a76f0a9"></a>
+<a class="el" href="classSystemLogger.html">SystemLogger</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SYSTEM_LOGGER</b></td></tr>
+<tr class="separator:ad172a32bd5320bedcec6d6537a76f0a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a613c837c91f4cf1b8f9faa07cf95115b" id="r_a613c837c91f4cf1b8f9faa07cf95115b"><td class="memItemLeft" align="right" valign="top"><a id="a613c837c91f4cf1b8f9faa07cf95115b" name="a613c837c91f4cf1b8f9faa07cf95115b"></a>
-const char *&#160;</td><td class="memItemRight" valign="bottom"><b>system_log_file</b> = &quot;/sys_log.log&quot;</td></tr>
+const char *&#160;</td><td class="memItemRight" valign="bottom"><b>system_log_file</b> = &quot;/event_log.txt&quot;</td></tr>
 <tr class="separator:a613c837c91f4cf1b8f9faa07cf95115b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a77f7159081bd39a76d8b86af56256201" id="r_a77f7159081bd39a76d8b86af56256201"><td class="memItemLeft" align="right" valign="top"><a id="a77f7159081bd39a76d8b86af56256201" name="a77f7159081bd39a76d8b86af56256201"></a>
 LOG_LEVEL&#160;</td><td class="memItemRight" valign="bottom"><b>level</b> = INFO</td></tr>
 <tr class="separator:a77f7159081bd39a76d8b86af56256201"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5bef7886537f878149917a29939a5cb0" id="r_a5bef7886537f878149917a29939a5cb0"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5bef7886537f878149917a29939a5cb0">rocket_ID</a> = &quot;rocket-1&quot;</td></tr>
+<tr class="memitem:a5bef7886537f878149917a29939a5cb0" id="r_a5bef7886537f878149917a29939a5cb0"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5bef7886537f878149917a29939a5cb0">rocket_ID</a> = &quot;FC1&quot;</td></tr>
 <tr class="separator:a5bef7886537f878149917a29939a5cb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a12a374be19c9b55750097a0b9fad50fb" id="r_a12a374be19c9b55750097a0b9fad50fb"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a12a374be19c9b55750097a0b9fad50fb">subsystems_state_buffer</a> [10]</td></tr>
 <tr class="separator:a12a374be19c9b55750097a0b9fad50fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -571,7 +570,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalman_filte
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This contains the main driver code for the flight computer. </p>
 <dl class="section author"><dt>Author</dt><dd>Edwin Mwiti </dd></dl>
-<dl class="section version"><dt>Version</dt><dd>0.1 </dd></dl>
+<dl class="section version"><dt>Version</dt><dd>N4 </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>July 15 2024</dd></dl>
 <p>0x5765206D6179206D616B65206F757220706C616E73202C 0x62757420476F642068617320746865206C61737420776F7264 </p>
 </div><h2 class="groupheader">Macro Definition Documentation</h2>
@@ -1627,7 +1626,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalman_filte
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">const char* rocket_ID = &quot;rocket-1&quot;</td>
+          <td class="memname">const char* rocket_ID = &quot;FC1&quot;</td>
         </tr>
       </table>
 </div><div class="memdoc">
