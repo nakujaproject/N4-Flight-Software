@@ -1,4 +1,7 @@
 /**
+ * @file system_log_levels.h
+ * Defines the log levels we need for in flight event logging
+ * 
  * Written by: Edwin Mwiti
  * Email: emwiti658@gmail.com
  *
@@ -17,5 +20,10 @@ typedef enum{
 	CRITICAL,
 	ERROR
 } LOG_LEVEL;
+
+typedef enum {
+	WRITE = 0,
+	APPEND
+} LOG_MODE;
 
 #endif

@@ -1,10 +1,16 @@
+/**
+ * @file system_logger.h
+ * 
+ * Declarations for flight events logging 
+ */
+
 #ifndef SYSTEMLOGGER_H
 #define SYSTEMLOGGER_H
 
 #include <Arduino.h>
 #include <FS.h>
 #include <SPIFFS.h>
-#include "custom_time.h"
+#include "system_log_levels.h"
 
 class SystemLogger {
 	public:

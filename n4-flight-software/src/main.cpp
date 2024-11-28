@@ -1,7 +1,7 @@
 /**
  * @file main.cpp
  * @author Edwin Mwiti
- * @version 0.1
+ * @version N4
  * @date July 15 2024
  * 
  * @brief This contains the main driver code for the flight computer
@@ -25,7 +25,6 @@
 #include "SerialFlash.h"    // Handling external SPI flash memory
 #include "logger.h"         // system logging
 #include "data_types.h"     // definitions of data types used
-#include "custom_time.h"    // custom time conversions
 #include "states.h"         // state machine states
 #include "system_logger.h"  // system logging functions
 #include "system_log_levels.h"  // system logging log levels
@@ -46,10 +45,10 @@ uint8_t current_state = FLIGHT_STATE::PRE_FLIGHT_GROUND;	    /*!< The starting s
 TinyGPSPlus gps;
 
 /* system logger */
-SystemLogger system_logger;
-const char* system_log_file = "/sys_log.log";
+SystemLogger SYSTEM_LOGGER;
+const char* system_log_file = "/event_log.txt";
 LOG_LEVEL level = INFO;
-const char* rocket_ID = "rocket-1";             /*!< Unique ID of the rocket. Change to the needed rocket name before uploading */
+const char* rocket_ID = "FC1";             /*!< Unique ID of the rocket. Change to the needed rocket name before uploading */
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -699,8 +698,10 @@ void initDynamicWIFI() {
     uint8_t wifi_connection_result = wifi_config.WifiConnect();
     if(wifi_connection_result) {
         debugln("Wifi config OK!");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Wifi config OK!\r\n");
     } else {
         debugln("Wifi config failed");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Wifi config failed\r\n");
     }
 }
 
@@ -1018,10 +1019,11 @@ void readGPSTask(void* pvParameters){
  * 
  */
 float kalmanFilter(float z) {
-    float estimatedAltitude_pred = estimated_altitude;
-    float errorCovariance_pred = error_covariance_bmp + process_variance_bmp;
-    kalman_gain_bmp = errorCovariance_pred + kalman_gain_bmp * (z - estimatedAltitude_pred);
-    errorCovariance_pred = (1 - kalman_gain_bmp) * errorCovariance_pred;
+    float estimated_altitude_pred = estimated_altitude;
+    float error_covariance_pred = error_covariance_bmp + process_variance_bmp;
+    kalman_gain_bmp = error_covariance_pred / (error_covariance_pred + measurement_variance_bmp);
+    estimated_altitude = estimated_altitude_pred + kalman_gain_bmp * (z - estimated_altitude_pred);
+    error_covariance_bmp = (1 - kalman_gain_bmp) * error_covariance_pred;
 
     return estimated_altitude;
 
@@ -1396,10 +1398,17 @@ void setup() {
     Serial.begin(BAUDRATE);
     delay(100);
 
+    // SPIFFS Must be initialized first to allow event logging from the word go
+    uint8_t spiffs_init_state = InitSPIFFS();
+
+    // SYS LOG
+    SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::WRITE, "FC1", LOG_LEVEL::INFO, system_log_file, "Flight computer Event log\r\n");
+
     debugln();
     debugln(F("=============================================="));
     debugln(F("========= CREATING DYNAMIC WIFI ==========="));
     debugln(F("=============================================="));
+    SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==CREATING DYNAMIC WIFI==\r\n");
 
     // create and wait for dynamic WIFI connection
     initDynamicWIFI();
@@ -1408,13 +1417,14 @@ void setup() {
     debugln(F("=============================================="));
     debugln(F("========= INITIALIZING PERIPHERALS ==========="));
     debugln(F("=============================================="));
+    SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==Initializing peripherals==\r\n");
 
     uint8_t bmp_init_state = BMPInit();
     uint8_t imu_init_state = imu.init();
     uint8_t gps_init_state = GPSInit();
     uint8_t sd_init_state = initSD();
     initDataFiles();
-    uint8_t spiffs_init_state = InitSPIFFS();
+    
     uint8_t test_gpio_init_state = initTestGPIO();
     MQTTInit(MQTT_SERVER, MQTT_PORT);
 
@@ -1468,7 +1478,7 @@ void setup() {
         // in test mode we only transfer test data from the testing PC to the SD card
         debugln();
         debugln(F("=============================================="));
-        debugln(F("========= FLIGHT COMPUTER DATA ACQUISITION MODE ========="));
+        debugln(F("=== FLIGHT COMPUTER DATA ACQUISITION MODE ===="));
         debugln(F("=============================================="));
 
         debugln("Ready to receive data...");
@@ -1482,6 +1492,7 @@ void setup() {
         debugln(F("=============================================="));
         debugln(F("=================== TEST MODE ================"));
         debugln(F("=============================================="));
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "RUN MODE\r\n");
 
         /**
          * We need to read the TEST state from a file in the SD card 
@@ -1513,6 +1524,7 @@ void setup() {
         debugln(F("=============================================="));
         debugln(F("===== INITIALIZING DATA LOGGING SYSTEM ======="));
         debugln(F("=============================================="));
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==INITIALIZING DATA LOGGING SYSTEM==\r\n");
         
         data_logger.loggerInit();
 
@@ -1522,6 +1534,7 @@ void setup() {
         debugln(F("=============================================="));
         debugln(F("============== CREATING QUEUES ==============="));
         debugln(F("=============================================="));
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==CREATING QUEUES==\r\n");
 
         // new queue method
         telemetry_data_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
@@ -1532,38 +1545,49 @@ void setup() {
 
         if(telemetry_data_queue_handle == NULL) {
             debugln("[-]telemetry_data_queue_handle creation failed");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]telemetry_data_queue_handle creation failed\r\n");
         } else {
             debugln("[+]telemetry_data_queue_handle creation OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]telemetry_data_queue_handle creation OK.\r\n");
         }
 
         if(log_to_mem_queue_handle == NULL) {
             debugln("[-]telemetry_data_queue_handle creation failed");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]telemetry_data_queue_handle creation failed\r\n");
         } else {
             debugln("[+]telemetry_data_queue_handle creation OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]telemetry_data_queue_handle creation OK.\r\n");
         }
 
         if(check_state_queue_handle == NULL) {
             debugln("[-]check_state_queue_handle creation failed");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]check_state_queue_handle creation failed\r\n");
         } else {
             debugln("[+]check_state_queue_handle creation OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]check_state_queue_handle creation OK.\r\n");
         }
 
         if(debug_to_term_queue_handle == NULL) {
             debugln("[-]debug_to_term_queue_handle creation failed");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]debug_to_term_queue_handle creation failed\r\n");
         } else {
             debugln("[+]debug_to_term_queue_handle creation OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]debug_to_term_queue_handle creation OK.\r\n");
         }
 
         if(kalman_filter_queue_handle == NULL) {
             debugln("[-]kalman_filter_queue_handle creation failed");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]kalman_filter_queue_handle creation failed\r\n");
         } else {
             debugln("[+]kalman_filter_queue_handle creation OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]kalman_filter_queue_handle creation OK.\r\n");
         }
 
         debugln();
         debugln(F("=============================================="));
         debugln(F("============== CREATING TASKS ==============="));
         debugln(F("==============================================\n"));
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==CREATING TASKS==\r\n");
 
         /* Create tasks
         * All tasks have a stack size of 1024 words - not bytes!
@@ -1584,24 +1608,30 @@ void setup() {
         BaseType_t gr = xTaskCreate(readAccelerationTask, "readGyroscope", STACK_SIZE*2, NULL, 2, &readAccelerationTaskHandle);
         if(gr == pdPASS) {
             debugln("[+]Read acceleration task created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Read acceleration task created OK.\r\n");
         } else {
             debugln("[-]Read acceleration task creation failed");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Read acceleration task creation failed\r\n");
         }
 
         /* TASK 2: READ ALTIMETER DATA */
-        BaseType_t ra = xTaskCreate(readAltimeterTask,"readAltimeter",STACK_SIZE*2,NULL,2, &readAltimeterTaskHandle);
+        BaseType_t ra = xTaskCreate(readAltimeterTask,"readAltimeter",STACK_SIZE*3,NULL,2, &readAltimeterTaskHandle);
         if(ra == pdPASS) {
             debugln("[+]readAltimeterTask created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]readAltimeterTask created OK.\r\n");
         } else {
             debugln("[-]Failed to create readAltimeterTask");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create readAltimeterTask\r\n");
         }
 
         /* TASK 3: READ GPS DATA */
         BaseType_t rg = xTaskCreate(readGPSTask, "readGPS", STACK_SIZE*2, NULL,2, &readGPSTaskHandle);
         if(rg == pdPASS) {
             debugln("[+]Read GPS task created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Read GPS task created OK.\r\n");
         } else {
             debugln("[-]Failed to create GPS task");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create GPS task\r\n");
         }
 
         /* TASK 5: CHECK FLIGHT STATE TASK */
@@ -1610,8 +1640,10 @@ void setup() {
 
         if(cf == pdPASS) {
             debugln("[+]checkFlightState task created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]checkFlightState task created OK.\r\n");
         } else {
-            debugln("[-}Failed to create checkFlightState task");
+            debugln("[-]Failed to create checkFlightState task");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create checkFlightState task\r\n");
         }
 
         /* TASK 6: FLIGHT STATE CALLBACK TASK */    
@@ -1619,8 +1651,10 @@ void setup() {
         vTaskSuspend(flightStateCallbackTaskHandle);
         if(fs == pdPASS) {
             debugln("[+]flightStateCallback task created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]flightStateCallback task created OK.\r\n");
         } else {
-            debugln("[-}Failed to create flightStateCallback task");
+            debugln("[-]Failed to create flightStateCallback task");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create flightStateCallback task\r\n");
         }
 
         /* TASK 8: TRANSMIT TELEMETRY DATA */
@@ -1629,9 +1663,11 @@ void setup() {
 
         if(th == pdPASS){
             debugln("[+]MQTT transmit task created OK");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]kalman_filter_queue_handle creation OK.\r\n");
             
         } else {
             debugln("[-]MQTT transmit task failed to create");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]MQTT transmit task failed to create\r\n");
         }
 
         BaseType_t kf = xTaskCreate(kalmanFilterTask, "kalman filter", STACK_SIZE*2, NULL, 2, &kalmanFilterTaskHandle);
@@ -1639,8 +1675,10 @@ void setup() {
 
         if(kf == pdPASS) {
             debugln("[+]kalmanFilter task created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]kalman_filter_queue_handle creation OK.\r\n");
         } else {
             debugln("[-]kalmanFilter task failed to create");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]kalmanFilter task failed to create\r\n");
         }
 
         #if DEBUG_TO_TERMINAL   // set DEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
@@ -1648,11 +1686,13 @@ void setup() {
             /* TASK 7: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
             BaseType_t dt = xTaskCreate(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE*4, NULL,2,&debugToTerminalTaskHandle);
             vTaskSuspend(debugToTerminalTaskHandle);
-
+        
             if(dt == pdPASS) {
                 debugln("[+]debugToTerminal task created OK");
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]debugToTerminal task created OK\r\n");
             } else {
                 debugln("[-]debugToTerminal task not created");
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]debugToTerminal task not created\r\n");
             }
         
         #endif // DEBUG_TO_TERMINAL_TASK
@@ -1668,10 +1708,13 @@ void setup() {
                     &logToMemoryTaskHandle
             ) != pdPASS){
                 debugln("[-]logToMemory task failed to create");
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]logToMemory task failed to create\r\n");
                 vTaskSuspend(logToMemoryTaskHandle);
     
             }else{
                 debugln("[+]logToMemory task created OK.");
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]logToMemory task created OK.\r\n");
+
             }
         #endif // LOG_TO_MEMORY
 
@@ -1679,9 +1722,11 @@ void setup() {
         debugln(F("=============================================="));
         debugln(F("========== FINISHED CREATING TASKS ==========="));
         debugln(F("==============================================\n"));
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==FINISHED CREATING TASKS==\r\n");
 
         // done creating all tasks - resuming suspended tasks
         debugln("Resuming all suspended tasks\n"); // TODO: log to sys logger
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Resuming all suspended tasks\r\n");
         
         // vTaskResume(checkFlightStateTaskHandle);
         vTaskResume(flightStateCallbackTaskHandle);
@@ -1693,6 +1738,8 @@ void setup() {
         #endif
 
         delay(2000);
+
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "END OF INITIALIZATION\r\n");
 
     } // end of setup in running mode 
     

@@ -1,18 +1,26 @@
+/**
+ * @file system_logger.cpp
+ * 
+ * Implement flight logging to SPIFFS functions 
+ */
+
 #include "system_logger.h"
 
+/**
+ * @brief write event logs to file 
+ * @param 
+ */
 void SystemLogger::logToFile (fs::FS &fs, uint8_t mode, const char* client, uint8_t log_level, const char* file,  const char* msg) {
-    char log_buffer[100];
+    char log_buffer[256];
     // get the timestamp
     unsigned long raw_timestamp = millis();
 
-    // convert the timestamp to human readable format
-    convertTimestamp(raw_timestamp);
 
     // construct the log message
     // timestamp clientID log_level msg
     sprintf(log_buffer,
-            "%c %d %s %s %s\n",
-            tstamp,
+            "%d:%s:%s:%s\n",
+            raw_timestamp,
             client,
             this->getLogLevelString(log_level),
             msg
