@@ -1,6 +1,6 @@
 /**
  * @file states.h
- * This file describes the flight states 
+ * This file defines the flight states
  *
  */
 #ifndef STATES_H
@@ -16,6 +16,6 @@ typedef enum {
 	MAIN_DEPLOY,
 	MAIN_DESCENT,
 	POST_FLIGHT_GROUND
-} FLIGHT_STATE;
+} ARMED_FLIGHT_STATE;
 
 #endif

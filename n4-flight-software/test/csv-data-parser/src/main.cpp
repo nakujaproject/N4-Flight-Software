@@ -80,7 +80,6 @@ void loop() {
                 debug("Error: at least one of the columns was not found");
             }
 
-
         } else {
             debug("File does not exist");
         }

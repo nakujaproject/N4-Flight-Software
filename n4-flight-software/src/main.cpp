@@ -51,8 +51,16 @@ const char* system_log_file = "/event_log.txt";
 LOG_LEVEL level = INFO;
 const char* rocket_ID = "FC1";             /*!< Unique ID of the rocket. Change to the needed rocket name before uploading */
 
-// flight states
-// these states are to be used for flight 
+/**
+ * flight states
+ * these states are to be used for flight
+**/
+enum FLIGHT_STATES {
+    SAFE_MODE = 0, /* Pyro-charges are disarmed  */
+    ARMED_MODE      /* Pyro charges are armed and ready to deploy on apogee --see docs for more-- */
+};
+
+uint8_t is_flight_mode = 0;
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
@@ -433,34 +441,39 @@ void blink_200ms(uint8_t led_pin) {
 }
 
 /*!****************************************************************************
- * @brief Sample the RUN/TEST toggle pins to check whether the flight computer is in test mode
- * or run mode.
+ * @brief Sample the RUN/TEST toggle pins to check whether the flight computer is in test-DAQ mode, TEST mode or
+ * FLIGHT mode.
+ * If in DAQ mode, set the DAQ flag
  * If in TEST mode, define the TEST flag
- * If in RUN mode, define the RUN flag
+ * FLIGHT mode is activated by completely removing the jumper
+ *
  * TEST_MODE Pin and RUN_MODE pin are both pulled HIGH. When you set the jumper, you pull that pin to LOW.
  *******************************************************************************/
 void checkRunTestToggle() {
 
     if ((digitalRead(SET_TEST_MODE_PIN) == 0) && (digitalRead(SET_DAQ_MODE_PIN) == 1)) {
-        // run mode
+        // test mode
         TEST_MODE = 1;
         DAQ_MODE = 0;
         SwitchLEDs(DAQ_MODE, TEST_MODE);
     }
 
     if ((digitalRead(SET_TEST_MODE_PIN) == 1) && (digitalRead(SET_DAQ_MODE_PIN) == 0)) {
-        // test mode
+        // DAQ mode
         TEST_MODE = 0;
         DAQ_MODE = 1;
-
         SwitchLEDs(DAQ_MODE, TEST_MODE);
     }
 
-    // here the jumper has been removed. we are neither in the TEST or RUN mode
-    // INVALID STATE
+    // here the jumper has been removed. we are neither in the DAQ or TEST mode
     if ((digitalRead(SET_TEST_MODE_PIN) == 1) && (digitalRead(SET_DAQ_MODE_PIN) == 1)) {
+        // FLIGHT mode
         DAQ_MODE = 0;
         TEST_MODE = 0;
+
+        // set FLIGHT MODE
+        is_flight_mode = 1;
+
         SwitchLEDs(!DAQ_MODE, !TEST_MODE);
     }
 
@@ -1062,7 +1075,8 @@ void kalmanFilterTask(void* pvParameters) {
 }
 
 /*!****************************************************************************
- * @brief Check and update the current state of flight - refer to states.h
+ * @brief chek various condition from flight data to change the flight state
+ * - -see states.h for more info --
  *
  *******************************************************************************/
 void checkFlightState(void* pvParameters) {
@@ -1072,19 +1086,17 @@ void checkFlightState(void* pvParameters) {
     while (1) {
         // debugln("CHECKING STATE");
         uint8_t s = xQueueReceive(check_state_queue_handle, &flight_data, portMAX_DELAY);
-      
 
-        // // check the flight state based on the conditions 
-        // // extract the flight state from the data packet
-        uint8_t state = flight_data.state;
+        // PREFLIGHT
+        if(flight_data.alt_data.altitude > LAUNCH_DETECTION_THRESHOLD) {
 
-        if(state == 0) {
-            current_state = FLIGHT_STATE::PRE_FLIGHT_GROUND;
-            // debugln("PREFLIGHT");
-        } 
+        }
 
-        // TODO: check other states
-
+        // LAUNCH DETECTED -- LAUNCH DETECTED
+        if(flight_data.alt_data.altitude > 5) {
+            // launch detected
+            current_state = ARMED_FLIGHT_STATE::POWERED_FLIGHT;
+        }
 
     }
 
@@ -1093,22 +1105,22 @@ void checkFlightState(void* pvParameters) {
 /*!****************************************************************************
  * @brief performs flight actions based on the current flight state
 
- * If the flight state neccessisates an operation, we perform it here
+ * If the flight state requires an action, we perform it here
  * For example if the flight state is apogee, we perform MAIN_CHUTE ejection
  * 
  *******************************************************************************/
 void flightStateCallback(void* pvParameters) {
-    int curr = 0;
+
     while(1) {
         switch (curr) {
             // PRE_FLIGHT_GROUND
             case FLIGHT_STATE::PRE_FLIGHT_GROUND:
-            //    debugln("PRE-FLIGHT STATE");
+                debugln("PRE-FLIGHT STATE");
                 break;
 
             // POWERED_FLIGHT
             case FLIGHT_STATE::POWERED_FLIGHT:
-            //    debugln("POWERED FLIGHT STATE");
+                debugln("POWERED FLIGHT STATE");
                 break;
 
             // COASTING
@@ -1775,10 +1787,12 @@ void loop() {
     //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
+    // data acquisition mode
     if (DAQ_MODE) {
         prepareForDataReceive();
 
-    } else if(TEST_MODE) { // hardware defined
+    // testing mode
+    } else if(TEST_MODE) {
 
         /**
          * Here is where we consume the test data stored in the data.txt file
@@ -1800,6 +1814,10 @@ void loop() {
                          debug(col1[row]);
                          debug(", col_2 = ");
                          debugln(col2[row]);
+
+                         // feed it into telemetry queue
+                         xQueueSend()
+
                      }
 
                      debugln("END OF FILE");
@@ -1814,14 +1832,14 @@ void loop() {
 
          }
 
-         // global functions -> must be called
-         MQTT_Reconnect();
-         client.loop();
-
-    }
-
     //////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  ////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
+
+    // FLIGHT MODE state - toggle jumper is completely removed
+    } else if(is_flight_mode) {
+        MQTT_Reconnect();
+        client.loop();
+    }
 
 } // end of loop
