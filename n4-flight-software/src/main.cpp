@@ -40,7 +40,7 @@ float kalmanFilter(float z);
 
 /* state machine variables*/
 uint8_t operation_mode = 0;                                     /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
-uint8_t current_state = FLIGHT_STATE::PRE_FLIGHT_GROUND;	    /*!< The starting state - we start at PRE_FLIGHT_GROUND state */
+uint8_t current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;	    /*!< The starting state - we start at PRE_FLIGHT_GROUND state */
 
 /* GPS object */
 TinyGPSPlus gps;
@@ -55,7 +55,7 @@ const char* rocket_ID = "FC1";             /*!< Unique ID of the rocket. Change 
  * flight states
  * these states are to be used for flight
 **/
-enum FLIGHT_STATES {
+enum OPERATION_MODE {
     SAFE_MODE = 0, /* Pyro-charges are disarmed  */
     ARMED_MODE      /* Pyro charges are armed and ready to deploy on apogee --see docs for more-- */
 };
@@ -934,12 +934,12 @@ void readAltimeterTask(void* pvParameters) {
                         // Result: a = altitude in m.
 
                         a = altimeter.altitude(PRESSURE, p0);
-                        debug(a);
+                        //debug(a);
 
                         // feed the altitude into the kalman filter
                         estimated_altitude = kalmanFilter(a);
-                        debug(",");
-                        debugln(estimated_altitude);
+                        //debug(",");
+                        //debugln(estimated_altitude);
 
                     } else {
                         debugln("error retrieving pressure measurement\n");
@@ -1059,7 +1059,6 @@ float kalmanFilter(float z) {
     error_covariance_bmp = (1 - kalman_gain_bmp) * error_covariance_pred;
 
     return estimated_altitude;
-
 }
 
 /*!***************************************************************************
@@ -1075,7 +1074,7 @@ void kalmanFilterTask(void* pvParameters) {
 }
 
 /*!****************************************************************************
- * @brief chek various condition from flight data to change the flight state
+ * @brief check various condition from flight data to change the flight state
  * - -see states.h for more info --
  *
  *******************************************************************************/
@@ -1084,16 +1083,18 @@ void checkFlightState(void* pvParameters) {
     telemetry_type_t flight_data; 
     
     while (1) {
-        // debugln("CHECKING STATE");
-        uint8_t s = xQueueReceive(check_state_queue_handle, &flight_data, portMAX_DELAY);
+        xQueueReceive(check_state_queue_handle, &flight_data, portMAX_DELAY);
 
+        debug("Received alt:"); debug(flight_data.alt_data.altitude); debugln();
+
+        // todo: check more conditions
         // PREFLIGHT
-        if(flight_data.alt_data.altitude > LAUNCH_DETECTION_THRESHOLD) {
-
+        if(flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
+            current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;
         }
 
         // LAUNCH DETECTED -- LAUNCH DETECTED
-        if(flight_data.alt_data.altitude > 5) {
+        if(flight_data.alt_data.altitude > LAUNCH_DETECTION_THRESHOLD) {
             // launch detected
             current_state = ARMED_FLIGHT_STATE::POWERED_FLIGHT;
         }
@@ -1112,51 +1113,51 @@ void checkFlightState(void* pvParameters) {
 void flightStateCallback(void* pvParameters) {
 
     while(1) {
-        switch (curr) {
+        switch (current_state) {
             // PRE_FLIGHT_GROUND
-            case FLIGHT_STATE::PRE_FLIGHT_GROUND:
+            case ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND:
                 debugln("PRE-FLIGHT STATE");
                 break;
 
             // POWERED_FLIGHT
-            case FLIGHT_STATE::POWERED_FLIGHT:
+            case ARMED_FLIGHT_STATE::POWERED_FLIGHT:
                 debugln("POWERED FLIGHT STATE");
                 break;
 
             // COASTING
-            case FLIGHT_STATE::COASTING:
+            case ARMED_FLIGHT_STATE::COASTING:
             //    debugln("COASTING");
                 break;
 
             // APOGEE
-            case FLIGHT_STATE::APOGEE:
+            case ARMED_FLIGHT_STATE::APOGEE:
             //    debugln("APOGEE");
                 break;
 
             // DROGUE_DEPLOY
-            case FLIGHT_STATE::DROGUE_DEPLOY:
+            case ARMED_FLIGHT_STATE::DROGUE_DEPLOY:
             //    debugln("DROGUE DEPLOY");
                 drogueChuteDeploy();
                 break;
 
             // DROGUE_DESCENT
-            case FLIGHT_STATE::DROGUE_DESCENT: 
+            case ARMED_FLIGHT_STATE::DROGUE_DESCENT:
             //    debugln("DROGUE DESCENT");
                 break;
 
             // MAIN_DEPLOY
-            case FLIGHT_STATE::MAIN_DEPLOY:
+            case ARMED_FLIGHT_STATE::MAIN_DEPLOY:
             //    debugln("MAIN CHUTE DEPLOY");
                 mainChuteDeploy();
                 break;
 
             // MAIN_DESCENT
-            case FLIGHT_STATE::MAIN_DESCENT:
+            case ARMED_FLIGHT_STATE::MAIN_DESCENT:
             //    debugln("MAIN CHUTE DESCENT");
                 break;
 
             // POST_FLIGHT_GROUND
-            case FLIGHT_STATE::POST_FLIGHT_GROUND:
+            case ARMED_FLIGHT_STATE::POST_FLIGHT_GROUND:
             //    debugln("POST FLIGHT GROUND");
                 break;
             
@@ -1639,6 +1640,7 @@ void setup() {
 
         /* TASK 1: READ ACCELERATION DATA */
         BaseType_t gr = xTaskCreate(readAccelerationTask, "readGyroscope", STACK_SIZE*2, NULL, 2, &readAccelerationTaskHandle);
+        vTaskSuspend(readAccelerationTaskHandle);
         if(gr == pdPASS) {
             debugln("[+]Read acceleration task created OK.");
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Read acceleration task created OK.\r\n");
@@ -1649,6 +1651,7 @@ void setup() {
 
         /* TASK 2: READ ALTIMETER DATA */
         BaseType_t ra = xTaskCreate(readAltimeterTask,"readAltimeter",STACK_SIZE*3,NULL,2, &readAltimeterTaskHandle);
+        vTaskSuspend(readAltimeterTaskHandle);
         if(ra == pdPASS) {
             debugln("[+]readAltimeterTask created OK.");
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]readAltimeterTask created OK.\r\n");
@@ -1659,6 +1662,7 @@ void setup() {
 
         /* TASK 3: READ GPS DATA */
         BaseType_t rg = xTaskCreate(readGPSTask, "readGPS", STACK_SIZE*2, NULL,2, &readGPSTaskHandle);
+        vTaskSuspend(readGPSTaskHandle);
         if(rg == pdPASS) {
             debugln("[+]Read GPS task created OK.");
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Read GPS task created OK.\r\n");
@@ -1679,7 +1683,7 @@ void setup() {
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create checkFlightState task\r\n");
         }
 
-        /* TASK 6: FLIGHT STATE CALLBACK TASK */    
+        /* TASK 6: FLIGHT STATE CALLBACK TASK */
         BaseType_t fs = xTaskCreate(flightStateCallback, "flightStateCallback", STACK_SIZE*2, NULL, 2, &flightStateCallbackTaskHandle);
         vTaskSuspend(flightStateCallbackTaskHandle);
         if(fs == pdPASS) {
@@ -1758,10 +1762,15 @@ void setup() {
         SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==FINISHED CREATING TASKS==\r\n");
 
         // done creating all tasks - resuming suspended tasks
+
+        // check if we are in testing
+        // if in testing mode, resume all but read sensor tasks
         debugln("Resuming all suspended tasks\n"); // TODO: log to sys logger
         SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Resuming all suspended tasks\r\n");
-        
-        // vTaskResume(checkFlightStateTaskHandle);
+        //vTaskResume(readAccelerationTaskHandle);
+        //vTaskResume(readAltimeterTaskHandle);
+        //vTaskResume(readGPSTaskHandle);
+        vTaskResume(checkFlightStateTaskHandle);
         vTaskResume(flightStateCallbackTaskHandle);
         vTaskResume(MQTT_TransmitTelemetryTaskHandle);
         vTaskResume(kalmanFilterTaskHandle);
@@ -1770,7 +1779,7 @@ void setup() {
             vTaskResume(debugToTerminalTaskHandle);
         #endif
 
-        delay(2000);
+        delay(1000);
 
         SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "END OF INITIALIZATION\r\n");
 
@@ -1800,6 +1809,7 @@ void loop() {
 
          if(current_test_state == TEST_STATES::DATA_CONSUME) {
              debugln("=============== Consuming test data ===============");
+             telemetry_type_t test_data_packet;
 
              CSV_Parser cp("ff", false, ',');
              if(cp.readSDfile(f_name)) {
@@ -1815,8 +1825,12 @@ void loop() {
                          debug(", col_2 = ");
                          debugln(col2[row]);
 
-                         // feed it into telemetry queue
-                         xQueueSend()
+                         // set altitude as altitude read from queue
+                         double alt = col2[row];
+                         test_data_packet.alt_data.altitude = alt;
+
+                         // feed it into check-flight-state queue
+                         xQueueSend(check_state_queue_handle, &test_data_packet, 0);
 
                      }
 
