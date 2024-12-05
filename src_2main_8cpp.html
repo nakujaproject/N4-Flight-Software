@@ -181,10 +181,10 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:a77900373b5a19b26727eb80b1616d449" id="r_a77900373b5a19b26727eb80b1616d449"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a77900373b5a19b26727eb80b1616d449">FLIGHT_STATES</a> { <b>SAFE_MODE</b> = 0
+<tr class="memitem:a9dd8c0bc72877aecb789ae6d08811d54" id="r_a9dd8c0bc72877aecb789ae6d08811d54"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9dd8c0bc72877aecb789ae6d08811d54">OPERATION_MODE</a> { <b>SAFE_MODE</b> = 0
 , <b>ARMED_MODE</b>
  }</td></tr>
-<tr class="separator:a77900373b5a19b26727eb80b1616d449"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a9dd8c0bc72877aecb789ae6d08811d54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aae0dcb6f6e84dab5b57ab3ba5ea559b4" id="r_aae0dcb6f6e84dab5b57ab3ba5ea559b4"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aae0dcb6f6e84dab5b57ab3ba5ea559b4">DAQ_STATES</a> { <a class="el" href="#aae0dcb6f6e84dab5b57ab3ba5ea559b4acc6ddcaa36bd57e5aec12749cb5ce29c">HANDSHAKE</a> = 0
 , <a class="el" href="#aae0dcb6f6e84dab5b57ab3ba5ea559b4a078eb5ef5383567cdf7a9b36f49289d6">RECEIVE_TEST_DATA</a>
 , <b>CONFIRM_TEST_DATA</b>
@@ -312,7 +312,7 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>MQTTInit</b> (cons
 <tr class="memdesc:a7ce5e586674f4cd4260bd2aaba246757"><td class="mdescLeft">&#160;</td><td class="mdescRight">Filter data using the Kalman Filter.  <br /></td></tr>
 <tr class="separator:a7ce5e586674f4cd4260bd2aaba246757"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a152aa3ad3c21993eb70968de75219174" id="r_a152aa3ad3c21993eb70968de75219174"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a152aa3ad3c21993eb70968de75219174">checkFlightState</a> (void *pvParameters)</td></tr>
-<tr class="memdesc:a152aa3ad3c21993eb70968de75219174"><td class="mdescLeft">&#160;</td><td class="mdescRight">chek various condition from flight data to change the flight state  <br /></td></tr>
+<tr class="memdesc:a152aa3ad3c21993eb70968de75219174"><td class="mdescLeft">&#160;</td><td class="mdescRight">check various condition from flight data to change the flight state  <br /></td></tr>
 <tr class="separator:a152aa3ad3c21993eb70968de75219174"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6648d201a9f47aa836d36e5339e78ef3" id="r_a6648d201a9f47aa836d36e5339e78ef3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6648d201a9f47aa836d36e5339e78ef3">flightStateCallback</a> (void *pvParameters)</td></tr>
 <tr class="memdesc:a6648d201a9f47aa836d36e5339e78ef3"><td class="mdescLeft">&#160;</td><td class="mdescRight">performs flight actions based on the current flight state  <br /></td></tr>
@@ -344,7 +344,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_Reconnect</b> ()
 Variables</h2></td></tr>
 <tr class="memitem:a59b33f351d47779eaaff510227075be1" id="r_a59b33f351d47779eaaff510227075be1"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a59b33f351d47779eaaff510227075be1">operation_mode</a> = 0</td></tr>
 <tr class="separator:a59b33f351d47779eaaff510227075be1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac559654865b2d48ea0b77b1a1f4a097b" id="r_ac559654865b2d48ea0b77b1a1f4a097b"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac559654865b2d48ea0b77b1a1f4a097b">current_state</a> = FLIGHT_STATE::PRE_FLIGHT_GROUND</td></tr>
+<tr class="memitem:ac559654865b2d48ea0b77b1a1f4a097b" id="r_ac559654865b2d48ea0b77b1a1f4a097b"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac559654865b2d48ea0b77b1a1f4a097b">current_state</a> = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND</td></tr>
 <tr class="separator:ac559654865b2d48ea0b77b1a1f4a097b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a169c53997a7da1d0fb99aec1b4675ce8" id="r_a169c53997a7da1d0fb99aec1b4675ce8"><td class="memItemLeft" align="right" valign="top"><a id="a169c53997a7da1d0fb99aec1b4675ce8" name="a169c53997a7da1d0fb99aec1b4675ce8"></a>
 TinyGPSPlus&#160;</td><td class="memItemRight" valign="bottom"><b>gps</b></td></tr>
@@ -736,14 +736,14 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalman_filte
 
 </div>
 </div>
-<a id="a77900373b5a19b26727eb80b1616d449" name="a77900373b5a19b26727eb80b1616d449"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a77900373b5a19b26727eb80b1616d449">&#9670;&#160;</a></span>FLIGHT_STATES</h2>
+<a id="a9dd8c0bc72877aecb789ae6d08811d54" name="a9dd8c0bc72877aecb789ae6d08811d54"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9dd8c0bc72877aecb789ae6d08811d54">&#9670;&#160;</a></span>OPERATION_MODE</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">enum <a class="el" href="#a77900373b5a19b26727eb80b1616d449">FLIGHT_STATES</a></td>
+          <td class="memname">enum <a class="el" href="#a9dd8c0bc72877aecb789ae6d08811d54">OPERATION_MODE</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -843,7 +843,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalman_filte
       </table>
 </div><div class="memdoc">
 
-<p>chek various condition from flight data to change the flight state </p>
+<p>check various condition from flight data to change the flight state </p>
 <hr  />
 <ul>
 <li>-see <a class="el" href="states_8h.html">states.h</a> for more info &ndash; </li>
@@ -1446,7 +1446,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalman_filte
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">uint8_t current_state = FLIGHT_STATE::PRE_FLIGHT_GROUND</td>
+          <td class="memname">uint8_t current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND</td>
         </tr>
       </table>
 </div><div class="memdoc">

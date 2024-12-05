@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['flight_5fstates_0',['FLIGHT_STATES',['../src_2main_8cpp.html#a77900373b5a19b26727eb80b1616d449',1,'main.cpp']]]
+  ['operation_5fmode_0',['OPERATION_MODE',['../src_2main_8cpp.html#a9dd8c0bc72877aecb789ae6d08811d54',1,'main.cpp']]]
 ];
