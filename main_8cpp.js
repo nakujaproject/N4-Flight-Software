@@ -8,6 +8,7 @@ var main_8cpp =
     [ "NAK", "main_8cpp.html#a7ff3e502ffb5d509612c6c6741de45cc", null ],
     [ "NAK_INTERVAL", "main_8cpp.html#a394162e74bbeb9bf67d3009cc38e0466", null ],
     [ "SOH", "main_8cpp.html#ab3796cca360697d3658162dba5965e28", null ],
+    [ "TRANSMIT_TELEMETRY_BIT", "main_8cpp.html#a3101d6fdbdc9f9b1d5395471a32e23c9", null ],
     [ "DAQ_STATES", "main_8cpp.html#aae0dcb6f6e84dab5b57ab3ba5ea559b4", [
       [ "HANDSHAKE", "main_8cpp.html#aae0dcb6f6e84dab5b57ab3ba5ea559b4acc6ddcaa36bd57e5aec12749cb5ce29c", null ],
       [ "RECEIVE_TEST_DATA", "main_8cpp.html#aae0dcb6f6e84dab5b57ab3ba5ea559b4a078eb5ef5383567cdf7a9b36f49289d6", null ],
@@ -23,6 +24,7 @@ var main_8cpp =
     [ "buzz", "main_8cpp.html#a28b1eb955e6e2f5e83599536f6bf4d2f", null ],
     [ "checkFlightState", "main_8cpp.html#a152aa3ad3c21993eb70968de75219174", null ],
     [ "checkRunTestToggle", "main_8cpp.html#a36d26be00724540c08411ce54b01a49b", null ],
+    [ "clearTelemetryQueueTask", "main_8cpp.html#a2eee545cf4af91a694e63ac4940276a4", null ],
     [ "debugToTerminalTask", "main_8cpp.html#aaa1a5716bd567e8c37465dabe33e6396", null ],
     [ "drogueChuteDeploy", "main_8cpp.html#aee373e9d6ea48f0b376bdaa1c2970510", null ],
     [ "flightStateCallback", "main_8cpp.html#a6648d201a9f47aa836d36e5339e78ef3", null ],
@@ -31,8 +33,6 @@ var main_8cpp =
     [ "initDynamicWIFI", "main_8cpp.html#a29b878fa9aee771a49679759f9f10da1", null ],
     [ "initTestGPIO", "main_8cpp.html#a7e2d538eec5c54386e40bbc0b99d0ac1", null ],
     [ "InitXMODEM", "main_8cpp.html#abf447a0860a5fec74fecf8654172fec0", null ],
-    [ "kalmanFilter", "main_8cpp.html#a9d009c484353785c540503d359e22097", null ],
-    [ "kalmanFilterTask", "main_8cpp.html#a7ce5e586674f4cd4260bd2aaba246757", null ],
     [ "listDir", "main_8cpp.html#a8841578fe91cace6206676f0e751cab5", null ],
     [ "logToMemory", "main_8cpp.html#a7df146b43e503e23146e698154d5096d", null ],
     [ "loop", "main_8cpp.html#afe461d27b9c48d5921c00d521181f12f", null ],
@@ -64,7 +64,6 @@ var main_8cpp =
     [ "log_sample_interval", "main_8cpp.html#affaa6e6cce540b233b04e558e3d164b2", null ],
     [ "operation_mode", "main_8cpp.html#a59b33f351d47779eaaff510227075be1", null ],
     [ "previous_log_time", "main_8cpp.html#ac03f1f50d9e1452593353033c5b2b1b0", null ],
-    [ "readAccelerationTaskHandle", "main_8cpp.html#a9f30f7c913c2e35ebf44fbf77f416bbc", null ],
     [ "recv_data_led", "main_8cpp.html#a7047c2926a0671d98c6f80a4015f2c14", null ],
     [ "red_led", "main_8cpp.html#a450aab1d5c2ac17dd8a8fd346a47cf16", null ],
     [ "rocket_ID", "main_8cpp.html#a5bef7886537f878149917a29939a5cb0", null ],
@@ -74,7 +73,7 @@ var main_8cpp =
     [ "SOH_recvd_flag", "main_8cpp.html#a6a02e76e786465c8d2fe8ba9ad3393da", null ],
     [ "SUBSYSTEM_INIT_MASK", "main_8cpp.html#a5fa0d939030a4ab773be75554017c4aa", null ],
     [ "subsystems_state_buffer", "main_8cpp.html#a12a374be19c9b55750097a0b9fad50fb", null ],
-    [ "telemetry_data_queue_handle", "main_8cpp.html#abe0f2d917a4d91446385606b903276ea", null ],
+    [ "telemetry_data_qHandle", "main_8cpp.html#a0ed5ea94df7417ea494d69ca56aab490", null ],
     [ "value", "main_8cpp.html#ac4f474c82e82cbb89ca7c36dd52be0ed", null ],
-    [ "wifi_client", "main_8cpp.html#afafd0fc922c17c38235820189e1d9b3b", null ]
+    [ "wifi_config", "main_8cpp.html#ab373e93ee373b64207ddef0991fcac9d", null ]
 ];
