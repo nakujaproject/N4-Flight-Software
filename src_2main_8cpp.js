@@ -14,6 +14,10 @@ var src_2main_8cpp =
       [ "CONFIRM_TEST_DATA", "src_2main_8cpp.html#aae0dcb6f6e84dab5b57ab3ba5ea559b4a45b2e590181d2cc1c7626bea6a9b6810", null ],
       [ "FINISH_DATA_RECEIVE", "src_2main_8cpp.html#aae0dcb6f6e84dab5b57ab3ba5ea559b4a9e607d728f1f37a37d39d2e251e2f73a", null ]
     ] ],
+    [ "FLIGHT_STATES", "src_2main_8cpp.html#a77900373b5a19b26727eb80b1616d449", [
+      [ "SAFE_MODE", "src_2main_8cpp.html#a77900373b5a19b26727eb80b1616d449a65305b334897a18c7e6f0e35ecbb05ca", null ],
+      [ "ARMED_MODE", "src_2main_8cpp.html#a77900373b5a19b26727eb80b1616d449ad885191e721ae41356ee53ddbe326ba9", null ]
+    ] ],
     [ "TEST_STATES", "src_2main_8cpp.html#aad85a2cb8ebe216a0a294c127c0a99a4", [
       [ "DATA_CONSUME", "src_2main_8cpp.html#aad85a2cb8ebe216a0a294c127c0a99a4a6d3b7f07ec8616b7057d96869e957f38", null ],
       [ "DONE_TESTING", "src_2main_8cpp.html#aad85a2cb8ebe216a0a294c127c0a99a4a66ab257f58f93abc7bda5977ad0be2a6", null ]
