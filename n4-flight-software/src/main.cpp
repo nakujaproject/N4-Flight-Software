@@ -20,6 +20,7 @@
 #include <FS.h>             // File system functions
 #include <SD.h>             // SD card logging function
 #include <SPIFFS.h>         // SPIFFS file system function
+#include <CSV_Parser.h>     // for parsing test data from the SD card
 #include "defs.h"           // misc defines
 #include "mpu.h"            // for reading MPU6050
 #include "SerialFlash.h"    // Handling external SPI flash memory
@@ -50,6 +51,8 @@ const char* system_log_file = "/event_log.txt";
 LOG_LEVEL level = INFO;
 const char* rocket_ID = "FC1";             /*!< Unique ID of the rocket. Change to the needed rocket name before uploading */
 
+// flight states
+// these states are to be used for flight 
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
@@ -68,7 +71,6 @@ uint8_t SUBSYSTEM_INIT_MASK = 0b00000000;  /*!< Holds the status of the subsyste
 
 uint8_t DAQ_MODE = 0;
 uint8_t TEST_MODE = 0;
-uint8_t current_test_state;
 
 #define BAUDRATE        115200
 #define NAK_INTERVAL    4000        /*!< Interval in which to send the NAK command to the transmitter */
@@ -119,6 +121,8 @@ enum DAQ_STATES {
     FINISH_DATA_RECEIVE
 };
 
+uint8_t current_DAQ_state = DAQ_STATES::HANDSHAKE; /*!< Define current data consume state the flight computer is in */
+
 /**
  * 
  * Holds the states used when consuming the test data in testing mode
@@ -128,8 +132,25 @@ enum TEST_STATES {
     DATA_CONSUME = 0,
     DONE_TESTING
 };
+uint8_t current_test_state  = TEST_STATES::DATA_CONSUME;
+const char* f_name = "/short_data.csv";
+File test_file; // handle for the test data file
 
-uint8_t current_DAQ_state = DAQ_STATES::HANDSHAKE; /*!< Define current state the flight computer is in */
+/**
+ *
+ * @return
+ */
+char feedRowParser(){
+    return test_file.read();
+}
+
+/**
+ *
+ * @return
+ */
+bool rowParserFinished() {
+    return ((test_file.available() > 0) ? false:true);
+}
 
 /**
  * XMODEM serial function prototypes
@@ -718,7 +739,6 @@ void initDynamicWIFI() {
  TaskHandle_t kalmanFilterTaskHandle;
  TaskHandle_t debugToTerminalTaskHandle;
  TaskHandle_t logToMemoryTaskHandle;
-
 
 /**
  * ///////////////////////// DATA TYPES /////////////////////////
@@ -1401,7 +1421,7 @@ void setup() {
     // SPIFFS Must be initialized first to allow event logging from the word go
     uint8_t spiffs_init_state = InitSPIFFS();
 
-    // SYS LOG
+    // SYSTEM LOG FILE
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::WRITE, "FC1", LOG_LEVEL::INFO, system_log_file, "Flight computer Event log\r\n");
 
     debugln();
@@ -1428,7 +1448,7 @@ void setup() {
     uint8_t test_gpio_init_state = initTestGPIO();
     MQTTInit(MQTT_SERVER, MQTT_PORT);
 
-    /* update the susbsystems init state table */   
+    /* update the sub-systems init state table */
     // check if BMP init OK
     if(bmp_init_state) { 
         SUBSYSTEM_INIT_MASK |= (1 << BMP_CHECK_BIT);
@@ -1486,11 +1506,12 @@ void setup() {
         //////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  //////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////
+
             
     }  else if (TEST_MODE) {
         debugln();
         debugln(F("=============================================="));
-        debugln(F("=================== TEST MODE ================"));
+        debugln(F("=================== RUN MODE ================"));
         debugln(F("=============================================="));
         SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "RUN MODE\r\n");
 
@@ -1501,21 +1522,21 @@ void setup() {
          * 
          * This file will be updated in the loop once we are done consuming the test data 
          */
-        readStateFile(SD, "/state.txt");
-        debugln(current_test_state_buffer);
+        //readStateFile(SD, "/state.txt");
+        //debugln(current_test_state_buffer);
 
         /**
          * check what state we are in while in the test state. 
          * If we are in the data consume state, set the current state to DATA_CONSUME
          * The state is got from the SD card state.txt file
          */
-        if (strcmp(current_test_state_buffer, "DATA_CONSUME\r\n") == 0) {
-            current_test_state = TEST_STATES::DATA_CONSUME;
-            debugln("STATE set to DATA CONSUME ");
-
-        } else {
-            debugln("current state undefined... ");
-        }
+//        if (strcmp(current_test_state_buffer, "DATA_CONSUME\r\n") == 0) {
+//            current_test_state = TEST_STATES::DATA_CONSUME;
+//            debugln("STATE set to DATA CONSUME ");
+//
+//        } else {
+//            debugln("current state undefined... ");
+//        }
 
         /* mode 0 resets the system log file by clearing all the current contents */
         // system_logger.logToFile(SPIFFS, 0, rocket_ID, level, system_log_file, "Game Time!"); // TODO: DEBUG
@@ -1757,21 +1778,44 @@ void loop() {
     if (DAQ_MODE) {
         prepareForDataReceive();
 
-    } else if(TEST_MODE) {
-        // debugln("DATA CONSUME");
+    } else if(TEST_MODE) { // hardware defined
 
         /**
          * Here is where we consume the test data stored in the data.txt file
          */
-        // if(current_test_state == TEST_STATES::DATA_CONSUME) {
-        //     debugln("=============== Consuming test data ===============");
-        //     // readFile(SD, "/data.txt");
 
-        //     // feed into state machine
-        // }
+         if(current_test_state == TEST_STATES::DATA_CONSUME) {
+             debugln("=============== Consuming test data ===============");
 
+             CSV_Parser cp("ff", false, ',');
+             if(cp.readSDfile(f_name)) {
+                 float* col1 = (float*)cp[0];
+                 float* col2 = (float*)cp[1];
+
+                 if(col1 && col2) {
+                     for(int row = 0; row < cp.getRowsCount(); row++) {
+                         debug("row = ");
+                         debug(row);
+                         debug(", col_1 = ");
+                         debug(col1[row]);
+                         debug(", col_2 = ");
+                         debugln(col2[row]);
+                     }
+
+                     debugln("END OF FILE");
+                     current_test_state = TEST_STATES::DONE_TESTING;
+                 } else {
+                     debug("Error: at least one of the columns was not found");
+                 }
+
+             } else {
+                 debug("File does not exist");
+             }
+
+         }
+
+         // global functions -> must be called
          MQTT_Reconnect();
-
          client.loop();
 
     }
