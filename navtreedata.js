@@ -51,7 +51,10 @@ var NAVTREE =
     [ "WIFI network configuration", "index.html#step21", null ],
     [ "MQTT configuration", "index.html#step22", null ],
     [ "Flight Data Collection and Kalman Filtering", "index.html#step23", null ],
-    [ "Contributors", "index.html#step24", null ],
+    [ "Launch detection", "index.html#step24", null ],
+    [ "Apogee detection", "index.html#step25", null ],
+    [ "Parachute ejection", "index.html#step26", null ],
+    [ "Contributors", "index.html#step30", null ],
     [ "README", "md_n4-flight-software_2README.html", null ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ]

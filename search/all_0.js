@@ -16,8 +16,10 @@ var searchData=
   ['and_20peripherals_13',['Hardware, pin assignment and peripherals',['../index.html#step13',1,'']]],
   ['and_20testing_20procedures_14',['Integration and Testing Procedures',['../index.html#step14',1,'']]],
   ['apogee_15',['apogee',['../namespaceapogee.html',1,'']]],
-  ['assignment_20and_20peripherals_16',['Hardware, pin assignment and peripherals',['../index.html#step13',1,'']]],
-  ['ax_17',['ax',['../structAcceleration__Data.html#a0ac3f80a6aaf6bb4b39cc5b6298bf48d',1,'Acceleration_Data']]],
-  ['ay_18',['ay',['../structAcceleration__Data.html#af18da59fae25e84ce665ebe427d0d43b',1,'Acceleration_Data']]],
-  ['az_19',['az',['../structAcceleration__Data.html#a358fef1b09bfe48d8927bc16ab557a59',1,'Acceleration_Data']]]
+  ['apogee_20detection_16',['Apogee detection',['../index.html#step25',1,'']]],
+  ['apogee_5fdetection_5fthreshold_17',['APOGEE_DETECTION_THRESHOLD',['../defs_8h.html#aa60a3d5d5dbbe3a81b5e4ed6b8d9f8f8',1,'defs.h']]],
+  ['assignment_20and_20peripherals_18',['Hardware, pin assignment and peripherals',['../index.html#step13',1,'']]],
+  ['ax_19',['ax',['../structAcceleration__Data.html#a0ac3f80a6aaf6bb4b39cc5b6298bf48d',1,'Acceleration_Data']]],
+  ['ay_20',['ay',['../structAcceleration__Data.html#af18da59fae25e84ce665ebe427d0d43b',1,'Acceleration_Data']]],
+  ['az_21',['az',['../structAcceleration__Data.html#a358fef1b09bfe48d8927bc16ab557a59',1,'Acceleration_Data']]]
 ];

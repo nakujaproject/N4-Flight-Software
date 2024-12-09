@@ -1,6 +1,7 @@
 var defs_8h =
 [
     [ "ALTIMETER_QUEUE_LENGTH", "defs_8h.html#a5b60efac67f2c4a6d693e79e9651838e", null ],
+    [ "APOGEE_DETECTION_THRESHOLD", "defs_8h.html#aa60a3d5d5dbbe3a81b5e4ed6b8d9f8f8", null ],
     [ "BASE_ALTITUDE", "defs_8h.html#a522265e76ce6f48d243b5037d731d75d", null ],
     [ "BROKER_IP_ADDRESS_LENGTH", "defs_8h.html#afd0c8e19541273b9dcf57809a4d509f4", null ],
     [ "CALLIBRATION_READINGS", "defs_8h.html#aaa5fd61c579cc26495e42e12f5382e9d", null ],
