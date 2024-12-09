@@ -118,20 +118,41 @@ $(function(){initNavTree('src_2main_8cpp.html',''); initResizable(true); });
 <code>#include &lt;FS.h&gt;</code><br />
 <code>#include &lt;SD.h&gt;</code><br />
 <code>#include &lt;SPIFFS.h&gt;</code><br />
-<code>#include &quot;sensors.h&quot;</code><br />
+<code>#include &lt;CSV_Parser.h&gt;</code><br />
 <code>#include &quot;<a class="el" href="defs_8h_source.html">defs.h</a>&quot;</code><br />
 <code>#include &quot;mpu.h&quot;</code><br />
 <code>#include &quot;SerialFlash.h&quot;</code><br />
 <code>#include &quot;<a class="el" href="logger_8h_source.html">logger.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="data__types_8h_source.html">data_types.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="custom__time_8h_source.html">custom_time.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="states_8h_source.html">states.h</a>&quot;</code><br />
-<code>#include &quot;system_logger.h&quot;</code><br />
-<code>#include &quot;system_log_levels.h&quot;</code><br />
+<code>#include &quot;<a class="el" href="system__logger_8h_source.html">system_logger.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="system__log__levels_8h_source.html">system_log_levels.h</a>&quot;</code><br />
 <code>#include &quot;wifi-config.h&quot;</code><br />
+<code>#include &quot;<a class="el" href="kalman__filter_8h_source.html">kalman_filter.h</a>&quot;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
+<tr class="memitem:a88049d74d21a1d54b2cf9cc2edb979ce" id="r_a88049d74d21a1d54b2cf9cc2edb979ce"><td class="memItemLeft" align="right" valign="top"><a id="a88049d74d21a1d54b2cf9cc2edb979ce" name="a88049d74d21a1d54b2cf9cc2edb979ce"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>BMP_CHECK_BIT</b>&#160;&#160;&#160;0</td></tr>
+<tr class="separator:a88049d74d21a1d54b2cf9cc2edb979ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac7dd4c3831e70e5565a023a8abb3184e" id="r_ac7dd4c3831e70e5565a023a8abb3184e"><td class="memItemLeft" align="right" valign="top"><a id="ac7dd4c3831e70e5565a023a8abb3184e" name="ac7dd4c3831e70e5565a023a8abb3184e"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>IMU_CHECK_BIT</b>&#160;&#160;&#160;1</td></tr>
+<tr class="separator:ac7dd4c3831e70e5565a023a8abb3184e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25437386b7461a23572a5e50a662fa96" id="r_a25437386b7461a23572a5e50a662fa96"><td class="memItemLeft" align="right" valign="top"><a id="a25437386b7461a23572a5e50a662fa96" name="a25437386b7461a23572a5e50a662fa96"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>FLASH_CHECK_BIT</b>&#160;&#160;&#160;2</td></tr>
+<tr class="separator:a25437386b7461a23572a5e50a662fa96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac91fa7a14736c5a4ac967a27f1cfa931" id="r_ac91fa7a14736c5a4ac967a27f1cfa931"><td class="memItemLeft" align="right" valign="top"><a id="ac91fa7a14736c5a4ac967a27f1cfa931" name="ac91fa7a14736c5a4ac967a27f1cfa931"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>GPS_CHECK_BIT</b>&#160;&#160;&#160;3</td></tr>
+<tr class="separator:ac91fa7a14736c5a4ac967a27f1cfa931"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa60e081e32dacb93934700ce354c53cc" id="r_aa60e081e32dacb93934700ce354c53cc"><td class="memItemLeft" align="right" valign="top"><a id="aa60e081e32dacb93934700ce354c53cc" name="aa60e081e32dacb93934700ce354c53cc"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>SD_CHECK_BIT</b>&#160;&#160;&#160;4</td></tr>
+<tr class="separator:aa60e081e32dacb93934700ce354c53cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acd15be87ee4c04768aa86e2cf8d6d9b9" id="r_acd15be87ee4c04768aa86e2cf8d6d9b9"><td class="memItemLeft" align="right" valign="top"><a id="acd15be87ee4c04768aa86e2cf8d6d9b9" name="acd15be87ee4c04768aa86e2cf8d6d9b9"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>SPIFFS_CHECK_BIT</b>&#160;&#160;&#160;5</td></tr>
+<tr class="separator:acd15be87ee4c04768aa86e2cf8d6d9b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a588ec28022524a037355203f2309c04a" id="r_a588ec28022524a037355203f2309c04a"><td class="memItemLeft" align="right" valign="top"><a id="a588ec28022524a037355203f2309c04a" name="a588ec28022524a037355203f2309c04a"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>TEST_HARDWARE_CHECK_BIT</b>&#160;&#160;&#160;6</td></tr>
+<tr class="separator:a588ec28022524a037355203f2309c04a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a734bbab06e1a9fd2e5522db0221ff6e3" id="r_a734bbab06e1a9fd2e5522db0221ff6e3"><td class="memItemLeft" align="right" valign="top"><a id="a734bbab06e1a9fd2e5522db0221ff6e3" name="a734bbab06e1a9fd2e5522db0221ff6e3"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>BAUDRATE</b>&#160;&#160;&#160;115200</td></tr>
 <tr class="separator:a734bbab06e1a9fd2e5522db0221ff6e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -154,32 +175,27 @@ Macros</h2></td></tr>
 <tr class="memitem:a8677cc3aaa35e7f860928085b74c161c" id="r_a8677cc3aaa35e7f860928085b74c161c"><td class="memItemLeft" align="right" valign="top"><a id="a8677cc3aaa35e7f860928085b74c161c" name="a8677cc3aaa35e7f860928085b74c161c"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>FORMAT_SPIFFS_IF_FAILED</b>&#160;&#160;&#160;1</td></tr>
 <tr class="separator:a8677cc3aaa35e7f860928085b74c161c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3101d6fdbdc9f9b1d5395471a32e23c9" id="r_a3101d6fdbdc9f9b1d5395471a32e23c9"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3101d6fdbdc9f9b1d5395471a32e23c9">TRANSMIT_TELEMETRY_BIT</a>&#160;&#160;&#160;((EventBits_t) 0x01 &lt;&lt; 0)</td></tr>
-<tr class="separator:a3101d6fdbdc9f9b1d5395471a32e23c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae233f856159856a9ca59d9008c5c2300" id="r_ae233f856159856a9ca59d9008c5c2300"><td class="memItemLeft" align="right" valign="top"><a id="ae233f856159856a9ca59d9008c5c2300" name="ae233f856159856a9ca59d9008c5c2300"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>CHECK_FLIGHT_STATE_BIT</b>&#160;&#160;&#160;((EventBits_t) 0x01 &lt;&lt; 1)</td></tr>
-<tr class="separator:ae233f856159856a9ca59d9008c5c2300"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab69bc384be6a2e1a245ecaefb6e4dc78" id="r_ab69bc384be6a2e1a245ecaefb6e4dc78"><td class="memItemLeft" align="right" valign="top"><a id="ab69bc384be6a2e1a245ecaefb6e4dc78" name="ab69bc384be6a2e1a245ecaefb6e4dc78"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>LOG_TO_MEMORY_BIT</b>&#160;&#160;&#160;((EventBits_t) 0x01 &lt;&lt; 2)</td></tr>
-<tr class="separator:ab69bc384be6a2e1a245ecaefb6e4dc78"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8d3ad2db9742b7636091f2b0aaf8f520" id="r_a8d3ad2db9742b7636091f2b0aaf8f520"><td class="memItemLeft" align="right" valign="top"><a id="a8d3ad2db9742b7636091f2b0aaf8f520" name="a8d3ad2db9742b7636091f2b0aaf8f520"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>TRANSMIT_XBEE_BIT</b>&#160;&#160;&#160;((EventBits_t) 0x01 &lt;&lt; 3)</td></tr>
-<tr class="separator:a8d3ad2db9742b7636091f2b0aaf8f520"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0ec10f245f5e20b2b59c42beecaf26b9" id="r_a0ec10f245f5e20b2b59c42beecaf26b9"><td class="memItemLeft" align="right" valign="top"><a id="a0ec10f245f5e20b2b59c42beecaf26b9" name="a0ec10f245f5e20b2b59c42beecaf26b9"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>DEBUG_TO_TERM_BIT</b>&#160;&#160;&#160;((EventBits_t) 0x01 &lt;&lt; 4)</td></tr>
-<tr class="separator:a0ec10f245f5e20b2b59c42beecaf26b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a074ee5e3b81c7240e5e3488f89e62397" id="r_a074ee5e3b81c7240e5e3488f89e62397"><td class="memItemLeft" align="right" valign="top"><a id="a074ee5e3b81c7240e5e3488f89e62397" name="a074ee5e3b81c7240e5e3488f89e62397"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>ALTITUDE</b>&#160;&#160;&#160;1525.0</td></tr>
 <tr class="separator:a074ee5e3b81c7240e5e3488f89e62397"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:a7010bdd588d627529b5948acb89dc09d" id="r_a7010bdd588d627529b5948acb89dc09d"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7010bdd588d627529b5948acb89dc09d">TEST_STATE</a> { <a class="el" href="#a7010bdd588d627529b5948acb89dc09dacc6ddcaa36bd57e5aec12749cb5ce29c">HANDSHAKE</a> = 0
-, <a class="el" href="#a7010bdd588d627529b5948acb89dc09da078eb5ef5383567cdf7a9b36f49289d6">RECEIVE_TEST_DATA</a>
-, <b>CONFIRM_TEST_DATA</b>
+<tr class="memitem:a9dd8c0bc72877aecb789ae6d08811d54" id="r_a9dd8c0bc72877aecb789ae6d08811d54"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9dd8c0bc72877aecb789ae6d08811d54">OPERATION_MODE</a> { <b>SAFE_MODE</b> = 0
+, <b>ARMED_MODE</b>
  }</td></tr>
-<tr class="memdesc:a7010bdd588d627529b5948acb89dc09d"><td class="mdescLeft">&#160;</td><td class="mdescRight">This enum holds the states during flight computer test mode.  <a href="#a7010bdd588d627529b5948acb89dc09d">More...</a><br /></td></tr>
-<tr class="separator:a7010bdd588d627529b5948acb89dc09d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a9dd8c0bc72877aecb789ae6d08811d54"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae0dcb6f6e84dab5b57ab3ba5ea559b4" id="r_aae0dcb6f6e84dab5b57ab3ba5ea559b4"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aae0dcb6f6e84dab5b57ab3ba5ea559b4">DAQ_STATES</a> { <a class="el" href="#aae0dcb6f6e84dab5b57ab3ba5ea559b4acc6ddcaa36bd57e5aec12749cb5ce29c">HANDSHAKE</a> = 0
+, <a class="el" href="#aae0dcb6f6e84dab5b57ab3ba5ea559b4a078eb5ef5383567cdf7a9b36f49289d6">RECEIVE_TEST_DATA</a>
+, <b>CONFIRM_TEST_DATA</b>
+, <b>FINISH_DATA_RECEIVE</b>
+ }</td></tr>
+<tr class="memdesc:aae0dcb6f6e84dab5b57ab3ba5ea559b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">This enum holds the states during flight computer test mode.  <a href="#aae0dcb6f6e84dab5b57ab3ba5ea559b4">More...</a><br /></td></tr>
+<tr class="separator:aae0dcb6f6e84dab5b57ab3ba5ea559b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad85a2cb8ebe216a0a294c127c0a99a4" id="r_aad85a2cb8ebe216a0a294c127c0a99a4"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aad85a2cb8ebe216a0a294c127c0a99a4">TEST_STATES</a> { <b>DATA_CONSUME</b> = 0
+, <b>DONE_TESTING</b>
+ }</td></tr>
+<tr class="separator:aad85a2cb8ebe216a0a294c127c0a99a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -188,23 +204,31 @@ Functions</h2></td></tr>
  Default no. of seconds to remain HIGH is 5  <br /></td></tr>
 <tr class="separator:aee373e9d6ea48f0b376bdaa1c2970510"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9074d493ccf55d0cfa3acd2d173f665a" id="r_a9074d493ccf55d0cfa3acd2d173f665a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9074d493ccf55d0cfa3acd2d173f665a">mainChuteDeploy</a> ()</td></tr>
-<tr class="memdesc:a9074d493ccf55d0cfa3acd2d173f665a"><td class="mdescLeft">&#160;</td><td class="mdescRight">fires the pyro-charge to deploy the main chute Turn on the main chute ejection circuit by running the GPIO HIGH for a preset No. of seconds. <br  />
- Default no. of seconds to remain HIGH is 5  <br /></td></tr>
+<tr class="memdesc:a9074d493ccf55d0cfa3acd2d173f665a"><td class="mdescLeft">&#160;</td><td class="mdescRight">fires the pyro-charge to deploy the main chute Turn on the main chute ejection circuit by running the GPIO HIGH for a preset No. of seconds Default no. of seconds to remain HIGH is 5  <br /></td></tr>
 <tr class="separator:a9074d493ccf55d0cfa3acd2d173f665a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4a46279717733648d2fdc69dfa33af50" id="r_a4a46279717733648d2fdc69dfa33af50"><td class="memItemLeft" align="right" valign="top"><a id="a4a46279717733648d2fdc69dfa33af50" name="a4a46279717733648d2fdc69dfa33af50"></a>
-PubSubClient&#160;</td><td class="memItemRight" valign="bottom"><b>mqtt_client</b> (wifi_client)</td></tr>
-<tr class="separator:a4a46279717733648d2fdc69dfa33af50"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a29b878fa9aee771a49679759f9f10da1" id="r_a29b878fa9aee771a49679759f9f10da1"><td class="memItemLeft" align="right" valign="top"><a id="a29b878fa9aee771a49679759f9f10da1" name="a29b878fa9aee771a49679759f9f10da1"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>initDynamicWIFI</b> ()</td></tr>
+<tr class="memdesc:a29b878fa9aee771a49679759f9f10da1"><td class="mdescLeft">&#160;</td><td class="mdescRight">create dynamic WIFI <br /></td></tr>
+<tr class="separator:a29b878fa9aee771a49679759f9f10da1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d009c484353785c540503d359e22097" id="r_a9d009c484353785c540503d359e22097"><td class="memItemLeft" align="right" valign="top"><a id="a9d009c484353785c540503d359e22097" name="a9d009c484353785c540503d359e22097"></a>
+float&#160;</td><td class="memItemRight" valign="bottom"><b>kalmanFilter</b> (float z)</td></tr>
+<tr class="memdesc:a9d009c484353785c540503d359e22097"><td class="mdescLeft">&#160;</td><td class="mdescRight">Kalman filter estimated value calculation. <br /></td></tr>
+<tr class="separator:a9d009c484353785c540503d359e22097"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d8cb0cd8ed5366f66d84db5076cd6d3" id="r_a2d8cb0cd8ed5366f66d84db5076cd6d3"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2d8cb0cd8ed5366f66d84db5076cd6d3">feedRowParser</a> ()</td></tr>
+<tr class="separator:a2d8cb0cd8ed5366f66d84db5076cd6d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afbfb26a0bc64fdd54058db8bdc14a603" id="r_afbfb26a0bc64fdd54058db8bdc14a603"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afbfb26a0bc64fdd54058db8bdc14a603">rowParserFinished</a> ()</td></tr>
+<tr class="separator:afbfb26a0bc64fdd54058db8bdc14a603"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8841578fe91cace6206676f0e751cab5" id="r_a8841578fe91cace6206676f0e751cab5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8841578fe91cace6206676f0e751cab5">listDir</a> (fs::FS &amp;fs, const char *dirname, uint8_t levels)</td></tr>
 <tr class="separator:a8841578fe91cace6206676f0e751cab5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae8297bf2b99a2ad67af6f9a421ea4b16" id="r_ae8297bf2b99a2ad67af6f9a421ea4b16"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae8297bf2b99a2ad67af6f9a421ea4b16">initGPIO</a> ()</td></tr>
-<tr class="memdesc:ae8297bf2b99a2ad67af6f9a421ea4b16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inititialize the GPIOs.  <br /></td></tr>
-<tr class="separator:ae8297bf2b99a2ad67af6f9a421ea4b16"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad150871dcb335bbf64b1bd7bf9f6d379" id="r_ad150871dcb335bbf64b1bd7bf9f6d379"><td class="memItemLeft" align="right" valign="top"><a id="ad150871dcb335bbf64b1bd7bf9f6d379" name="ad150871dcb335bbf64b1bd7bf9f6d379"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>InitSPIFFS</b> ()</td></tr>
-<tr class="separator:ad150871dcb335bbf64b1bd7bf9f6d379"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af25a1f794fa12539ca1c4cba5122952d" id="r_af25a1f794fa12539ca1c4cba5122952d"><td class="memItemLeft" align="right" valign="top"><a id="af25a1f794fa12539ca1c4cba5122952d" name="af25a1f794fa12539ca1c4cba5122952d"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>initSD</b> ()</td></tr>
-<tr class="separator:af25a1f794fa12539ca1c4cba5122952d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e2d538eec5c54386e40bbc0b99d0ac1" id="r_a7e2d538eec5c54386e40bbc0b99d0ac1"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7e2d538eec5c54386e40bbc0b99d0ac1">initTestGPIO</a> ()</td></tr>
+<tr class="memdesc:a7e2d538eec5c54386e40bbc0b99d0ac1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inititialize the GPIOs.  <br /></td></tr>
+<tr class="separator:a7e2d538eec5c54386e40bbc0b99d0ac1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31b6932835b12c5ea4db3e24f4b9dd7f" id="r_a31b6932835b12c5ea4db3e24f4b9dd7f"><td class="memItemLeft" align="right" valign="top"><a id="a31b6932835b12c5ea4db3e24f4b9dd7f" name="a31b6932835b12c5ea4db3e24f4b9dd7f"></a>
+uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>InitSPIFFS</b> ()</td></tr>
+<tr class="separator:a31b6932835b12c5ea4db3e24f4b9dd7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aedbb4a03b76d7246ea721233c6540ba1" id="r_aedbb4a03b76d7246ea721233c6540ba1"><td class="memItemLeft" align="right" valign="top"><a id="aedbb4a03b76d7246ea721233c6540ba1" name="aedbb4a03b76d7246ea721233c6540ba1"></a>
+uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>initSD</b> ()</td></tr>
+<tr class="separator:aedbb4a03b76d7246ea721233c6540ba1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5f3e40ff0b3b6f2c247fadc41b0a5896" id="r_a5f3e40ff0b3b6f2c247fadc41b0a5896"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5f3e40ff0b3b6f2c247fadc41b0a5896">SwitchLEDs</a> (uint8_t red_state, uint8_t green_state)</td></tr>
 <tr class="memdesc:a5f3e40ff0b3b6f2c247fadc41b0a5896"><td class="mdescLeft">&#160;</td><td class="mdescRight">Switch the LEDS states.  <br /></td></tr>
 <tr class="separator:a5f3e40ff0b3b6f2c247fadc41b0a5896"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -218,11 +242,14 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>SerialEvent</b> ()</t
 void&#160;</td><td class="memItemRight" valign="bottom"><b>ParseSerial</b> (char *)</td></tr>
 <tr class="separator:a9511fdd05a1d494d359670ec39a4f536"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36d26be00724540c08411ce54b01a49b" id="r_a36d26be00724540c08411ce54b01a49b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a36d26be00724540c08411ce54b01a49b">checkRunTestToggle</a> ()</td></tr>
-<tr class="memdesc:a36d26be00724540c08411ce54b01a49b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sample the RUN/TEST toggle pins to check whether the fligh tcomputer is in test mode or run mode. If in TEST mode, define the TEST flag If in RUN mode, define the RUN flag TEST_MODE Pin and RUN_MODE pin are both pulled HIGH. When you set the jumper, you pull that pin to LOW.  <br /></td></tr>
+<tr class="memdesc:a36d26be00724540c08411ce54b01a49b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sample the RUN/TEST toggle pins to check whether the flight computer is in test-DAQ mode, TEST mode or FLIGHT mode. If in DAQ mode, set the DAQ flag If in TEST mode, define the TEST flag FLIGHT mode is activated by completely removing the jumper.  <br /></td></tr>
 <tr class="separator:a36d26be00724540c08411ce54b01a49b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39694d8c816730fe5b678b70afa424ed" id="r_a39694d8c816730fe5b678b70afa424ed"><td class="memItemLeft" align="right" valign="top"><a id="a39694d8c816730fe5b678b70afa424ed" name="a39694d8c816730fe5b678b70afa424ed"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>readFile</b> (fs::FS &amp;fs, const char *path)</td></tr>
 <tr class="separator:a39694d8c816730fe5b678b70afa424ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3cec70f0be8f6c2c69ef9bbd76508724" id="r_a3cec70f0be8f6c2c69ef9bbd76508724"><td class="memItemLeft" align="right" valign="top"><a id="a3cec70f0be8f6c2c69ef9bbd76508724" name="a3cec70f0be8f6c2c69ef9bbd76508724"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>readStateFile</b> (fs::FS &amp;fs, const char *path)</td></tr>
+<tr class="separator:a3cec70f0be8f6c2c69ef9bbd76508724"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adfdfe491c3b951586aeba25a0b8ccf80" id="r_adfdfe491c3b951586aeba25a0b8ccf80"><td class="memItemLeft" align="right" valign="top"><a id="adfdfe491c3b951586aeba25a0b8ccf80" name="adfdfe491c3b951586aeba25a0b8ccf80"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>writeFile</b> (fs::FS &amp;fs, const char *path, const char *message)</td></tr>
 <tr class="separator:adfdfe491c3b951586aeba25a0b8ccf80"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -235,6 +262,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>deleteFile</b> (fs::F
 <tr class="memitem:a08fd5ccb534426dffe601ec8a8bf1d3e" id="r_a08fd5ccb534426dffe601ec8a8bf1d3e"><td class="memItemLeft" align="right" valign="top"><a id="a08fd5ccb534426dffe601ec8a8bf1d3e" name="a08fd5ccb534426dffe601ec8a8bf1d3e"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>readTestDataFile</b> ()</td></tr>
 <tr class="separator:a08fd5ccb534426dffe601ec8a8bf1d3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a15fa02eb36dd89d676974ce84c747820" id="r_a15fa02eb36dd89d676974ce84c747820"><td class="memItemLeft" align="right" valign="top"><a id="a15fa02eb36dd89d676974ce84c747820" name="a15fa02eb36dd89d676974ce84c747820"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>initDataFiles</b> ()</td></tr>
+<tr class="separator:a15fa02eb36dd89d676974ce84c747820"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a28b1eb955e6e2f5e83599536f6bf4d2f" id="r_a28b1eb955e6e2f5e83599536f6bf4d2f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a28b1eb955e6e2f5e83599536f6bf4d2f">buzz</a> ()</td></tr>
 <tr class="memdesc:a28b1eb955e6e2f5e83599536f6bf4d2f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Buzz the buzzer for a given buzz_interval This function is non-blocking.  <br /></td></tr>
 <tr class="separator:a28b1eb955e6e2f5e83599536f6bf4d2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -253,29 +283,39 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>ParseSerialBuffer</b>
 <tr class="memitem:a61040c538622d7ad222068e37d96b52a" id="r_a61040c538622d7ad222068e37d96b52a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a61040c538622d7ad222068e37d96b52a">receiveTestDataSerialEvent</a> ()</td></tr>
 <tr class="memdesc:a61040c538622d7ad222068e37d96b52a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Receive serial message during RECEIVE_TEST_DATA state Data received in this state is the actual test data. It is saved into the test flash memory.  <br /></td></tr>
 <tr class="separator:a61040c538622d7ad222068e37d96b52a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a80d57b1ee5cb9d474465d3f8485f5bbc" id="r_a80d57b1ee5cb9d474465d3f8485f5bbc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a80d57b1ee5cb9d474465d3f8485f5bbc">BMPInit</a> ()</td></tr>
-<tr class="memdesc:a80d57b1ee5cb9d474465d3f8485f5bbc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize BMP180 barometric sensor.  <br /></td></tr>
-<tr class="separator:a80d57b1ee5cb9d474465d3f8485f5bbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f220446b54026b1217f93a3a9c04c1f" id="r_a6f220446b54026b1217f93a3a9c04c1f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6f220446b54026b1217f93a3a9c04c1f">GPSInit</a> ()</td></tr>
-<tr class="memdesc:a6f220446b54026b1217f93a3a9c04c1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the GPS connected on Serial2.  <br /></td></tr>
-<tr class="separator:a6f220446b54026b1217f93a3a9c04c1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af17571f8eae94b2917362daa65cc29bd" id="r_af17571f8eae94b2917362daa65cc29bd"><td class="memItemLeft" align="right" valign="top"><a id="af17571f8eae94b2917362daa65cc29bd" name="af17571f8eae94b2917362daa65cc29bd"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>prepareForDataReceive</b> ()</td></tr>
+<tr class="memdesc:af17571f8eae94b2917362daa65cc29bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">this function prepares the flight computer to receive test data depending on the state, it tries to establich link between flight computer and sending PC receives the actual data confirm the actual data <br /></td></tr>
+<tr class="separator:af17571f8eae94b2917362daa65cc29bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a241552a311530bd71688f2827359443b" id="r_a241552a311530bd71688f2827359443b"><td class="memItemLeft" align="right" valign="top"><a id="a241552a311530bd71688f2827359443b" name="a241552a311530bd71688f2827359443b"></a>
+PubSubClient&#160;</td><td class="memItemRight" valign="bottom"><b>client</b> (<a class="el" href="#afafd0fc922c17c38235820189e1d9b3b">wifi_client</a>)</td></tr>
+<tr class="separator:a241552a311530bd71688f2827359443b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91b508daf26fad06708a9e3ba3c7d37b" id="r_a91b508daf26fad06708a9e3ba3c7d37b"><td class="memItemLeft" align="right" valign="top"><a id="a91b508daf26fad06708a9e3ba3c7d37b" name="a91b508daf26fad06708a9e3ba3c7d37b"></a>
+uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>MQTTInit</b> (const char *broker_IP, uint16_t broker_port)</td></tr>
+<tr class="separator:a91b508daf26fad06708a9e3ba3c7d37b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8bd22523fa85c7cdc0b1ce2ca2ad9340" id="r_a8bd22523fa85c7cdc0b1ce2ca2ad9340"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8bd22523fa85c7cdc0b1ce2ca2ad9340">BMPInit</a> ()</td></tr>
+<tr class="memdesc:a8bd22523fa85c7cdc0b1ce2ca2ad9340"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize BMP180 barometric sensor.  <br /></td></tr>
+<tr class="separator:a8bd22523fa85c7cdc0b1ce2ca2ad9340"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7614084d3b4eca93954d98680cc2443d" id="r_a7614084d3b4eca93954d98680cc2443d"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7614084d3b4eca93954d98680cc2443d">GPSInit</a> ()</td></tr>
+<tr class="memdesc:a7614084d3b4eca93954d98680cc2443d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the GPS connected on Serial2.  <br /></td></tr>
+<tr class="separator:a7614084d3b4eca93954d98680cc2443d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a64be9ebbabd58a9b6d32b92ce607f2a6" id="r_a64be9ebbabd58a9b6d32b92ce607f2a6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a64be9ebbabd58a9b6d32b92ce607f2a6">readAccelerationTask</a> (void *pvParameter)</td></tr>
 <tr class="memdesc:a64be9ebbabd58a9b6d32b92ce607f2a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read acceleration data from the accelerometer.  <br /></td></tr>
 <tr class="separator:a64be9ebbabd58a9b6d32b92ce607f2a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5947e71102388e9d5bfd09f8e97d668c" id="r_a5947e71102388e9d5bfd09f8e97d668c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5947e71102388e9d5bfd09f8e97d668c">readAltimeterTask</a> (void *pvParameters)</td></tr>
-<tr class="memdesc:a5947e71102388e9d5bfd09f8e97d668c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read ar pressure data from the barometric sensor onboard.  <br /></td></tr>
+<tr class="memdesc:a5947e71102388e9d5bfd09f8e97d668c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read atm pressure data from the barometric sensor onboard.  <br /></td></tr>
 <tr class="separator:a5947e71102388e9d5bfd09f8e97d668c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa8ea491ed98b16bb5292ad184537f0b5" id="r_aa8ea491ed98b16bb5292ad184537f0b5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa8ea491ed98b16bb5292ad184537f0b5">readGPSTask</a> (void *pvParameters)</td></tr>
 <tr class="memdesc:aa8ea491ed98b16bb5292ad184537f0b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the GPS location data and altitude and append to telemetry packet for transmission.  <br /></td></tr>
 <tr class="separator:aa8ea491ed98b16bb5292ad184537f0b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2eee545cf4af91a694e63ac4940276a4" id="r_a2eee545cf4af91a694e63ac4940276a4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2eee545cf4af91a694e63ac4940276a4">clearTelemetryQueueTask</a> (void *pvParameters)</td></tr>
-<tr class="memdesc:a2eee545cf4af91a694e63ac4940276a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">dequeue data from telemetry queue after all the tasks have consumed the data  <br /></td></tr>
-<tr class="separator:a2eee545cf4af91a694e63ac4940276a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ce5e586674f4cd4260bd2aaba246757" id="r_a7ce5e586674f4cd4260bd2aaba246757"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7ce5e586674f4cd4260bd2aaba246757">kalmanFilterTask</a> (void *pvParameters)</td></tr>
+<tr class="memdesc:a7ce5e586674f4cd4260bd2aaba246757"><td class="mdescLeft">&#160;</td><td class="mdescRight">Filter data using the Kalman Filter.  <br /></td></tr>
+<tr class="separator:a7ce5e586674f4cd4260bd2aaba246757"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a152aa3ad3c21993eb70968de75219174" id="r_a152aa3ad3c21993eb70968de75219174"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a152aa3ad3c21993eb70968de75219174">checkFlightState</a> (void *pvParameters)</td></tr>
-<tr class="memdesc:a152aa3ad3c21993eb70968de75219174"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check and update the current state of flight - refer to <a class="el" href="states_8h.html">states.h</a>.  <br /></td></tr>
+<tr class="memdesc:a152aa3ad3c21993eb70968de75219174"><td class="mdescLeft">&#160;</td><td class="mdescRight">check various condition from flight data to change the flight state  <br /></td></tr>
 <tr class="separator:a152aa3ad3c21993eb70968de75219174"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6648d201a9f47aa836d36e5339e78ef3" id="r_a6648d201a9f47aa836d36e5339e78ef3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6648d201a9f47aa836d36e5339e78ef3">flightStateCallback</a> (void *pvParameters)</td></tr>
-<tr class="memdesc:a6648d201a9f47aa836d36e5339e78ef3"><td class="mdescLeft">&#160;</td><td class="mdescRight">performs flight actions based on the current flight state If the flight state neccessisates an operation, we perform it here For example if the flight state is apogee, we perform MAIN_CHUTE ejection  <br /></td></tr>
+<tr class="memdesc:a6648d201a9f47aa836d36e5339e78ef3"><td class="mdescLeft">&#160;</td><td class="mdescRight">performs flight actions based on the current flight state  <br /></td></tr>
 <tr class="separator:a6648d201a9f47aa836d36e5339e78ef3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaa1a5716bd567e8c37465dabe33e6396" id="r_aaa1a5716bd567e8c37465dabe33e6396"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aaa1a5716bd567e8c37465dabe33e6396">debugToTerminalTask</a> (void *pvParameters)</td></tr>
 <tr class="memdesc:aaa1a5716bd567e8c37465dabe33e6396"><td class="mdescLeft">&#160;</td><td class="mdescRight">debug flight/test data to terminal, this task is called if the DEBUG_TO_TERMINAL is set to 1 (see <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a>)  <br /></td></tr>
@@ -283,6 +323,16 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>ParseSerialBuffer</b>
 <tr class="memitem:a7df146b43e503e23146e698154d5096d" id="r_a7df146b43e503e23146e698154d5096d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7df146b43e503e23146e698154d5096d">logToMemory</a> (void *pvParameter)</td></tr>
 <tr class="memdesc:a7df146b43e503e23146e698154d5096d"><td class="mdescLeft">&#160;</td><td class="mdescRight">log the data to the external flash memory  <br /></td></tr>
 <tr class="separator:a7df146b43e503e23146e698154d5096d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a623ea109418725f80cfc705f49fd7a55" id="r_a623ea109418725f80cfc705f49fd7a55"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a623ea109418725f80cfc705f49fd7a55">MQTT_TransmitTelemetry</a> (void *pvParameters)</td></tr>
+<tr class="memdesc:a623ea109418725f80cfc705f49fd7a55"><td class="mdescLeft">&#160;</td><td class="mdescRight">send flight data to ground  <br /></td></tr>
+<tr class="separator:a623ea109418725f80cfc705f49fd7a55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a48a88cefb37379fe58c0f58d0c274f" id="r_a5a48a88cefb37379fe58c0f58d0c274f"><td class="memItemLeft" align="right" valign="top"><a id="a5a48a88cefb37379fe58c0f58d0c274f" name="a5a48a88cefb37379fe58c0f58d0c274f"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_Reconnect</b> ()</td></tr>
+<tr class="memdesc:a5a48a88cefb37379fe58c0f58d0c274f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Try reconnecting to MQTT if connection is lost. <br /></td></tr>
+<tr class="separator:a5a48a88cefb37379fe58c0f58d0c274f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a582e3dadcae4266158f0516e7c264bb6" id="r_a582e3dadcae4266158f0516e7c264bb6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a582e3dadcae4266158f0516e7c264bb6">MQTTInit</a> (const char *broker_IP, int broker_port)</td></tr>
+<tr class="memdesc:a582e3dadcae4266158f0516e7c264bb6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize MQTT.  <br /></td></tr>
+<tr class="separator:a582e3dadcae4266158f0516e7c264bb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4fc01d736fe50cf5b977f755b675f11d" id="r_a4fc01d736fe50cf5b977f755b675f11d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4fc01d736fe50cf5b977f755b675f11d">setup</a> ()</td></tr>
 <tr class="memdesc:a4fc01d736fe50cf5b977f755b675f11d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup - perform initialization of all hardware subsystems, create queues, create queue handles initialize system check table.  <br /></td></tr>
 <tr class="separator:a4fc01d736fe50cf5b977f755b675f11d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -294,28 +344,32 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>ParseSerialBuffer</b>
 Variables</h2></td></tr>
 <tr class="memitem:a59b33f351d47779eaaff510227075be1" id="r_a59b33f351d47779eaaff510227075be1"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a59b33f351d47779eaaff510227075be1">operation_mode</a> = 0</td></tr>
 <tr class="separator:a59b33f351d47779eaaff510227075be1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac559654865b2d48ea0b77b1a1f4a097b" id="r_ac559654865b2d48ea0b77b1a1f4a097b"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac559654865b2d48ea0b77b1a1f4a097b">current_state</a> = FLIGHT_STATE::PRE_FLIGHT_GROUND</td></tr>
+<tr class="memitem:ac559654865b2d48ea0b77b1a1f4a097b" id="r_ac559654865b2d48ea0b77b1a1f4a097b"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac559654865b2d48ea0b77b1a1f4a097b">current_state</a> = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND</td></tr>
 <tr class="separator:ac559654865b2d48ea0b77b1a1f4a097b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afafd0fc922c17c38235820189e1d9b3b" id="r_afafd0fc922c17c38235820189e1d9b3b"><td class="memItemLeft" align="right" valign="top"><a id="afafd0fc922c17c38235820189e1d9b3b" name="afafd0fc922c17c38235820189e1d9b3b"></a>
-WiFiClient&#160;</td><td class="memItemRight" valign="bottom"><b>wifi_client</b></td></tr>
-<tr class="separator:afafd0fc922c17c38235820189e1d9b3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a169c53997a7da1d0fb99aec1b4675ce8" id="r_a169c53997a7da1d0fb99aec1b4675ce8"><td class="memItemLeft" align="right" valign="top"><a id="a169c53997a7da1d0fb99aec1b4675ce8" name="a169c53997a7da1d0fb99aec1b4675ce8"></a>
 TinyGPSPlus&#160;</td><td class="memItemRight" valign="bottom"><b>gps</b></td></tr>
 <tr class="separator:a169c53997a7da1d0fb99aec1b4675ce8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4591a82d6df23b62ed33717b89cf9bb8" id="r_a4591a82d6df23b62ed33717b89cf9bb8"><td class="memItemLeft" align="right" valign="top"><a id="a4591a82d6df23b62ed33717b89cf9bb8" name="a4591a82d6df23b62ed33717b89cf9bb8"></a>
-<a class="el" href="class_system_logger.html">SystemLogger</a>&#160;</td><td class="memItemRight" valign="bottom"><b>system_logger</b></td></tr>
-<tr class="separator:a4591a82d6df23b62ed33717b89cf9bb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad172a32bd5320bedcec6d6537a76f0a9" id="r_ad172a32bd5320bedcec6d6537a76f0a9"><td class="memItemLeft" align="right" valign="top"><a id="ad172a32bd5320bedcec6d6537a76f0a9" name="ad172a32bd5320bedcec6d6537a76f0a9"></a>
+<a class="el" href="class_system_logger.html">SystemLogger</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SYSTEM_LOGGER</b></td></tr>
+<tr class="separator:ad172a32bd5320bedcec6d6537a76f0a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a613c837c91f4cf1b8f9faa07cf95115b" id="r_a613c837c91f4cf1b8f9faa07cf95115b"><td class="memItemLeft" align="right" valign="top"><a id="a613c837c91f4cf1b8f9faa07cf95115b" name="a613c837c91f4cf1b8f9faa07cf95115b"></a>
-const char *&#160;</td><td class="memItemRight" valign="bottom"><b>system_log_file</b> = &quot;/sys_log.log&quot;</td></tr>
+const char *&#160;</td><td class="memItemRight" valign="bottom"><b>system_log_file</b> = &quot;/event_log.txt&quot;</td></tr>
 <tr class="separator:a613c837c91f4cf1b8f9faa07cf95115b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a77f7159081bd39a76d8b86af56256201" id="r_a77f7159081bd39a76d8b86af56256201"><td class="memItemLeft" align="right" valign="top"><a id="a77f7159081bd39a76d8b86af56256201" name="a77f7159081bd39a76d8b86af56256201"></a>
 LOG_LEVEL&#160;</td><td class="memItemRight" valign="bottom"><b>level</b> = INFO</td></tr>
 <tr class="separator:a77f7159081bd39a76d8b86af56256201"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5bef7886537f878149917a29939a5cb0" id="r_a5bef7886537f878149917a29939a5cb0"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5bef7886537f878149917a29939a5cb0">rocket_ID</a> = &quot;rocket-1&quot;</td></tr>
+<tr class="memitem:a5bef7886537f878149917a29939a5cb0" id="r_a5bef7886537f878149917a29939a5cb0"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5bef7886537f878149917a29939a5cb0">rocket_ID</a> = &quot;FC1&quot;</td></tr>
 <tr class="separator:a5bef7886537f878149917a29939a5cb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a703e0d9679428f7c9e0a24e766ba4489" id="r_a703e0d9679428f7c9e0a24e766ba4489"><td class="memItemLeft" align="right" valign="top"><a id="a703e0d9679428f7c9e0a24e766ba4489" name="a703e0d9679428f7c9e0a24e766ba4489"></a>
-uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>RUN_MODE</b> = 0</td></tr>
-<tr class="separator:a703e0d9679428f7c9e0a24e766ba4489"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab83af3e3fef37bbadaa0804e9c1abf66" id="r_ab83af3e3fef37bbadaa0804e9c1abf66"><td class="memItemLeft" align="right" valign="top"><a id="ab83af3e3fef37bbadaa0804e9c1abf66" name="ab83af3e3fef37bbadaa0804e9c1abf66"></a>
+uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>is_flight_mode</b> = 0</td></tr>
+<tr class="separator:ab83af3e3fef37bbadaa0804e9c1abf66"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12a374be19c9b55750097a0b9fad50fb" id="r_a12a374be19c9b55750097a0b9fad50fb"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a12a374be19c9b55750097a0b9fad50fb">subsystems_state_buffer</a> [10]</td></tr>
+<tr class="separator:a12a374be19c9b55750097a0b9fad50fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5fa0d939030a4ab773be75554017c4aa" id="r_a5fa0d939030a4ab773be75554017c4aa"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5fa0d939030a4ab773be75554017c4aa">SUBSYSTEM_INIT_MASK</a> = 0b00000000</td></tr>
+<tr class="separator:a5fa0d939030a4ab773be75554017c4aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27fd8fba65f49d813e5ac20d716fa571" id="r_a27fd8fba65f49d813e5ac20d716fa571"><td class="memItemLeft" align="right" valign="top"><a id="a27fd8fba65f49d813e5ac20d716fa571" name="a27fd8fba65f49d813e5ac20d716fa571"></a>
+uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>DAQ_MODE</b> = 0</td></tr>
+<tr class="separator:a27fd8fba65f49d813e5ac20d716fa571"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a692df54084ea1c5ccd3f3545ea837d28" id="r_a692df54084ea1c5ccd3f3545ea837d28"><td class="memItemLeft" align="right" valign="top"><a id="a692df54084ea1c5ccd3f3545ea837d28" name="a692df54084ea1c5ccd3f3545ea837d28"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>TEST_MODE</b> = 0</td></tr>
 <tr class="separator:a692df54084ea1c5ccd3f3545ea837d28"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -339,6 +393,9 @@ int16_t&#160;</td><td class="memItemRight" valign="bottom"><b>serial_index</b> =
 <tr class="memitem:af224269236a3cd2559d760873c0c2ebf" id="r_af224269236a3cd2559d760873c0c2ebf"><td class="memItemLeft" align="right" valign="top"><a id="af224269236a3cd2559d760873c0c2ebf" name="af224269236a3cd2559d760873c0c2ebf"></a>
 char&#160;</td><td class="memItemRight" valign="bottom"><b>test_data_buffer</b> [<a class="el" href="#a3aad00c42368296b28f72f623c446925">MAX_CSV_LENGTH</a>]</td></tr>
 <tr class="separator:af224269236a3cd2559d760873c0c2ebf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2b0a813b53fe8bacdb68ef2104b0114e" id="r_a2b0a813b53fe8bacdb68ef2104b0114e"><td class="memItemLeft" align="right" valign="top"><a id="a2b0a813b53fe8bacdb68ef2104b0114e" name="a2b0a813b53fe8bacdb68ef2104b0114e"></a>
+char&#160;</td><td class="memItemRight" valign="bottom"><b>data_buffer_formatted</b> [<a class="el" href="#a3aad00c42368296b28f72f623c446925">MAX_CSV_LENGTH</a>]</td></tr>
+<tr class="separator:a2b0a813b53fe8bacdb68ef2104b0114e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5e07bd725e8c558533fb37ebd7abeafd" id="r_a5e07bd725e8c558533fb37ebd7abeafd"><td class="memItemLeft" align="right" valign="top"><a id="a5e07bd725e8c558533fb37ebd7abeafd" name="a5e07bd725e8c558533fb37ebd7abeafd"></a>
 int16_t&#160;</td><td class="memItemRight" valign="bottom"><b>test_data_serial_index</b> = 0</td></tr>
 <tr class="separator:a5e07bd725e8c558533fb37ebd7abeafd"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -351,17 +408,32 @@ int16_t&#160;</td><td class="memItemRight" valign="bottom"><b>test_data_serial_i
 <tr class="memitem:a9418b2bdb6757580e513ed448fa30dbf" id="r_a9418b2bdb6757580e513ed448fa30dbf"><td class="memItemLeft" align="right" valign="top"><a id="a9418b2bdb6757580e513ed448fa30dbf" name="a9418b2bdb6757580e513ed448fa30dbf"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>buzzer</b> = 33</td></tr>
 <tr class="separator:a9418b2bdb6757580e513ed448fa30dbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac0121f71eae2488320c2cd36a4843976" id="r_ac0121f71eae2488320c2cd36a4843976"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac0121f71eae2488320c2cd36a4843976">SET_TEST_MODE_PIN</a> = 14</td></tr>
+<tr class="memitem:a060a5c871540f7913d6529a2afb3b1e4" id="r_a060a5c871540f7913d6529a2afb3b1e4"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a060a5c871540f7913d6529a2afb3b1e4">SET_DAQ_MODE_PIN</a> = 14</td></tr>
+<tr class="separator:a060a5c871540f7913d6529a2afb3b1e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0121f71eae2488320c2cd36a4843976" id="r_ac0121f71eae2488320c2cd36a4843976"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac0121f71eae2488320c2cd36a4843976">SET_TEST_MODE_PIN</a> = 13</td></tr>
 <tr class="separator:ac0121f71eae2488320c2cd36a4843976"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abea45f8bc016d99f82b468ae77916e64" id="r_abea45f8bc016d99f82b468ae77916e64"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abea45f8bc016d99f82b468ae77916e64">SET_RUN_MODE_PIN</a> = 13</td></tr>
-<tr class="separator:abea45f8bc016d99f82b468ae77916e64"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adcf3e4d2276ee4d10b23c05e4e7da0c3" id="r_adcf3e4d2276ee4d10b23c05e4e7da0c3"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adcf3e4d2276ee4d10b23c05e4e7da0c3">SD_CS_PIN</a> = 26</td></tr>
 <tr class="separator:adcf3e4d2276ee4d10b23c05e4e7da0c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9dc783a2c139e60a49e643aed8b741b9" id="r_a9dc783a2c139e60a49e643aed8b741b9"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9dc783a2c139e60a49e643aed8b741b9">current_test_state</a> = <a class="el" href="#a7010bdd588d627529b5948acb89dc09dacc6ddcaa36bd57e5aec12749cb5ce29c">TEST_STATE::HANDSHAKE</a></td></tr>
+<tr class="memitem:a5a374cc6b295b98bbdf9bc4adbdf3950" id="r_a5a374cc6b295b98bbdf9bc4adbdf3950"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5a374cc6b295b98bbdf9bc4adbdf3950">current_DAQ_state</a> = <a class="el" href="#aae0dcb6f6e84dab5b57ab3ba5ea559b4acc6ddcaa36bd57e5aec12749cb5ce29c">DAQ_STATES::HANDSHAKE</a></td></tr>
+<tr class="separator:a5a374cc6b295b98bbdf9bc4adbdf3950"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9dc783a2c139e60a49e643aed8b741b9" id="r_a9dc783a2c139e60a49e643aed8b741b9"><td class="memItemLeft" align="right" valign="top"><a id="a9dc783a2c139e60a49e643aed8b741b9" name="a9dc783a2c139e60a49e643aed8b741b9"></a>
+uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>current_test_state</b> = TEST_STATES::DATA_CONSUME</td></tr>
 <tr class="separator:a9dc783a2c139e60a49e643aed8b741b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d651171d046e2dff23fa92afd2a44ba" id="r_a0d651171d046e2dff23fa92afd2a44ba"><td class="memItemLeft" align="right" valign="top"><a id="a0d651171d046e2dff23fa92afd2a44ba" name="a0d651171d046e2dff23fa92afd2a44ba"></a>
+const char *&#160;</td><td class="memItemRight" valign="bottom"><b>f_name</b> = &quot;/short_data.csv&quot;</td></tr>
+<tr class="separator:a0d651171d046e2dff23fa92afd2a44ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aabb9208943da1b675b94a69b02da3a55" id="r_aabb9208943da1b675b94a69b02da3a55"><td class="memItemLeft" align="right" valign="top"><a id="aabb9208943da1b675b94a69b02da3a55" name="aabb9208943da1b675b94a69b02da3a55"></a>
+File&#160;</td><td class="memItemRight" valign="bottom"><b>test_file</b></td></tr>
+<tr class="separator:aabb9208943da1b675b94a69b02da3a55"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7db00b07999bb801300dca544a0fb21b" id="r_a7db00b07999bb801300dca544a0fb21b"><td class="memItemLeft" align="right" valign="top"><a id="a7db00b07999bb801300dca544a0fb21b" name="a7db00b07999bb801300dca544a0fb21b"></a>
 const char *&#160;</td><td class="memItemRight" valign="bottom"><b>test_data_file</b> = &quot;/data.csv&quot;</td></tr>
 <tr class="separator:a7db00b07999bb801300dca544a0fb21b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96c0c5d355fd6b8fe27a19d2cb5e2006" id="r_a96c0c5d355fd6b8fe27a19d2cb5e2006"><td class="memItemLeft" align="right" valign="top"><a id="a96c0c5d355fd6b8fe27a19d2cb5e2006" name="a96c0c5d355fd6b8fe27a19d2cb5e2006"></a>
+const char *&#160;</td><td class="memItemRight" valign="bottom"><b>run_state_file</b> = &quot;/state.txt&quot;</td></tr>
+<tr class="separator:a96c0c5d355fd6b8fe27a19d2cb5e2006"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a26a4dc51c61802e1df95e8569bd1c5cc" id="r_a26a4dc51c61802e1df95e8569bd1c5cc"><td class="memItemLeft" align="right" valign="top"><a id="a26a4dc51c61802e1df95e8569bd1c5cc" name="a26a4dc51c61802e1df95e8569bd1c5cc"></a>
+char&#160;</td><td class="memItemRight" valign="bottom"><b>current_test_state_buffer</b> [50] = &quot;&quot;</td></tr>
+<tr class="separator:a26a4dc51c61802e1df95e8569bd1c5cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af5979e0a17df28709d21894625a29136" id="r_af5979e0a17df28709d21894625a29136"><td class="memItemLeft" align="right" valign="top"><a id="af5979e0a17df28709d21894625a29136" name="af5979e0a17df28709d21894625a29136"></a>
 unsigned long&#160;</td><td class="memItemRight" valign="bottom"><b>last_buzz</b> = 0</td></tr>
 <tr class="separator:af5979e0a17df28709d21894625a29136"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -389,6 +461,11 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>led_state</b> = LO
 <tr class="memitem:ac4f474c82e82cbb89ca7c36dd52be0ed" id="r_ac4f474c82e82cbb89ca7c36dd52be0ed"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac4f474c82e82cbb89ca7c36dd52be0ed">value</a> = 0</td></tr>
 <tr class="memdesc:ac4f474c82e82cbb89ca7c36dd52be0ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parse the received serial command if it is a string.  <br /></td></tr>
 <tr class="separator:ac4f474c82e82cbb89ca7c36dd52be0ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afafd0fc922c17c38235820189e1d9b3b" id="r_afafd0fc922c17c38235820189e1d9b3b"><td class="memItemLeft" align="right" valign="top">WiFiClient&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afafd0fc922c17c38235820189e1d9b3b">wifi_client</a></td></tr>
+<tr class="separator:afafd0fc922c17c38235820189e1d9b3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab373e93ee373b64207ddef0991fcac9d" id="r_ab373e93ee373b64207ddef0991fcac9d"><td class="memItemLeft" align="right" valign="top"><a id="ab373e93ee373b64207ddef0991fcac9d" name="ab373e93ee373b64207ddef0991fcac9d"></a>
+<a class="el" href="class_w_i_f_i_config.html">WIFIConfig</a>&#160;</td><td class="memItemRight" valign="bottom"><b>wifi_config</b></td></tr>
+<tr class="separator:ab373e93ee373b64207ddef0991fcac9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa2a21869dff0c780017683e78f315bd0" id="r_aa2a21869dff0c780017683e78f315bd0"><td class="memItemLeft" align="right" valign="top"><a id="aa2a21869dff0c780017683e78f315bd0" name="aa2a21869dff0c780017683e78f315bd0"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>drogue_pyro</b> = 25</td></tr>
 <tr class="separator:aa2a21869dff0c780017683e78f315bd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -402,7 +479,7 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>remote_switch</b> 
 <tr class="separator:abff19a00537098fdfae4316ce9586f08"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab506410443108766020e011a3c9293af" id="r_ab506410443108766020e011a3c9293af"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab506410443108766020e011a3c9293af">flash_led_pin</a> = 32</td></tr>
 <tr class="separator:ab506410443108766020e011a3c9293af"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6c2affe0788e6ba12dce7a51e1bd35c3" id="r_a6c2affe0788e6ba12dce7a51e1bd35c3"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6c2affe0788e6ba12dce7a51e1bd35c3">filename</a> [] = &quot;flight.bin&quot;</td></tr>
+<tr class="memitem:a6c2affe0788e6ba12dce7a51e1bd35c3" id="r_a6c2affe0788e6ba12dce7a51e1bd35c3"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6c2affe0788e6ba12dce7a51e1bd35c3">filename</a> [] = &quot;flight.txt&quot;</td></tr>
 <tr class="separator:a6c2affe0788e6ba12dce7a51e1bd35c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa9614a793fcf876f8e55a118d21d2d77" id="r_aa9614a793fcf876f8e55a118d21d2d77"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa9614a793fcf876f8e55a118d21d2d77">FILE_SIZE_512K</a> = 524288L</td></tr>
 <tr class="separator:aa9614a793fcf876f8e55a118d21d2d77"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -419,7 +496,7 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>remote_switch</b> 
 <tr class="memitem:affaa6e6cce540b233b04e558e3d164b2" id="r_affaa6e6cce540b233b04e558e3d164b2"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#affaa6e6cce540b233b04e558e3d164b2">log_sample_interval</a> = 10</td></tr>
 <tr class="separator:affaa6e6cce540b233b04e558e3d164b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aadbd0ea0f3d5254e26185b5b0eb39b7d" id="r_aadbd0ea0f3d5254e26185b5b0eb39b7d"><td class="memItemLeft" align="right" valign="top"><a id="aadbd0ea0f3d5254e26185b5b0eb39b7d" name="aadbd0ea0f3d5254e26185b5b0eb39b7d"></a>
-<a class="el" href="class_data_logger.html">DataLogger</a>&#160;</td><td class="memItemRight" valign="bottom"><b>data_logger</b> (<a class="el" href="#a974c70ac5c2f6156bf0e7fafd973d803">flash_cs_pin</a>, <a class="el" href="#ab506410443108766020e011a3c9293af">flash_led_pin</a>, <a class="el" href="#a6c2affe0788e6ba12dce7a51e1bd35c3">filename</a>, <a class="el" href="#ada14cbbf98490eb3cb49b5d1cb0c0056">file</a>, <a class="el" href="#aef692c53edfa11997d3470f8ed1d6a26">FILE_SIZE_4M</a>)</td></tr>
+<a class="el" href="class_data_logger.html">DataLogger</a>&#160;</td><td class="memItemRight" valign="bottom"><b>data_logger</b> (<a class="el" href="#a974c70ac5c2f6156bf0e7fafd973d803">flash_cs_pin</a>, <a class="el" href="#ab506410443108766020e011a3c9293af">flash_led_pin</a>, filename, <a class="el" href="#ada14cbbf98490eb3cb49b5d1cb0c0056">file</a>, <a class="el" href="#aef692c53edfa11997d3470f8ed1d6a26">FILE_SIZE_4M</a>)</td></tr>
 <tr class="separator:aadbd0ea0f3d5254e26185b5b0eb39b7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a360ab113ec4a96f9238590114d9b36a2" id="r_a360ab113ec4a96f9238590114d9b36a2"><td class="memItemLeft" align="right" valign="top"><a id="a360ab113ec4a96f9238590114d9b36a2" name="a360ab113ec4a96f9238590114d9b36a2"></a>
 long long&#160;</td><td class="memItemRight" valign="bottom"><b>current_time</b> = 0</td></tr>
@@ -427,9 +504,38 @@ long long&#160;</td><td class="memItemRight" valign="bottom"><b>current_time</b>
 <tr class="memitem:ab7fecbb46b75525f3e282dcba952255d" id="r_ab7fecbb46b75525f3e282dcba952255d"><td class="memItemLeft" align="right" valign="top"><a id="ab7fecbb46b75525f3e282dcba952255d" name="ab7fecbb46b75525f3e282dcba952255d"></a>
 long long&#160;</td><td class="memItemRight" valign="bottom"><b>previous_time</b> = 0</td></tr>
 <tr class="separator:ab7fecbb46b75525f3e282dcba952255d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1067333ef3d05fdb37de74977a972c61" id="r_a1067333ef3d05fdb37de74977a972c61"><td class="memItemLeft" align="right" valign="top"><a id="a1067333ef3d05fdb37de74977a972c61" name="a1067333ef3d05fdb37de74977a972c61"></a>
-EventGroupHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>tasksDataReceiveEventGroup</b></td></tr>
-<tr class="separator:a1067333ef3d05fdb37de74977a972c61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a976afc0ee6d7398658e8aa5d52030927" id="r_a976afc0ee6d7398658e8aa5d52030927"><td class="memItemLeft" align="right" valign="top"><a id="a976afc0ee6d7398658e8aa5d52030927" name="a976afc0ee6d7398658e8aa5d52030927"></a>
+char&#160;</td><td class="memItemRight" valign="bottom"><b>telemetry_packet_buffer</b> [256]</td></tr>
+<tr class="separator:a976afc0ee6d7398658e8aa5d52030927"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f30f7c913c2e35ebf44fbf77f416bbc" id="r_a9f30f7c913c2e35ebf44fbf77f416bbc"><td class="memItemLeft" align="right" valign="top">TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9f30f7c913c2e35ebf44fbf77f416bbc">readAccelerationTaskHandle</a></td></tr>
+<tr class="separator:a9f30f7c913c2e35ebf44fbf77f416bbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac122c42a5bcc3f6c3e5f66969197f01a" id="r_ac122c42a5bcc3f6c3e5f66969197f01a"><td class="memItemLeft" align="right" valign="top"><a id="ac122c42a5bcc3f6c3e5f66969197f01a" name="ac122c42a5bcc3f6c3e5f66969197f01a"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>readAltimeterTaskHandle</b></td></tr>
+<tr class="separator:ac122c42a5bcc3f6c3e5f66969197f01a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aefe474c52c5a17b77358969a708cd491" id="r_aefe474c52c5a17b77358969a708cd491"><td class="memItemLeft" align="right" valign="top"><a id="aefe474c52c5a17b77358969a708cd491" name="aefe474c52c5a17b77358969a708cd491"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>readGPSTaskHandle</b></td></tr>
+<tr class="separator:aefe474c52c5a17b77358969a708cd491"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab135264cc58822cb9ebf9f9e02d06646" id="r_ab135264cc58822cb9ebf9f9e02d06646"><td class="memItemLeft" align="right" valign="top"><a id="ab135264cc58822cb9ebf9f9e02d06646" name="ab135264cc58822cb9ebf9f9e02d06646"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>clearTelemetryQueueTaskHandle</b></td></tr>
+<tr class="separator:ab135264cc58822cb9ebf9f9e02d06646"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0af6dabbb3a4501359d1375ea34a42c1" id="r_a0af6dabbb3a4501359d1375ea34a42c1"><td class="memItemLeft" align="right" valign="top"><a id="a0af6dabbb3a4501359d1375ea34a42c1" name="a0af6dabbb3a4501359d1375ea34a42c1"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>checkFlightStateTaskHandle</b></td></tr>
+<tr class="separator:a0af6dabbb3a4501359d1375ea34a42c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae94e513afc6287901f6369180bac5744" id="r_ae94e513afc6287901f6369180bac5744"><td class="memItemLeft" align="right" valign="top"><a id="ae94e513afc6287901f6369180bac5744" name="ae94e513afc6287901f6369180bac5744"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>flightStateCallbackTaskHandle</b></td></tr>
+<tr class="separator:ae94e513afc6287901f6369180bac5744"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa54b80dcf0f91cd69984e7798b77b49" id="r_afa54b80dcf0f91cd69984e7798b77b49"><td class="memItemLeft" align="right" valign="top"><a id="afa54b80dcf0f91cd69984e7798b77b49" name="afa54b80dcf0f91cd69984e7798b77b49"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_TransmitTelemetryTaskHandle</b></td></tr>
+<tr class="separator:afa54b80dcf0f91cd69984e7798b77b49"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab69d0ec0e0c7dfd9bcd9d2b4af4b820c" id="r_ab69d0ec0e0c7dfd9bcd9d2b4af4b820c"><td class="memItemLeft" align="right" valign="top"><a id="ab69d0ec0e0c7dfd9bcd9d2b4af4b820c" name="ab69d0ec0e0c7dfd9bcd9d2b4af4b820c"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalmanFilterTaskHandle</b></td></tr>
+<tr class="separator:ab69d0ec0e0c7dfd9bcd9d2b4af4b820c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd995b7d7a7534e7d748cef36558c3a2" id="r_afd995b7d7a7534e7d748cef36558c3a2"><td class="memItemLeft" align="right" valign="top"><a id="afd995b7d7a7534e7d748cef36558c3a2" name="afd995b7d7a7534e7d748cef36558c3a2"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>debugToTerminalTaskHandle</b></td></tr>
+<tr class="separator:afd995b7d7a7534e7d748cef36558c3a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd21a32ffaffe2ac671aa88aa315fb18" id="r_abd21a32ffaffe2ac671aa88aa315fb18"><td class="memItemLeft" align="right" valign="top"><a id="abd21a32ffaffe2ac671aa88aa315fb18" name="abd21a32ffaffe2ac671aa88aa315fb18"></a>
+TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>logToMemoryTaskHandle</b></td></tr>
+<tr class="separator:abd21a32ffaffe2ac671aa88aa315fb18"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5db507f1ef37ed2d76f24c064e4e6a85" id="r_a5db507f1ef37ed2d76f24c064e4e6a85"><td class="memItemLeft" align="right" valign="top"><a class="el" href="data__types_8h.html#a610a63dae0c8ed502103c93c5aa63db0">accel_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5db507f1ef37ed2d76f24c064e4e6a85">acc_data</a></td></tr>
 <tr class="separator:a5db507f1ef37ed2d76f24c064e4e6a85"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af91b409a7eb60f99def9aa1515c3d33c" id="r_af91b409a7eb60f99def9aa1515c3d33c"><td class="memItemLeft" align="right" valign="top"><a id="af91b409a7eb60f99def9aa1515c3d33c" name="af91b409a7eb60f99def9aa1515c3d33c"></a>
@@ -455,31 +561,34 @@ char&#160;</td><td class="memItemRight" valign="bottom"><b>status</b></td></tr>
 <tr class="memitem:ac94a6e5794c2d7b59588b14025cfba20" id="r_ac94a6e5794c2d7b59588b14025cfba20"><td class="memItemLeft" align="right" valign="top"><a id="ac94a6e5794c2d7b59588b14025cfba20" name="ac94a6e5794c2d7b59588b14025cfba20"></a>
 double&#160;</td><td class="memItemRight" valign="bottom"><b>T</b></td></tr>
 <tr class="separator:ac94a6e5794c2d7b59588b14025cfba20"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8019aa9167c19c810aefa4cd5c0b0ab5" id="r_a8019aa9167c19c810aefa4cd5c0b0ab5"><td class="memItemLeft" align="right" valign="top"><a id="a8019aa9167c19c810aefa4cd5c0b0ab5" name="a8019aa9167c19c810aefa4cd5c0b0ab5"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>P</b></td></tr>
-<tr class="separator:a8019aa9167c19c810aefa4cd5c0b0ab5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0ce89f1ccf18d4f5fd88839572b29c1" id="r_ac0ce89f1ccf18d4f5fd88839572b29c1"><td class="memItemLeft" align="right" valign="top"><a id="ac0ce89f1ccf18d4f5fd88839572b29c1" name="ac0ce89f1ccf18d4f5fd88839572b29c1"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>PRESSURE</b></td></tr>
+<tr class="separator:ac0ce89f1ccf18d4f5fd88839572b29c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8be9de5ac626cddcd15c5ec181619694" id="r_a8be9de5ac626cddcd15c5ec181619694"><td class="memItemLeft" align="right" valign="top"><a id="a8be9de5ac626cddcd15c5ec181619694" name="a8be9de5ac626cddcd15c5ec181619694"></a>
 double&#160;</td><td class="memItemRight" valign="bottom"><b>p0</b></td></tr>
 <tr class="separator:a8be9de5ac626cddcd15c5ec181619694"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1031d0e0a97a340abfe0a6ab9e831045" id="r_a1031d0e0a97a340abfe0a6ab9e831045"><td class="memItemLeft" align="right" valign="top"><a id="a1031d0e0a97a340abfe0a6ab9e831045" name="a1031d0e0a97a340abfe0a6ab9e831045"></a>
 double&#160;</td><td class="memItemRight" valign="bottom"><b>a</b></td></tr>
 <tr class="separator:a1031d0e0a97a340abfe0a6ab9e831045"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0ed5ea94df7417ea494d69ca56aab490" id="r_a0ed5ea94df7417ea494d69ca56aab490"><td class="memItemLeft" align="right" valign="top">QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0ed5ea94df7417ea494d69ca56aab490">telemetry_data_qHandle</a></td></tr>
-<tr class="separator:a0ed5ea94df7417ea494d69ca56aab490"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad3c2a35922f9e2a43e935d95459879a9" id="r_ad3c2a35922f9e2a43e935d95459879a9"><td class="memItemLeft" align="right" valign="top"><a id="ad3c2a35922f9e2a43e935d95459879a9" name="ad3c2a35922f9e2a43e935d95459879a9"></a>
-QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>accel_data_qHandle</b></td></tr>
-<tr class="separator:ad3c2a35922f9e2a43e935d95459879a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4261944a9bbfd52dbdc30b2e2d30e29b" id="r_a4261944a9bbfd52dbdc30b2e2d30e29b"><td class="memItemLeft" align="right" valign="top"><a id="a4261944a9bbfd52dbdc30b2e2d30e29b" name="a4261944a9bbfd52dbdc30b2e2d30e29b"></a>
-QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>altimeter_data_qHandle</b></td></tr>
-<tr class="separator:a4261944a9bbfd52dbdc30b2e2d30e29b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac659af111261400ebb2b566a7b250ca3" id="r_ac659af111261400ebb2b566a7b250ca3"><td class="memItemLeft" align="right" valign="top"><a id="ac659af111261400ebb2b566a7b250ca3" name="ac659af111261400ebb2b566a7b250ca3"></a>
-QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHandle</b></td></tr>
-<tr class="separator:ac659af111261400ebb2b566a7b250ca3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe0f2d917a4d91446385606b903276ea" id="r_abe0f2d917a4d91446385606b903276ea"><td class="memItemLeft" align="right" valign="top">QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abe0f2d917a4d91446385606b903276ea">telemetry_data_queue_handle</a></td></tr>
+<tr class="separator:abe0f2d917a4d91446385606b903276ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2f8c4f2ee1334dd033c60dd025894e08" id="r_a2f8c4f2ee1334dd033c60dd025894e08"><td class="memItemLeft" align="right" valign="top"><a id="a2f8c4f2ee1334dd033c60dd025894e08" name="a2f8c4f2ee1334dd033c60dd025894e08"></a>
+QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>log_to_mem_queue_handle</b></td></tr>
+<tr class="separator:a2f8c4f2ee1334dd033c60dd025894e08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa83cdae2e8888de432c228da0499dfc3" id="r_aa83cdae2e8888de432c228da0499dfc3"><td class="memItemLeft" align="right" valign="top"><a id="aa83cdae2e8888de432c228da0499dfc3" name="aa83cdae2e8888de432c228da0499dfc3"></a>
+QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>check_state_queue_handle</b></td></tr>
+<tr class="separator:aa83cdae2e8888de432c228da0499dfc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a985cd1e93901ecec04891dee6380b455" id="r_a985cd1e93901ecec04891dee6380b455"><td class="memItemLeft" align="right" valign="top"><a id="a985cd1e93901ecec04891dee6380b455" name="a985cd1e93901ecec04891dee6380b455"></a>
+QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>debug_to_term_queue_handle</b></td></tr>
+<tr class="separator:a985cd1e93901ecec04891dee6380b455"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5dd5aebc1596576f6a57a5c95148e3dd" id="r_a5dd5aebc1596576f6a57a5c95148e3dd"><td class="memItemLeft" align="right" valign="top"><a id="a5dd5aebc1596576f6a57a5c95148e3dd" name="a5dd5aebc1596576f6a57a5c95148e3dd"></a>
+QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalman_filter_queue_handle</b></td></tr>
+<tr class="separator:a5dd5aebc1596576f6a57a5c95148e3dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>This contains the main driver code for the flight computer. </p>
 <dl class="section author"><dt>Author</dt><dd>Edwin Mwiti </dd></dl>
-<dl class="section version"><dt>Version</dt><dd>0.1 </dd></dl>
+<dl class="section version"><dt>Version</dt><dd>N4 </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>July 15 2024</dd></dl>
 <p>0x5765206D6179206D616B65206F757220706C616E73202C 0x62757420476F642068617320746865206C61737420776F7264 </p>
 </div><h2 class="groupheader">Macro Definition Documentation</h2>
@@ -603,30 +712,15 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 
 </div>
 </div>
-<a id="a3101d6fdbdc9f9b1d5395471a32e23c9" name="a3101d6fdbdc9f9b1d5395471a32e23c9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3101d6fdbdc9f9b1d5395471a32e23c9">&#9670;&#160;</a></span>TRANSMIT_TELEMETRY_BIT</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define TRANSMIT_TELEMETRY_BIT&#160;&#160;&#160;((EventBits_t) 0x01 &lt;&lt; 0)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Task synchronization variables </p>
-
-</div>
-</div>
 <h2 class="groupheader">Enumeration Type Documentation</h2>
-<a id="a7010bdd588d627529b5948acb89dc09d" name="a7010bdd588d627529b5948acb89dc09d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7010bdd588d627529b5948acb89dc09d">&#9670;&#160;</a></span>TEST_STATE</h2>
+<a id="aae0dcb6f6e84dab5b57ab3ba5ea559b4" name="aae0dcb6f6e84dab5b57ab3ba5ea559b4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aae0dcb6f6e84dab5b57ab3ba5ea559b4">&#9670;&#160;</a></span>DAQ_STATES</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">enum <a class="el" href="#a7010bdd588d627529b5948acb89dc09d">TEST_STATE</a></td>
+          <td class="memname">enum <a class="el" href="#aae0dcb6f6e84dab5b57ab3ba5ea559b4">DAQ_STATES</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -634,11 +728,41 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 <p>This enum holds the states during flight computer test mode. </p>
 <hr  />
   <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a7010bdd588d627529b5948acb89dc09dacc6ddcaa36bd57e5aec12749cb5ce29c" name="a7010bdd588d627529b5948acb89dc09dacc6ddcaa36bd57e5aec12749cb5ce29c"></a>HANDSHAKE&#160;</td><td class="fielddoc"><p>state to establish initial communication with transmitter </p>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="aae0dcb6f6e84dab5b57ab3ba5ea559b4acc6ddcaa36bd57e5aec12749cb5ce29c" name="aae0dcb6f6e84dab5b57ab3ba5ea559b4acc6ddcaa36bd57e5aec12749cb5ce29c"></a>HANDSHAKE&#160;</td><td class="fielddoc"><p>state to establish initial communication with transmitter </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a7010bdd588d627529b5948acb89dc09da078eb5ef5383567cdf7a9b36f49289d6" name="a7010bdd588d627529b5948acb89dc09da078eb5ef5383567cdf7a9b36f49289d6"></a>RECEIVE_TEST_DATA&#160;</td><td class="fielddoc"><p>sets the flight computer to receive test data over serial </p>
+<tr><td class="fieldname"><a id="aae0dcb6f6e84dab5b57ab3ba5ea559b4a078eb5ef5383567cdf7a9b36f49289d6" name="aae0dcb6f6e84dab5b57ab3ba5ea559b4a078eb5ef5383567cdf7a9b36f49289d6"></a>RECEIVE_TEST_DATA&#160;</td><td class="fielddoc"><p>sets the flight computer to receive test data over serial </p>
 </td></tr>
 </table>
+
+</div>
+</div>
+<a id="a9dd8c0bc72877aecb789ae6d08811d54" name="a9dd8c0bc72877aecb789ae6d08811d54"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9dd8c0bc72877aecb789ae6d08811d54">&#9670;&#160;</a></span>OPERATION_MODE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="#a9dd8c0bc72877aecb789ae6d08811d54">OPERATION_MODE</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>flight states these states are to be used for flight </p>
+
+</div>
+</div>
+<a id="aad85a2cb8ebe216a0a294c127c0a99a4" name="aad85a2cb8ebe216a0a294c127c0a99a4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aad85a2cb8ebe216a0a294c127c0a99a4">&#9670;&#160;</a></span>TEST_STATES</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="#aad85a2cb8ebe216a0a294c127c0a99a4">TEST_STATES</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Holds the states used when consuming the test data in testing mode </p>
 
 </div>
 </div>
@@ -663,14 +787,14 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
   
 </div>
 </div>
-<a id="a80d57b1ee5cb9d474465d3f8485f5bbc" name="a80d57b1ee5cb9d474465d3f8485f5bbc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a80d57b1ee5cb9d474465d3f8485f5bbc">&#9670;&#160;</a></span>BMPInit()</h2>
+<a id="a8bd22523fa85c7cdc0b1ce2ca2ad9340" name="a8bd22523fa85c7cdc0b1ce2ca2ad9340"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8bd22523fa85c7cdc0b1ce2ca2ad9340">&#9670;&#160;</a></span>BMPInit()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void BMPInit </td>
+          <td class="memname">uint8_t BMPInit </td>
           <td>(</td>
           <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
           <td></td>
@@ -719,15 +843,11 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
       </table>
 </div><div class="memdoc">
 
-<p>Check and update the current state of flight - refer to <a class="el" href="states_8h.html">states.h</a>. </p>
+<p>check various condition from flight data to change the flight state </p>
 <hr  />
- <dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">pvParameters</td><td>- A value that is passed as the parameter to the created task. If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - so it is not valid to pass the address of a stack variable. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Updates the telemetry data flight state value </dd></dl>
+<ul>
+<li>-see <a class="el" href="states_8h.html">states.h</a> for more info &ndash; </li>
+</ul>
 
 </div>
 </div>
@@ -746,35 +866,9 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
       </table>
 </div><div class="memdoc">
 
-<p>Sample the RUN/TEST toggle pins to check whether the fligh tcomputer is in test mode or run mode. If in TEST mode, define the TEST flag If in RUN mode, define the RUN flag TEST_MODE Pin and RUN_MODE pin are both pulled HIGH. When you set the jumper, you pull that pin to LOW. </p>
+<p>Sample the RUN/TEST toggle pins to check whether the flight computer is in test-DAQ mode, TEST mode or FLIGHT mode. If in DAQ mode, set the DAQ flag If in TEST mode, define the TEST flag FLIGHT mode is activated by completely removing the jumper. </p>
 <hr  />
-  
-</div>
-</div>
-<a id="a2eee545cf4af91a694e63ac4940276a4" name="a2eee545cf4af91a694e63ac4940276a4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2eee545cf4af91a694e63ac4940276a4">&#9670;&#160;</a></span>clearTelemetryQueueTask()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void clearTelemetryQueueTask </td>
-          <td>(</td>
-          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>pvParameters</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>dequeue data from telemetry queue after all the tasks have consumed the data </p>
-<hr  />
- <dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">pvParameters</td><td>- A value that is passed as the parameter to the created task. If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - so it is not valid to pass the address of a stack variable. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>none </dd></dl>
+ <p>TEST_MODE Pin and RUN_MODE pin are both pulled HIGH. When you set the jumper, you pull that pin to LOW. </p>
 
 </div>
 </div>
@@ -801,6 +895,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
   </table>
   </dd>
 </dl>
+<p>record number operation_mode state ax ay az pitch roll gx gy gz latitude longitude gps_altitude pressure temperature altitude_agl velocity</p>
 
 </div>
 </div>
@@ -825,6 +920,24 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
   
 </div>
 </div>
+<a id="a2d8cb0cd8ed5366f66d84db5076cd6d3" name="a2d8cb0cd8ed5366f66d84db5076cd6d3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2d8cb0cd8ed5366f66d84db5076cd6d3">&#9670;&#160;</a></span>feedRowParser()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">char feedRowParser </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd></dd></dl>
+
+</div>
+</div>
 <a id="a6648d201a9f47aa836d36e5339e78ef3" name="a6648d201a9f47aa836d36e5339e78ef3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6648d201a9f47aa836d36e5339e78ef3">&#9670;&#160;</a></span>flightStateCallback()</h2>
 
@@ -840,25 +953,20 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
       </table>
 </div><div class="memdoc">
 
-<p>performs flight actions based on the current flight state If the flight state neccessisates an operation, we perform it here For example if the flight state is apogee, we perform MAIN_CHUTE ejection </p>
+<p>performs flight actions based on the current flight state </p>
 <hr  />
- <dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">pvParameter</td><td>- A value that is passed as the parameter to the created task. If pvParameter is set to the address of a variable then the variable must still exist when the created task executes - so it is not valid to pass the address of a stack variable. </td></tr>
-  </table>
-  </dd>
-</dl>
+ <p>If the flight state requires an action, we perform it here For example if the flight state is apogee, we perform MAIN_CHUTE ejection </p>
 
 </div>
 </div>
-<a id="a6f220446b54026b1217f93a3a9c04c1f" name="a6f220446b54026b1217f93a3a9c04c1f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6f220446b54026b1217f93a3a9c04c1f">&#9670;&#160;</a></span>GPSInit()</h2>
+<a id="a7614084d3b4eca93954d98680cc2443d" name="a7614084d3b4eca93954d98680cc2443d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7614084d3b4eca93954d98680cc2443d">&#9670;&#160;</a></span>GPSInit()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void GPSInit </td>
+          <td class="memname">uint8_t GPSInit </td>
           <td>(</td>
           <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
           <td></td>
@@ -869,6 +977,8 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 <p>Initialize the GPS connected on Serial2. </p>
 <hr  />
  <dl class="section return"><dt>Returns</dt><dd>1 if init OK, 0 otherwise </dd></dl>
+<p>FIXME: Proper GPS init check! Look into if the GPS has acquired a LOCK on satelites Only if it has a lock then can we return a 1</p>
+<p>GPS is low priority at the time of writing this but make it work!</p>
 
 </div>
 </div>
@@ -892,14 +1002,14 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
   
 </div>
 </div>
-<a id="ae8297bf2b99a2ad67af6f9a421ea4b16" name="ae8297bf2b99a2ad67af6f9a421ea4b16"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae8297bf2b99a2ad67af6f9a421ea4b16">&#9670;&#160;</a></span>initGPIO()</h2>
+<a id="a7e2d538eec5c54386e40bbc0b99d0ac1" name="a7e2d538eec5c54386e40bbc0b99d0ac1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e2d538eec5c54386e40bbc0b99d0ac1">&#9670;&#160;</a></span>initTestGPIO()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void initGPIO </td>
+          <td class="memname">uint8_t initTestGPIO </td>
           <td>(</td>
           <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
           <td></td>
@@ -937,6 +1047,26 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
   </dd>
 </dl>
 
+</div>
+</div>
+<a id="a7ce5e586674f4cd4260bd2aaba246757" name="a7ce5e586674f4cd4260bd2aaba246757"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ce5e586674f4cd4260bd2aaba246757">&#9670;&#160;</a></span>kalmanFilterTask()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void kalmanFilterTask </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>pvParameters</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Filter data using the Kalman Filter. </p>
+<hr  />
+  
 </div>
 </div>
 <a id="a8841578fe91cace6206676f0e751cab5" name="a8841578fe91cace6206676f0e751cab5"></a>
@@ -1009,7 +1139,8 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 
 <p>Main loop. </p>
 <hr  />
-  
+  <p>Here is where we consume the test data stored in the data.txt file</p>
+
 </div>
 </div>
 <a id="a9074d493ccf55d0cfa3acd2d173f665a" name="a9074d493ccf55d0cfa3acd2d173f665a"></a>
@@ -1027,8 +1158,59 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
       </table>
 </div><div class="memdoc">
 
-<p>fires the pyro-charge to deploy the main chute Turn on the main chute ejection circuit by running the GPIO HIGH for a preset No. of seconds. <br  />
- Default no. of seconds to remain HIGH is 5 </p>
+<p>fires the pyro-charge to deploy the main chute Turn on the main chute ejection circuit by running the GPIO HIGH for a preset No. of seconds Default no. of seconds to remain HIGH is 5 </p>
+<hr  />
+  
+</div>
+</div>
+<a id="a623ea109418725f80cfc705f49fd7a55" name="a623ea109418725f80cfc705f49fd7a55"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a623ea109418725f80cfc705f49fd7a55">&#9670;&#160;</a></span>MQTT_TransmitTelemetry()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MQTT_TransmitTelemetry </td>
+          <td>(</td>
+          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>pvParameters</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>send flight data to ground </p>
+<hr  />
+ <dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">pvParameter</td><td>- A value that is passed as the paramater to the created task. If pvParameter is set to the address of a variable then the variable must still exist when the created task executes - so it is not valid to pass the address of a stack variable. </td></tr>
+  </table>
+  </dd>
+</dl>
+<p>PACKAGE TELEMETRY PACKET</p>
+<p>record number operation_mode state ax ay az pitch roll gx gy gz latitude longitude gps_altitude gps_time pressure temperature altitude_agl velocity pyro1_state // not used pyro2_state // not used battery_voltage // not used</p>
+
+</div>
+</div>
+<a id="a582e3dadcae4266158f0516e7c264bb6" name="a582e3dadcae4266158f0516e7c264bb6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a582e3dadcae4266158f0516e7c264bb6">&#9670;&#160;</a></span>MQTTInit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void MQTTInit </td>
+          <td>(</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>broker_IP</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>broker_port</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize MQTT. </p>
 <hr  />
   
 </div>
@@ -1095,16 +1277,9 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
       </table>
 </div><div class="memdoc">
 
-<p>Read ar pressure data from the barometric sensor onboard. </p>
+<p>Read atm pressure data from the barometric sensor onboard. </p>
 <hr  />
- <dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">pvParameters</td><td>- A value that is passed as the parameter to the created task. If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - so it is not valid to pass the address of a stack variable. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Sends altimeter data to altimeter queue </dd></dl>
-
+  
 </div>
 </div>
 <a id="aa8ea491ed98b16bb5292ad184537f0b5" name="aa8ea491ed98b16bb5292ad184537f0b5"></a>
@@ -1153,6 +1328,24 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
   
 </div>
 </div>
+<a id="afbfb26a0bc64fdd54058db8bdc14a603" name="afbfb26a0bc64fdd54058db8bdc14a603"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afbfb26a0bc64fdd54058db8bdc14a603">&#9670;&#160;</a></span>rowParserFinished()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool rowParserFinished </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd></dd></dl>
+
+</div>
+</div>
 <a id="a4fc01d736fe50cf5b977f755b675f11d" name="a4fc01d736fe50cf5b977f755b675f11d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4fc01d736fe50cf5b977f755b675f11d">&#9670;&#160;</a></span>setup()</h2>
 
@@ -1170,7 +1363,10 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 
 <p>Setup - perform initialization of all hardware subsystems, create queues, create queue handles initialize system check table. </p>
 <hr  />
-  
+  <p>We need to read the TEST state from a file in the SD card This file stores the state we are in permanently, so that next time we reset while in run mode, we have a reference state to use</p>
+<p>This file will be updated in the loop once we are done consuming the test data</p>
+<p>check what state we are in while in the test state. If we are in the data consume state, set the current state to DATA_CONSUME The state is got from the SD card state.txt file</p>
+
 </div>
 </div>
 <a id="a5f3e40ff0b3b6f2c247fadc41b0a5896" name="a5f3e40ff0b3b6f2c247fadc41b0a5896"></a>
@@ -1213,6 +1409,21 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 
 </div>
 </div>
+<a id="a5a374cc6b295b98bbdf9bc4adbdf3950" name="a5a374cc6b295b98bbdf9bc4adbdf3950"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5a374cc6b295b98bbdf9bc4adbdf3950">&#9670;&#160;</a></span>current_DAQ_state</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8_t current_DAQ_state = <a class="el" href="#aae0dcb6f6e84dab5b57ab3ba5ea559b4acc6ddcaa36bd57e5aec12749cb5ce29c">DAQ_STATES::HANDSHAKE</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Define current data consume state the flight computer is in </p>
+
+</div>
+</div>
 <a id="a318b23db9cedde5ea8466af114f0c203" name="a318b23db9cedde5ea8466af114f0c203"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a318b23db9cedde5ea8466af114f0c203">&#9670;&#160;</a></span>current_log_time</h2>
 
@@ -1235,26 +1446,11 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">uint8_t current_state = FLIGHT_STATE::PRE_FLIGHT_GROUND</td>
+          <td class="memname">uint8_t current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND</td>
         </tr>
       </table>
 </div><div class="memdoc">
 <p>The starting state - we start at PRE_FLIGHT_GROUND state </p>
-
-</div>
-</div>
-<a id="a9dc783a2c139e60a49e643aed8b741b9" name="a9dc783a2c139e60a49e643aed8b741b9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9dc783a2c139e60a49e643aed8b741b9">&#9670;&#160;</a></span>current_test_state</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">uint8_t current_test_state = <a class="el" href="#a7010bdd588d627529b5948acb89dc09dacc6ddcaa36bd57e5aec12749cb5ce29c">TEST_STATE::HANDSHAKE</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Define current state the flight computer is in </p>
 
 </div>
 </div>
@@ -1325,7 +1521,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">char filename[] = &quot;flight.bin&quot;</td>
+          <td class="memname">char filename[] = &quot;flight.txt&quot;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1451,6 +1647,21 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 
 </div>
 </div>
+<a id="a9f30f7c913c2e35ebf44fbf77f416bbc" name="a9f30f7c913c2e35ebf44fbf77f416bbc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9f30f7c913c2e35ebf44fbf77f416bbc">&#9670;&#160;</a></span>readAccelerationTaskHandle</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">TaskHandle_t readAccelerationTaskHandle</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Task creation handles </p>
+
+</div>
+</div>
 <a id="a7047c2926a0671d98c6f80a4015f2c14" name="a7047c2926a0671d98c6f80a4015f2c14"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7047c2926a0671d98c6f80a4015f2c14">&#9670;&#160;</a></span>recv_data_led</h2>
 
@@ -1488,7 +1699,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">const char* rocket_ID = &quot;rocket-1&quot;</td>
+          <td class="memname">const char* rocket_ID = &quot;FC1&quot;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1511,18 +1722,18 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 
 </div>
 </div>
-<a id="abea45f8bc016d99f82b468ae77916e64" name="abea45f8bc016d99f82b468ae77916e64"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abea45f8bc016d99f82b468ae77916e64">&#9670;&#160;</a></span>SET_RUN_MODE_PIN</h2>
+<a id="a060a5c871540f7913d6529a2afb3b1e4" name="a060a5c871540f7913d6529a2afb3b1e4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a060a5c871540f7913d6529a2afb3b1e4">&#9670;&#160;</a></span>SET_DAQ_MODE_PIN</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">uint8_t SET_RUN_MODE_PIN = 13</td>
+          <td class="memname">uint8_t SET_DAQ_MODE_PIN = 14</td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Pin to set the flight computer to RUN mode </p>
+<p>Pin to set the flight computer to DAQ mode </p>
 
 </div>
 </div>
@@ -1533,7 +1744,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">uint8_t SET_TEST_MODE_PIN = 14</td>
+          <td class="memname">uint8_t SET_TEST_MODE_PIN = 13</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1557,14 +1768,44 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 
 </div>
 </div>
-<a id="a0ed5ea94df7417ea494d69ca56aab490" name="a0ed5ea94df7417ea494d69ca56aab490"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0ed5ea94df7417ea494d69ca56aab490">&#9670;&#160;</a></span>telemetry_data_qHandle</h2>
+<a id="a5fa0d939030a4ab773be75554017c4aa" name="a5fa0d939030a4ab773be75554017c4aa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5fa0d939030a4ab773be75554017c4aa">&#9670;&#160;</a></span>SUBSYSTEM_INIT_MASK</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">QueueHandle_t telemetry_data_qHandle</td>
+          <td class="memname">uint8_t SUBSYSTEM_INIT_MASK = 0b00000000</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Holds the status of the subsystems. 1 if Init OK, 0 if init failed </p>
+
+</div>
+</div>
+<a id="a12a374be19c9b55750097a0b9fad50fb" name="a12a374be19c9b55750097a0b9fad50fb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a12a374be19c9b55750097a0b9fad50fb">&#9670;&#160;</a></span>subsystems_state_buffer</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">char subsystems_state_buffer[10]</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Holds the status of the subsystems. 1 if Init OK, 0 if init failed </p>
+
+</div>
+</div>
+<a id="abe0f2d917a4d91446385606b903276ea" name="abe0f2d917a4d91446385606b903276ea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abe0f2d917a4d91446385606b903276ea">&#9670;&#160;</a></span>telemetry_data_queue_handle</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">QueueHandle_t telemetry_data_queue_handle</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1587,6 +1828,21 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>gps_data_qHa
 <p>Parse the received serial command if it is a string. </p>
 <hr  />
   
+</div>
+</div>
+<a id="afafd0fc922c17c38235820189e1d9b3b" name="afafd0fc922c17c38235820189e1d9b3b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afafd0fc922c17c38235820189e1d9b3b">&#9670;&#160;</a></span>wifi_client</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">WiFiClient wifi_client</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>MQTT helper instances, if using MQTT to transmit telemetry </p>
+
 </div>
 </div>
 </div><!-- contents -->

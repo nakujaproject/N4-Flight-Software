@@ -30,7 +30,8 @@
 #include "system_logger.h"  // system logging functions
 #include "system_log_levels.h"  // system logging log levels
 #include "wifi-config.h"    // handle wifi connection
-#include "kalman_filter.h"  // handle kalman filter functions 
+#include "kalman_filter.h"  // handle kalman filter functions
+#include "ring_buffer.h"    // for apogee detection
 
 /* function prototypes definition */
 void drogueChuteDeploy();
@@ -141,7 +142,7 @@ enum TEST_STATES {
     DONE_TESTING
 };
 uint8_t current_test_state  = TEST_STATES::DATA_CONSUME;
-const char* f_name = "/short_data.csv";
+const char* f_name = "/altitude_log.csv";
 File test_file; // handle for the test data file
 
 /**
@@ -724,6 +725,10 @@ long long previous_time = 0;
 
 /* To store the main telemetry packet being sent over MQTT */
 char telemetry_packet_buffer[256];
+ring_buffer altitude_ring_buffer;
+float curr_val;
+float oldest_val;
+uint8_t apogee_flag =0; // to signal that we have detected apogee
 
 /**
 * @brief create dynamic WIFI
@@ -1094,10 +1099,30 @@ void checkFlightState(void* pvParameters) {
         }
 
         // LAUNCH DETECTED -- LAUNCH DETECTED
+        // POWERED FLIGHT STATE
         if(flight_data.alt_data.altitude > LAUNCH_DETECTION_THRESHOLD) {
             // launch detected
             current_state = ARMED_FLIGHT_STATE::POWERED_FLIGHT;
         }
+
+        // COASTING
+
+        // APOGEE and APOGEE DETECTION
+        ring_buffer_put(&altitude_ring_buffer, flight_data.alt_data.altitude);
+        if(ring_buffer_full(&altitude_ring_buffer) == 1) {
+            oldest_val = ring_buffer_get(&altitude_ring_buffer);
+        }
+        if((oldest_val - flight_data.alt_data.altitude) > APOGEE_DETECTION_THRESHOLD) {
+            if(apogee_flag == 0) {
+                current_state = ARMED_FLIGHT_STATE::APOGEE;
+                // todo: deploy the drogue here ->
+//                delay(2); // simulate pyro firing
+//                current_state = ARMED_FLIGHT_STATE::DROGUE_DEPLOY;
+                apogee_flag = 1;
+            }
+        }
+
+        // MAIN CHUTE DEPLOY
 
     }
 
@@ -1136,7 +1161,7 @@ void flightStateCallback(void* pvParameters) {
 
             // DROGUE_DEPLOY
             case ARMED_FLIGHT_STATE::DROGUE_DEPLOY:
-            //    debugln("DROGUE DEPLOY");
+                debugln("DROGUE DEPLOY");
                 drogueChuteDeploy();
                 break;
 
@@ -1499,7 +1524,8 @@ void setup() {
 
     debug("[]SUBSYSTEM_INIT_MASK: "); debugln(SUBSYSTEM_INIT_MASK);
 
-    // delay(2000);
+    // initialize the ring buffer
+    ring_buffer_init(&altitude_ring_buffer);
 
     /* check whether we are in TEST or RUN mode */
     checkRunTestToggle();
@@ -1818,15 +1844,16 @@ void loop() {
 
                  if(col1 && col2) {
                      for(int row = 0; row < cp.getRowsCount(); row++) {
-                         debug("row = ");
-                         debug(row);
-                         debug(", col_1 = ");
-                         debug(col1[row]);
-                         debug(", col_2 = ");
-                         debugln(col2[row]);
+                         //debug("row = ");
+                         //debug(row);
+                         //debug(", col_1 = ");
+                         //debug(col1[row]);
+                         //debug(", col_2 = ");
+                         //debugln(col2[row]);
 
                          // set altitude as altitude read from queue
-                         double alt = col2[row];
+                         //double alt = col2[row];
+                         double alt = col1[row];
                          test_data_packet.alt_data.altitude = alt;
 
                          // feed it into check-flight-state queue

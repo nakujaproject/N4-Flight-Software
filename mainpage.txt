@@ -241,18 +241,36 @@ This shows that the flight computer has created a web portal and is waiting for 
   - Make sure that the ground station PC and the flight computer are on the same network.
 
   * @section step22 MQTT configuration
+    @note In Development
 
-  
+    * @section step23 Flight Data Collection and Kalman Filtering 
+    The main senors used in the flight computer are accelerometer and pressure sensors. We use the MPU6050 for acceleration and angular velocity measurements. We use the BMP180 for atmospheric pressure and altitude measurement. This data is collected as raw data which is then processed and filtered using the Kalman filter algorithm. 
 
-  * @section step23 Flight Data Collection and Kalman Filtering
-  The main senors used in the flight computer are accelerometer and pressure sensors. We use the MPU6050 for acceleration and angular velocity measurements. We use the BMP180 for atmospheric pressure and altitude measurement. This data is collected as raw data which is then processed and filtered using the Kalman filter algorithm. 
+      The ***Kalman Filter*** allows us to perform predictive recursive low pass filtering which greatly improves our collected sensor data which is safe for the state machine to consume. 
 
-  The ***Kalman Filter*** allows us to perform predictive recursive low pass filtering which greatly improves our collected sensor data which is safe for the state machine to consume. 
-
-  To learn more about the Kalman filter implementation, refer to the kalman.h and kalman.cpp files in the src folder of the n4-flight-software. 
+      To learn more about the Kalman filter implementation, refer to the kalman.h and kalman.cpp files in the src folder of the n4-flight-software. 
 
 
- * @section step24 Contributors
+  *@section step24 Launch detection
+   * @note In development
+    *
+
+    *@section step25 Apogee detection
+    *We detect apogee using the altitude values from the altimeter. The logic we use is that the *
+    *rocket's altitude increases as it ascends up continously. On reaching apogee, the rocket's altitude *starts decreasing. 
+
+    *To detect the decrease in altitude, we keep track of the last SIZE_OF_BUFFER items (see *ring_buffer.h). We then check the current altitude value against the oldest value in the ring *buffer. If the difference is more than the set THRESHOLD (usually 5 meters), we are sure that at *this point the rocket is coming down and we register APOGEE. 
+
+    *This is made possible using a ring buffer(circular buffer), that is implemented to always keep *track of the previous SIZE_OF_BUFFER. From this buffer we can infer apogee.
+    *
+
+    *@section step26 Parachute ejection
+    * @note In development 
+    *
+
+
+
+ * @section step30 Contributors
  * Our thanks go to the following current and previous avionics team members for their contribution:
 1. Edwin Mwiti
 2. Junn Hope 

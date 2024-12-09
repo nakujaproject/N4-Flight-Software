@@ -40,6 +40,7 @@
 
 /*!< Flight data constants  */
 #define LAUNCH_DETECTION_THRESHOLD 5         /*!< altitude(m) above which we register that we have launched  */
+#define APOGEE_DETECTION_THRESHOLD 5       /*!< value(m) for detecting apogee */
 #define MAIN_EJECTION_HEIGHT 1000            /*!< height to eject the main chute  */
 #define DROGUE_EJECTION_HEIGHT               /*!< height to eject the drogue chute - ideally it should be at apogee  */
 #define SEA_LEVEL_PRESSURE 101325            /*!< sea level pressure to be used for altitude calculations */
