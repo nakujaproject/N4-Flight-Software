@@ -1096,6 +1096,7 @@ void checkFlightState(void* pvParameters) {
         // PREFLIGHT
         if(flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
             current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;
+            debugln("PRE-FLIGHT");
         }
 
         // LAUNCH DETECTED -- LAUNCH DETECTED
@@ -1103,6 +1104,7 @@ void checkFlightState(void* pvParameters) {
         if(flight_data.alt_data.altitude > LAUNCH_DETECTION_THRESHOLD) {
             // launch detected
             current_state = ARMED_FLIGHT_STATE::POWERED_FLIGHT;
+            debugln("POW-FLIGHT");
         }
 
         // COASTING
@@ -1115,9 +1117,11 @@ void checkFlightState(void* pvParameters) {
         if((oldest_val - flight_data.alt_data.altitude) > APOGEE_DETECTION_THRESHOLD) {
             if(apogee_flag == 0) {
                 current_state = ARMED_FLIGHT_STATE::APOGEE;
+                debugln("APG");
                 // todo: deploy the drogue here ->
-//                delay(2); // simulate pyro firing
-//                current_state = ARMED_FLIGHT_STATE::DROGUE_DEPLOY;
+                delay(1500); // simulate pyro firing - remove this in production
+                current_state = ARMED_FLIGHT_STATE::DROGUE_DEPLOY;
+                debugln("DROG-DEP");
                 apogee_flag = 1;
             }
         }
@@ -1141,12 +1145,12 @@ void flightStateCallback(void* pvParameters) {
         switch (current_state) {
             // PRE_FLIGHT_GROUND
             case ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND:
-                debugln("PRE-FLIGHT STATE");
+                //debugln("PRE-FLIGHT STATE");
                 break;
 
             // POWERED_FLIGHT
             case ARMED_FLIGHT_STATE::POWERED_FLIGHT:
-                debugln("POWERED FLIGHT STATE");
+                //debugln("POWERED FLIGHT STATE");
                 break;
 
             // COASTING
@@ -1156,12 +1160,12 @@ void flightStateCallback(void* pvParameters) {
 
             // APOGEE
             case ARMED_FLIGHT_STATE::APOGEE:
-            //    debugln("APOGEE");
+                //debugln("APOGEE");
                 break;
 
             // DROGUE_DEPLOY
             case ARMED_FLIGHT_STATE::DROGUE_DEPLOY:
-                debugln("DROGUE DEPLOY");
+                //debugln("DROGUE DEPLOY");
                 drogueChuteDeploy();
                 break;
 
@@ -1443,6 +1447,10 @@ void mainChuteDeploy() {
     //     MAIN_CHUTE_EJECT_FLAG = 1;
     //     debugln("MAIN CHUTE DEPLOYED");
     // }
+}
+
+void customCheckState() {
+
 }
 
 
@@ -1832,8 +1840,9 @@ void loop() {
         /**
          * Here is where we consume the test data stored in the data.txt file
          */
-
          if(current_test_state == TEST_STATES::DATA_CONSUME) {
+             vTaskResume(checkFlightStateTaskHandle);
+
              debugln("=============== Consuming test data ===============");
              telemetry_type_t test_data_packet;
 
@@ -1844,21 +1853,20 @@ void loop() {
 
                  if(col1 && col2) {
                      for(int row = 0; row < cp.getRowsCount(); row++) {
-                         //debug("row = ");
-                         //debug(row);
-                         //debug(", col_1 = ");
-                         //debug(col1[row]);
-                         //debug(", col_2 = ");
-                         //debugln(col2[row]);
+//                         debug("row = ");
+//                         debug(row);
+//                         debug(", col_1 = ");
+//                         debug(col1[row]);
+//                         debug(", col_2 = ");
+//                         debugln(col2[row]);
 
                          // set altitude as altitude read from queue
-                         //double alt = col2[row];
-                         double alt = col1[row];
+                         double alt = col2[row];
+                         debugln(alt);
                          test_data_packet.alt_data.altitude = alt;
 
                          // feed it into check-flight-state queue
                          xQueueSend(check_state_queue_handle, &test_data_packet, 0);
-
                      }
 
                      debugln("END OF FILE");
@@ -1871,6 +1879,9 @@ void loop() {
                  debug("File does not exist");
              }
 
+         }
+         else if(current_test_state == TEST_STATES::DONE_TESTING) {
+             vTaskSuspend(checkFlightStateTaskHandle);
          }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
