@@ -1090,7 +1090,7 @@ void checkFlightState(void* pvParameters) {
     while (1) {
         xQueueReceive(check_state_queue_handle, &flight_data, portMAX_DELAY);
 
-        debug("Received alt:"); debug(flight_data.alt_data.altitude); debugln();
+        //debug("Received alt:"); debug(flight_data.alt_data.altitude); debugln();
 
         // todo: check more conditions
         // PREFLIGHT
@@ -1114,12 +1114,15 @@ void checkFlightState(void* pvParameters) {
         if(ring_buffer_full(&altitude_ring_buffer) == 1) {
             oldest_val = ring_buffer_get(&altitude_ring_buffer);
         }
+
         if((oldest_val - flight_data.alt_data.altitude) > APOGEE_DETECTION_THRESHOLD) {
             if(apogee_flag == 0) {
                 current_state = ARMED_FLIGHT_STATE::APOGEE;
                 debugln("APG");
                 // todo: deploy the drogue here ->
                 delay(1500); // simulate pyro firing - remove this in production
+
+                // todo: check when to deploy drogue chute, a few meters after apogee
                 current_state = ARMED_FLIGHT_STATE::DROGUE_DEPLOY;
                 debugln("DROG-DEP");
                 apogee_flag = 1;
@@ -1862,7 +1865,7 @@ void loop() {
 
                          // set altitude as altitude read from queue
                          double alt = col2[row];
-                         debugln(alt);
+                         //debugln(alt);
                          test_data_packet.alt_data.altitude = alt;
 
                          // feed it into check-flight-state queue
