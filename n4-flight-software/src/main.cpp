@@ -32,6 +32,7 @@
 #include "wifi-config.h"    // handle wifi connection
 #include "kalman_filter.h"  // handle kalman filter functions
 #include "ring_buffer.h"    // for apogee detection
+#include "custom_test_states.h"
 
 /* function prototypes definition */
 void drogueChuteDeploy();
@@ -131,7 +132,7 @@ enum DAQ_STATES {
 };
 
 uint8_t current_DAQ_state = DAQ_STATES::HANDSHAKE; /*!< Define current data consume state the flight computer is in */
-
+uint8_t sub_check_state; // to check the susbsystems initially
 /**
  * 
  * Holds the states used when consuming the test data in testing mode
@@ -180,6 +181,15 @@ void SerialEvent();
 void ParseSerial(char *);
 
 void checkRunTestToggle();
+
+void checkSubSystems();
+
+void checkSubSystems() {
+    Serial.println(SUBSYSTEM_INIT_MASK);
+
+    // reset the state 
+    sub_check_state = SYSTEM_CHECK_STATES::SUBSYSTEM_DONE_CHECK;
+}
 
 //////////////////// SPIFFS FILE OPERATIONS ///////////////////////////
 
@@ -473,9 +483,9 @@ void checkRunTestToggle() {
         TEST_MODE = 0;
 
         // set FLIGHT MODE
-        is_flight_mode = 1;
+        //is_flight_mode = 1;
 
-        SwitchLEDs(!DAQ_MODE, !TEST_MODE);
+        SwitchLEDs(!DAQ_MODE, !TEST_MODE); // both LEDS on 
     }
 
 }
@@ -886,7 +896,7 @@ void readAccelerationTask(void* pvParameter) {
 void readAltimeterTask(void* pvParameters) {
     telemetry_type_t alt_data_lcl;
 
-    while(1){
+    while(1) {
         // If you want to measure altitude, and not pressure, you will instead need
         // to provide a known baseline pressure. This is shown at the end of the sketch.
 
@@ -1492,6 +1502,7 @@ void setup() {
     uint8_t imu_init_state = imu.init();
     uint8_t gps_init_state = GPSInit();
     uint8_t sd_init_state = initSD();
+    uint8_t flash_init_state = data_logger.loggerInit();
     initDataFiles();
     
     uint8_t test_gpio_init_state = initTestGPIO();
@@ -1509,9 +1520,9 @@ void setup() {
     }
 
     // check if flash memory init OK
-    // if (flash_init_state) {
-    //     SUBSYSTEM_INIT_MASK |= (1 << FLASH_CHECK_BIT);
-    // }
+    if (flash_init_state) {
+        SUBSYSTEM_INIT_MASK |= (1 << FLASH_CHECK_BIT);
+    }
 
     // check if GPS init OK
     if(gps_init_state) {
@@ -1534,6 +1545,9 @@ void setup() {
     }
 
     debug("[]SUBSYSTEM_INIT_MASK: "); debugln(SUBSYSTEM_INIT_MASK);
+
+    // set current state
+    sub_check_state = SYSTEM_CHECK_STATES::SUB_SYSTEM_CHECK;
 
     // initialize the ring buffer
     ring_buffer_init(&altitude_ring_buffer);
@@ -1596,8 +1610,6 @@ void setup() {
         debugln(F("===== INITIALIZING DATA LOGGING SYSTEM ======="));
         debugln(F("=============================================="));
         SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==INITIALIZING DATA LOGGING SYSTEM==\r\n");
-        
-        data_logger.loggerInit();
 
         uint8_t app_id = xPortGetCoreID();
             
@@ -1833,68 +1845,79 @@ void loop() {
     //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    // data acquisition mode
-    if (DAQ_MODE) {
-        prepareForDataReceive();
+    // system check state during setup
+    if(sub_check_state == SYSTEM_CHECK_STATES::SUB_SYSTEM_CHECK) {
+        if(Serial.available()) {
+            char ch = Serial.read();
+            if(ch >= '0' && ch <= '9') { 
+                if (ch == '1')  checkSubSystems();
+            }
+        }
 
-    // testing mode
-    } else if(TEST_MODE) {
+    } else if(sub_check_state = SYSTEM_CHECK_STATES::SUBSYSTEM_DONE_CHECK) {
+        // data acquisition mode
+        if (DAQ_MODE) {
+            prepareForDataReceive();
 
-        /**
-         * Here is where we consume the test data stored in the data.txt file
-         */
-         if(current_test_state == TEST_STATES::DATA_CONSUME) {
-             vTaskResume(checkFlightStateTaskHandle);
+        // testing mode
+        } else if(TEST_MODE) {
+            /**
+             * Here is where we consume the test data stored in the data.txt file
+             */
+            if(current_test_state == TEST_STATES::DATA_CONSUME) {
+                vTaskResume(checkFlightStateTaskHandle);
 
-             debugln("=============== Consuming test data ===============");
-             telemetry_type_t test_data_packet;
+                debugln("=============== Consuming test data ===============");
+                telemetry_type_t test_data_packet;
 
-             CSV_Parser cp("ff", false, ',');
-             if(cp.readSDfile(f_name)) {
-                 float* col1 = (float*)cp[0];
-                 float* col2 = (float*)cp[1];
+                CSV_Parser cp("ff", false, ',');
+                if(cp.readSDfile(f_name)) {
+                    float* col1 = (float*)cp[0];
+                    float* col2 = (float*)cp[1];
 
-                 if(col1 && col2) {
-                     for(int row = 0; row < cp.getRowsCount(); row++) {
-//                         debug("row = ");
-//                         debug(row);
-//                         debug(", col_1 = ");
-//                         debug(col1[row]);
-//                         debug(", col_2 = ");
-//                         debugln(col2[row]);
+                    if(col1 && col2) {
+                        for(int row = 0; row < cp.getRowsCount(); row++) {
+    //                         debug("row = ");
+    //                         debug(row);
+    //                         debug(", col_1 = ");
+    //                         debug(col1[row]);
+    //                         debug(", col_2 = ");
+    //                         debugln(col2[row]);
 
-                         // set altitude as altitude read from queue
-                         double alt = col2[row];
-                         //debugln(alt);
-                         test_data_packet.alt_data.altitude = alt;
+                            // set altitude as altitude read from queue
+                            double alt = col2[row];
+                            //debugln(alt);
+                            test_data_packet.alt_data.altitude = alt;
 
-                         // feed it into check-flight-state queue
-                         xQueueSend(check_state_queue_handle, &test_data_packet, 0);
-                     }
+                            // feed it into check-flight-state queue
+                            xQueueSend(check_state_queue_handle, &test_data_packet, 0);
+                        }
 
-                     debugln("END OF FILE");
-                     current_test_state = TEST_STATES::DONE_TESTING;
-                 } else {
-                     debug("Error: at least one of the columns was not found");
-                 }
+                        debugln("END OF FILE");
+                        current_test_state = TEST_STATES::DONE_TESTING;
+                    } else {
+                        debug("Error: at least one of the columns was not found");
+                    }
 
-             } else {
-                 debug("File does not exist");
-             }
+                } else {
+                    debug("File does not exist");
+                }
 
-         }
-         else if(current_test_state == TEST_STATES::DONE_TESTING) {
-             vTaskSuspend(checkFlightStateTaskHandle);
-         }
+            }
+            else if(current_test_state == TEST_STATES::DONE_TESTING) {
+                vTaskSuspend(checkFlightStateTaskHandle);
+            }
 
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    //////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  ////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  ////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////////////////////
 
-    // FLIGHT MODE state - toggle jumper is completely removed
-    } else if(is_flight_mode) {
-        MQTT_Reconnect();
-        client.loop();
+        // FLIGHT MODE state - toggle jumper is completely removed
+        } else if(is_flight_mode) {
+            MQTT_Reconnect();
+            client.loop();
+        }
+
     }
 
-} // end of loop
+} // end of  main loop
