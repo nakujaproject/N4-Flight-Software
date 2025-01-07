@@ -55,7 +55,6 @@ var NAVTREE =
     [ "Apogee detection", "index.html#step25", null ],
     [ "Parachute ejection", "index.html#step26", null ],
     [ "Contributors", "index.html#step30", null ],
-    [ "README", "md_n4-flight-software_2README.html", null ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ]
     ] ],
@@ -88,5 +87,5 @@ var NAVTREEINDEX =
 "annotated.html"
 ];
 
-var SYNCONMSG = 'click to disable panel synchronisation';
-var SYNCOFFMSG = 'click to enable panel synchronisation';
+var SYNCONMSG = 'click to disable panel synchronization';
+var SYNCOFFMSG = 'click to enable panel synchronization';
