@@ -1126,44 +1126,47 @@ void checkFlightState(void* pvParameters) {
 
         //debug("Received alt:"); debug(flight_data.alt_data.altitude); debugln();
 
-        // todo: check more conditions
-        // PREFLIGHT
-        if(flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
-            current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;
-            debugln("PRE-FLIGHT");
+        if(apogee_flag != 1) {
+            // states before apogee
+            // PREFLIGHT
+            if(flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
+                current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;
+                debugln("PREFLIGHT");
+            } else if(LAUNCH_DETECTION_THRESHOLD < flight_data.alt_data.altitude < (LAUNCH_DETECTION_THRESHOLD+LAUNCH_DETECTION_ALTITUDE_WINDOW) ) {
+                current_state = ARMED_FLIGHT_STATE::POWERED_FLIGHT;
+                debugln("POWERED");  
+                delay(50);  
+            } 
+
+            // COASTING
+
             
-        } else if(LAUNCH_DETECTION_THRESHOLD < flight_data.alt_data.altitude < (LAUNCH_DETECTION_THRESHOLD+LAUNCH_DETECTION_ALTITUDE_WINDOW) ) {
-            current_state = ARMED_FLIGHT_STATE::POWERED_FLIGHT;
-            debugln("POW-FLIGHT");
-        } 
-
-        // COASTING
-
-        // APOGEE and APOGEE DETECTION
-        ring_buffer_put(&altitude_ring_buffer, flight_data.alt_data.altitude);
-        if(ring_buffer_full(&altitude_ring_buffer) == 1) {
-            oldest_val = ring_buffer_get(&altitude_ring_buffer);
-        }
-
-        //debug("Curr val:");debug(flight_data.alt_data.altitude); debug("    "); debugln(oldest_val);
-        if((oldest_val - flight_data.alt_data.altitude) > APOGEE_DETECTION_THRESHOLD) {
-            if(apogee_flag == 0) {
-                current_state = ARMED_FLIGHT_STATE::APOGEE;
-                debugln("APOGEE");
-                // todo: deploy the drogue here ->
-                delay(1500); // simulate pyro firing - remove this in production
-
-                // todo: check when to deploy drogue chute, a few meters after apogee
-                current_state = ARMED_FLIGHT_STATE::DROGUE_DEPLOY;
-                debugln("DROG-DEP");
-                apogee_flag = 1;
+            // APOGEE and APOGEE DETECTION
+            ring_buffer_put(&altitude_ring_buffer, flight_data.alt_data.altitude);
+            if(ring_buffer_full(&altitude_ring_buffer) == 1) {
+                oldest_val = ring_buffer_get(&altitude_ring_buffer);
             }
 
-            //debugln("APG");
+            //debug("Curr val:");debug(flight_data.alt_data.altitude); debug("    "); debugln(oldest_val);
+            if((oldest_val - flight_data.alt_data.altitude) >= APOGEE_DETECTION_THRESHOLD) {
+                if(apogee_flag == 0) {
+                    current_state = ARMED_FLIGHT_STATE::APOGEE;
+                    
+                    debugln("APOGEE");
+                    // todo: deploy the drogue here ->
+                    //delay(1500); // simulate pyro firing - remove this in production
+                    delay(50);
+                    // todo: check when to deploy drogue chute, a few meters after apogee
+                    current_state = ARMED_FLIGHT_STATE::DROGUE_DEPLOY;
+                    debugln("DROGUE");
+                    apogee_flag = 1;
+                }
+            }
+        } else {
+            // states after apogee
+            
         }
-
-        // MAIN CHUTE DEPLOY
-
+    
     }
 
 }
@@ -1883,7 +1886,6 @@ void loop() {
             if(ch >= '0' && ch <= '9') { 
                 if (ch == '1')  checkSubSystems();
                 if (ch == '2'){
-                    Serial.println("Received 2");
                     sub_check_state = SYSTEM_CHECK_STATES::SUBSYSTEM_DONE_CHECK;
                 }  
             }
@@ -1902,7 +1904,7 @@ void loop() {
             if(current_test_state == TEST_STATES::DATA_CONSUME) {
                 vTaskResume(checkFlightStateTaskHandle);
 
-                debugln("=============== Consuming test data ===============");
+                //debugln("=============== Consuming test data ===============");
                 telemetry_type_t test_data_packet;
 
                 CSV_Parser cp("ff", false, ',');
@@ -1912,13 +1914,9 @@ void loop() {
 
                     if(col1 && col2) {
                         for(int row = 0; row < cp.getRowsCount(); row++) {
-                            //debug("row index:");debugln(row);
-                            // set altitude as altitude read from queue
                             double alt = col2[row];
-                            debugln(alt);
                             test_data_packet.alt_data.altitude = alt;
-
-                            // feed it into check-flight-state queue
+                            delay(500);
                             xQueueSend(check_state_queue_handle, &test_data_packet, 0);
                         }
 
