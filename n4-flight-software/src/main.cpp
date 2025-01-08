@@ -43,6 +43,7 @@ float kalmanFilter(float z);
 /* state machine variables*/
 uint8_t operation_mode = 0;                                     /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
 uint8_t current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;	    /*!< The starting state - we start at PRE_FLIGHT_GROUND state */
+uint8_t STATE_BIT_MASK = 0;
 
 /* GPS object */
 TinyGPSPlus gps;
@@ -1130,15 +1131,11 @@ void checkFlightState(void* pvParameters) {
         if(flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
             current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;
             debugln("PRE-FLIGHT");
-        }
-
-        // LAUNCH DETECTED -- LAUNCH DETECTED
-        // POWERED FLIGHT STATE
-        if(flight_data.alt_data.altitude > LAUNCH_DETECTION_THRESHOLD) {
-            // launch detected
+            
+        } else if(LAUNCH_DETECTION_THRESHOLD < flight_data.alt_data.altitude < (LAUNCH_DETECTION_THRESHOLD+LAUNCH_DETECTION_ALTITUDE_WINDOW) ) {
             current_state = ARMED_FLIGHT_STATE::POWERED_FLIGHT;
             debugln("POW-FLIGHT");
-        }
+        } 
 
         // COASTING
 
@@ -1148,10 +1145,11 @@ void checkFlightState(void* pvParameters) {
             oldest_val = ring_buffer_get(&altitude_ring_buffer);
         }
 
+        //debug("Curr val:");debug(flight_data.alt_data.altitude); debug("    "); debugln(oldest_val);
         if((oldest_val - flight_data.alt_data.altitude) > APOGEE_DETECTION_THRESHOLD) {
             if(apogee_flag == 0) {
                 current_state = ARMED_FLIGHT_STATE::APOGEE;
-                debugln("APG");
+                debugln("APOGEE");
                 // todo: deploy the drogue here ->
                 delay(1500); // simulate pyro firing - remove this in production
 
@@ -1160,6 +1158,8 @@ void checkFlightState(void* pvParameters) {
                 debugln("DROG-DEP");
                 apogee_flag = 1;
             }
+
+            //debugln("APG");
         }
 
         // MAIN CHUTE DEPLOY
@@ -1513,7 +1513,7 @@ void setup() {
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==CREATING DYNAMIC WIFI==\r\n");
 
     // create and wait for dynamic WIFI connection
-    initDynamicWIFI();
+    //initDynamicWIFI(); // TODO - uncomment on live testing and production
 
     debugln();
     debugln(F("=============================================="));
@@ -1912,16 +1912,10 @@ void loop() {
 
                     if(col1 && col2) {
                         for(int row = 0; row < cp.getRowsCount(); row++) {
-    //                         debug("row = ");
-    //                         debug(row);
-    //                         debug(", col_1 = ");
-    //                         debug(col1[row]);
-    //                         debug(", col_2 = ");
-    //                         debugln(col2[row]);
-
+                            //debug("row index:");debugln(row);
                             // set altitude as altitude read from queue
                             double alt = col2[row];
-                            //debugln(alt);
+                            debugln(alt);
                             test_data_packet.alt_data.altitude = alt;
 
                             // feed it into check-flight-state queue

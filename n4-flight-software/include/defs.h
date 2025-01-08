@@ -39,8 +39,9 @@
 #define TASK_DELAY 10
 
 /*!< Flight data constants  */
-#define LAUNCH_DETECTION_THRESHOLD 5         /*!< altitude(m) above which we register that we have launched  */
-#define APOGEE_DETECTION_THRESHOLD 5       /*!< value(m) for detecting apogee */
+#define LAUNCH_DETECTION_THRESHOLD 5         /*!< altitude in meters, above which we register that we have launched  */
+#define LAUNCH_DETECTION_ALTITUDE_WINDOW 20  /*!< Window in meters where we register a launch */
+#define APOGEE_DETECTION_THRESHOLD 5         /*!< value in meters for detecting apogee */
 #define MAIN_EJECTION_HEIGHT 1000            /*!< height to eject the main chute  */
 #define DROGUE_EJECTION_HEIGHT               /*!< height to eject the drogue chute - ideally it should be at apogee  */
 #define SEA_LEVEL_PRESSURE 101325            /*!< sea level pressure to be used for altitude calculations */
@@ -76,6 +77,12 @@ const char MQTT_TOPIC[30] = "n4/flight-computer-1";             /* make this top
 #define GPS_RX 16                           /*!< GPS RX pin */
 
 #define MB_SIZE_DIVISOR 1048576
+
+
+
+#define PREFLIGHT_BIT 0
+#define POWERED_FLIGHT_BIT 1
+#define APOGEE_BIT 2
 
 #endif // DEFS_H
 
