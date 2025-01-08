@@ -184,12 +184,6 @@ void checkRunTestToggle();
 
 void checkSubSystems();
 
-void checkSubSystems() {
-    Serial.println(SUBSYSTEM_INIT_MASK);
-
-    // reset the state 
-    sub_check_state = SYSTEM_CHECK_STATES::SUBSYSTEM_DONE_CHECK;
-}
 
 //////////////////// SPIFFS FILE OPERATIONS ///////////////////////////
 
@@ -242,6 +236,7 @@ void readFile(fs::FS &fs, const char *path) {
 }
 
 char current_test_state_buffer[50] = ""; // TODO: use appropriate size, to hold the test state read from the SD card state.txt file 
+char subsystem_state_buffer[50];
 void readStateFile(fs::FS &fs, const char *path) {
     Serial.printf("Reading file: %s\r\n", path);
     File file = fs.open(path);
@@ -259,6 +254,27 @@ void readStateFile(fs::FS &fs, const char *path) {
     }
 
     current_test_state_buffer[index] = '\0';
+
+    file.close();
+}
+
+void readSubSystemStateFile(fs::FS &fs, const char *path) {
+    Serial.printf("Reading subsystem_state file: %s\r\n", path);
+    File file = fs.open(path);
+    if (!file || file.isDirectory()) {
+        debugln("- failed to open file for reading");
+        return;
+    }
+
+    debugln("- read from file:");
+    int index = 0;
+    while (file.available()) {
+        // Serial.write(file.read());
+        subsystem_state_buffer[index++] = file.read();
+        // sprintf(current_test_state_buf,"%s\n", file.read());
+    }
+
+    subsystem_state_buffer[index] = '\0';
 
     file.close();
 }
@@ -374,6 +390,13 @@ void initDataFiles() {
     writeFile(SD, "/data.txt", "Test data\r\n");
     writeFile(SD, "/state.txt", "DATA_CONSUME\r\n"); 
 
+}
+
+void checkSubSystems() {
+    sub_check_state = SYSTEM_CHECK_STATES::SUB_SYSTEM_CHECK;
+    Serial.println(SUBSYSTEM_INIT_MASK);
+    //sub_check_state = SYSTEM_CHECK_STATES::SUBSYSTEM_DONE_CHECK;
+    //writeFile(SD, "/subsystem_state.txt", "SUBSYSTEM_DONE_CHECK");
 }
 
 //////////////////// END OF SPIFFS FILE OPERATIONS ///////////////////////////
@@ -1544,10 +1567,18 @@ void setup() {
         SUBSYSTEM_INIT_MASK |= (1 << TEST_HARDWARE_CHECK_BIT);
     }
 
-    debug("[]SUBSYSTEM_INIT_MASK: "); debugln(SUBSYSTEM_INIT_MASK);
+    //debug("[]SUBSYSTEM_INIT_MASK: "); debugln(SUBSYSTEM_INIT_MASK);
 
     // set current state
-    sub_check_state = SYSTEM_CHECK_STATES::SUB_SYSTEM_CHECK;
+    //writeFile(SD, "/subsystem_state.txt", "SUB_SYSTEM_CHECK");
+    //readSubSystemStateFile(SD, "/subsystem_state.txt");
+    // if(strcmp("SUB_SYSTEM_CHECK", subsystem_state_buffer) == 0 ){
+    //     sub_check_state = SYSTEM_CHECK_STATES::SUB_SYSTEM_CHECK;
+    // } else if(strcmp("SUBSYSTEM_DONE_CHECK", subsystem_state_buffer) == 0) {
+    //     sub_check_state = SYSTEM_CHECK_STATES::SUBSYSTEM_DONE_CHECK;
+    // }
+
+    //sub_check_state = SYSTEM_CHECK_STATES::SUB_SYSTEM_CHECK;
 
     // initialize the ring buffer
     ring_buffer_init(&altitude_ring_buffer);
@@ -1851,6 +1882,10 @@ void loop() {
             char ch = Serial.read();
             if(ch >= '0' && ch <= '9') { 
                 if (ch == '1')  checkSubSystems();
+                if (ch == '2'){
+                    Serial.println("Received 2");
+                    sub_check_state = SYSTEM_CHECK_STATES::SUBSYSTEM_DONE_CHECK;
+                }  
             }
         }
 
