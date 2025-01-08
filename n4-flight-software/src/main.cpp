@@ -763,6 +763,7 @@ ring_buffer altitude_ring_buffer;
 float curr_val;
 float oldest_val;
 uint8_t apogee_flag =0; // to signal that we have detected apogee
+static int apogee_val = 0; // apogee altitude aproximmation
 
 /**
 * @brief create dynamic WIFI
@@ -1135,12 +1136,11 @@ void checkFlightState(void* pvParameters) {
             } else if(LAUNCH_DETECTION_THRESHOLD < flight_data.alt_data.altitude < (LAUNCH_DETECTION_THRESHOLD+LAUNCH_DETECTION_ALTITUDE_WINDOW) ) {
                 current_state = ARMED_FLIGHT_STATE::POWERED_FLIGHT;
                 debugln("POWERED");  
-                delay(50);  
+                delay(STATE_CHANGE_DELAY);  
             } 
 
             // COASTING
 
-            
             // APOGEE and APOGEE DETECTION
             ring_buffer_put(&altitude_ring_buffer, flight_data.alt_data.altitude);
             if(ring_buffer_full(&altitude_ring_buffer) == 1) {
@@ -1149,22 +1149,43 @@ void checkFlightState(void* pvParameters) {
 
             //debug("Curr val:");debug(flight_data.alt_data.altitude); debug("    "); debugln(oldest_val);
             if((oldest_val - flight_data.alt_data.altitude) >= APOGEE_DETECTION_THRESHOLD) {
+
                 if(apogee_flag == 0) {
+                    apogee_val = ( (oldest_val - flight_data.alt_data.altitude) / 2 ) + oldest_val;
+                    //debug("APG_VAL");debugln(apogee_val);
                     current_state = ARMED_FLIGHT_STATE::APOGEE;
-                    
+                    delay(STATE_CHANGE_DELAY);
                     debugln("APOGEE");
-                    // todo: deploy the drogue here ->
-                    //delay(1500); // simulate pyro firing - remove this in production
-                    delay(50);
-                    // todo: check when to deploy drogue chute, a few meters after apogee
+                    delay(STATE_CHANGE_DELAY);
                     current_state = ARMED_FLIGHT_STATE::DROGUE_DEPLOY;
                     debugln("DROGUE");
+                    delay(STATE_CHANGE_DELAY);
+                    current_state =  ARMED_FLIGHT_STATE::DROGUE_DESCENT;
+                    debugln("DROGUE_DESCENT");
+                    delay(STATE_CHANGE_DELAY);
                     apogee_flag = 1;
                 }
+
             }
-        } else {
-            // states after apogee
+
+        } else if(apogee_flag == 1) {
             
+            if(LAUNCH_DETECTION_THRESHOLD <= flight_data.alt_data.altitude <= apogee_val) {
+                current_state = ARMED_FLIGHT_STATE::MAIN_DEPLOY;
+                debugln("MAIN");
+                delay(STATE_CHANGE_DELAY);
+
+                // current_state = ARMED_FLIGHT_STATE::MAIN_DESCENT;
+                // debugln("MAIN_DESC");
+                // delay(STATE_CHANGE_DELAY);
+
+            }
+            
+            if(flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
+                current_state = ARMED_FLIGHT_STATE::POST_FLIGHT_GROUND;
+                debugln("POST_FLIGHT");
+                delay(STATE_CHANGE_DELAY);
+            }
         }
     
     }
@@ -1916,7 +1937,7 @@ void loop() {
                         for(int row = 0; row < cp.getRowsCount(); row++) {
                             double alt = col2[row];
                             test_data_packet.alt_data.altitude = alt;
-                            delay(500);
+                            delay(200);
                             xQueueSend(check_state_queue_handle, &test_data_packet, 0);
                         }
 

@@ -84,5 +84,7 @@ const char MQTT_TOPIC[30] = "n4/flight-computer-1";             /* make this top
 #define POWERED_FLIGHT_BIT 1
 #define APOGEE_BIT 2
 
+#define STATE_CHANGE_DELAY 50
+
 #endif // DEFS_H
 
