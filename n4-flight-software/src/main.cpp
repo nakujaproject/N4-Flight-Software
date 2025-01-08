@@ -764,6 +764,7 @@ float curr_val;
 float oldest_val;
 uint8_t apogee_flag =0; // to signal that we have detected apogee
 static int apogee_val = 0; // apogee altitude aproximmation
+uint8_t main_eject_flag = 0;
 
 /**
 * @brief create dynamic WIFI
@@ -1170,24 +1171,26 @@ void checkFlightState(void* pvParameters) {
 
         } else if(apogee_flag == 1) {
             
-            if(LAUNCH_DETECTION_THRESHOLD <= flight_data.alt_data.altitude <= apogee_val) {
-                current_state = ARMED_FLIGHT_STATE::MAIN_DEPLOY;
-                debugln("MAIN");
-                delay(STATE_CHANGE_DELAY);
-
-                // current_state = ARMED_FLIGHT_STATE::MAIN_DESCENT;
-                // debugln("MAIN_DESC");
-                // delay(STATE_CHANGE_DELAY);
-
-            }
             
-            if(flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
-                current_state = ARMED_FLIGHT_STATE::POST_FLIGHT_GROUND;
-                debugln("POST_FLIGHT");
-                delay(STATE_CHANGE_DELAY);
-            }
+            if(LAUNCH_DETECTION_THRESHOLD <= flight_data.alt_data.altitude <= apogee_val) {
+                if(main_eject_flag == 0) {
+                    current_state = ARMED_FLIGHT_STATE::MAIN_DEPLOY;
+                    debugln("MAIN");
+                    delay(STATE_CHANGE_DELAY);
+                    main_eject_flag = 1;
+                } else if(main_eject_flag == 1) {
+                    current_state = ARMED_FLIGHT_STATE::MAIN_DESCENT;
+                    debugln("MAIN_DESC");
+                    delay(STATE_CHANGE_DELAY);
+                }
+
+                if(flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
+                    current_state = ARMED_FLIGHT_STATE::POST_FLIGHT_GROUND;
+                    debugln("POST_FLIGHT");
+                }
+            } 
+
         }
-    
     }
 
 }
@@ -1934,7 +1937,7 @@ void loop() {
                     float* col2 = (float*)cp[1];
 
                     if(col1 && col2) {
-                        for(int row = 0; row < cp.getRowsCount(); row++) {
+                        for(int row = 0; row <= cp.getRowsCount(); row++) {
                             double alt = col2[row];
                             test_data_packet.alt_data.altitude = alt;
                             delay(200);
