@@ -15,6 +15,7 @@ var defs_8h =
     [ "GPS_RX", "defs_8h.html#a8cd04b3645e97569755976b99fe190b8", null ],
     [ "GPS_TX", "defs_8h.html#a05b958741e002c6dd8f8af174726665e", null ],
     [ "GYROSCOPE_QUEUE_LENGTH", "defs_8h.html#aa799416c73f46fb02358bcbca97ac1ab", null ],
+    [ "LAUNCH_DETECTION_ALTITUDE_WINDOW", "defs_8h.html#a9f618e641087c9b499b2ecc9d9e113ef", null ],
     [ "LAUNCH_DETECTION_THRESHOLD", "defs_8h.html#a246062a122ce91ff67ff5988b508304c", null ],
     [ "LOG_TO_MEMORY", "defs_8h.html#a872bad07d105729fd8b94cd1a497fa0e", null ],
     [ "MAIN_EJECTION_HEIGHT", "defs_8h.html#a072d5d58ddf935fd073aa59fefa2b9f0", null ],

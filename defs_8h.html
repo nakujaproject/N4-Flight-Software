@@ -140,6 +140,8 @@ Macros</h2></td></tr>
 <tr class="separator:a74959040d4f3fa78c373849d6f548ca4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a246062a122ce91ff67ff5988b508304c" id="r_a246062a122ce91ff67ff5988b508304c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a246062a122ce91ff67ff5988b508304c">LAUNCH_DETECTION_THRESHOLD</a>&#160;&#160;&#160;5</td></tr>
 <tr class="separator:a246062a122ce91ff67ff5988b508304c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9f618e641087c9b499b2ecc9d9e113ef" id="r_a9f618e641087c9b499b2ecc9d9e113ef"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9f618e641087c9b499b2ecc9d9e113ef">LAUNCH_DETECTION_ALTITUDE_WINDOW</a>&#160;&#160;&#160;20</td></tr>
+<tr class="separator:a9f618e641087c9b499b2ecc9d9e113ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa60a3d5d5dbbe3a81b5e4ed6b8d9f8f8" id="r_aa60a3d5d5dbbe3a81b5e4ed6b8d9f8f8"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa60a3d5d5dbbe3a81b5e4ed6b8d9f8f8">APOGEE_DETECTION_THRESHOLD</a>&#160;&#160;&#160;5</td></tr>
 <tr class="separator:aa60a3d5d5dbbe3a81b5e4ed6b8d9f8f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a072d5d58ddf935fd073aa59fefa2b9f0" id="r_a072d5d58ddf935fd073aa59fefa2b9f0"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a072d5d58ddf935fd073aa59fefa2b9f0">MAIN_EJECTION_HEIGHT</a>&#160;&#160;&#160;1000</td></tr>
@@ -182,6 +184,15 @@ Macros</h2></td></tr>
 <tr class="memitem:a3155280d08d70ed55f20087e0315fc0e" id="r_a3155280d08d70ed55f20087e0315fc0e"><td class="memItemLeft" align="right" valign="top"><a id="a3155280d08d70ed55f20087e0315fc0e" name="a3155280d08d70ed55f20087e0315fc0e"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>MB_SIZE_DIVISOR</b>&#160;&#160;&#160;1048576</td></tr>
 <tr class="separator:a3155280d08d70ed55f20087e0315fc0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a524bf02baed56ea16efad882e177bdfd" id="r_a524bf02baed56ea16efad882e177bdfd"><td class="memItemLeft" align="right" valign="top"><a id="a524bf02baed56ea16efad882e177bdfd" name="a524bf02baed56ea16efad882e177bdfd"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>PREFLIGHT_BIT</b>&#160;&#160;&#160;0</td></tr>
+<tr class="separator:a524bf02baed56ea16efad882e177bdfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4c30632c9e0004ae75cdc95751b40d55" id="r_a4c30632c9e0004ae75cdc95751b40d55"><td class="memItemLeft" align="right" valign="top"><a id="a4c30632c9e0004ae75cdc95751b40d55" name="a4c30632c9e0004ae75cdc95751b40d55"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>POWERED_FLIGHT_BIT</b>&#160;&#160;&#160;1</td></tr>
+<tr class="separator:a4c30632c9e0004ae75cdc95751b40d55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ada3753c0fba6010197331acc523359" id="r_a5ada3753c0fba6010197331acc523359"><td class="memItemLeft" align="right" valign="top"><a id="a5ada3753c0fba6010197331acc523359" name="a5ada3753c0fba6010197331acc523359"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>APOGEE_BIT</b>&#160;&#160;&#160;2</td></tr>
+<tr class="separator:a5ada3753c0fba6010197331acc523359"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
@@ -221,7 +232,7 @@ const char&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_TOPIC</b> 
         </tr>
       </table>
 </div><div class="memdoc">
-<p><a class="el" href="src_2main_8cpp.html#ac4f474c82e82cbb89ca7c36dd52be0ed" title="Parse the received serial command if it is a string.">value(m)</a> for detecting apogee </p>
+<p>value in meters for detecting apogee </p>
 
 </div>
 </div>
@@ -478,6 +489,21 @@ const char&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_TOPIC</b> 
 
 </div>
 </div>
+<a id="a9f618e641087c9b499b2ecc9d9e113ef" name="a9f618e641087c9b499b2ecc9d9e113ef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9f618e641087c9b499b2ecc9d9e113ef">&#9670;&#160;</a></span>LAUNCH_DETECTION_ALTITUDE_WINDOW</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define LAUNCH_DETECTION_ALTITUDE_WINDOW&#160;&#160;&#160;20</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Window in meters where we register a launch </p>
+
+</div>
+</div>
 <a id="a246062a122ce91ff67ff5988b508304c" name="a246062a122ce91ff67ff5988b508304c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a246062a122ce91ff67ff5988b508304c">&#9670;&#160;</a></span>LAUNCH_DETECTION_THRESHOLD</h2>
 
@@ -489,7 +515,7 @@ const char&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_TOPIC</b> 
         </tr>
       </table>
 </div><div class="memdoc">
-<p>altitude(m) above which we register that we have launched </p>
+<p>altitude in meters, above which we register that we have launched </p>
 
 </div>
 </div>
