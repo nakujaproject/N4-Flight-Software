@@ -642,7 +642,7 @@ void receiveTestDataSerialEvent() {
             test_data_buffer[test_data_serial_index] = 0; // NUL terminator
 
             sprintf(data_buffer_formatted, "%s\n", test_data_buffer);
-            appendFile(SD, "/data.txt", (const char*) data_buffer_formatted);
+            appendFile(SD, test_data_file, (const char*) data_buffer_formatted);
 
             test_data_serial_index = 0;   
 
@@ -1932,7 +1932,7 @@ void loop() {
                 telemetry_type_t test_data_packet;
 
                 CSV_Parser cp("ff", false, ',');
-                if(cp.readSDfile(f_name)) {
+                if(cp.readSDfile(test_data_file)) { // to work use f_name
                     float* col1 = (float*)cp[0];
                     float* col2 = (float*)cp[1];
 
