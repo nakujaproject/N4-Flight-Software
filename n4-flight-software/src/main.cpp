@@ -333,7 +333,7 @@ void readTestDataFile() {
     // }
 
     // read back the received data to confirm
-    readFile(SD, "/data.txt");
+    //readFile(SD, "/data.txt");
     
 }
 
@@ -364,7 +364,7 @@ uint8_t initSD() {
         }
 
         // initialize test data file
-        File file = SD.open("/data.txt", FILE_WRITE); // TODO: change file name to const char*
+        File file = SD.open("data.txt", FILE_WRITE); // TODO: change file name to const char*
         if (!file) {
             debugln("[File does not exist. Creating file]");
             debugln("Test data file created");
@@ -388,10 +388,8 @@ uint8_t initSD() {
 }
 
 void initDataFiles() {
-
-    writeFile(SD, "/data.txt", "Test data\r\n");
-    writeFile(SD, "/state.txt", "DATA_CONSUME\r\n"); 
-
+    //appendFile(SD, test_data_file, "0");
+    writeFile(SD, "/state.txt", "DATA_CONSUME\r\n");
 }
 
 void checkSubSystems() {
@@ -660,7 +658,7 @@ void receiveTestDataSerialEvent() {
 
 /**
  * @brief this function prepares the flight computer to receive test data 
- * depending on the state, it tries to establich link between flight computer and sending PC
+ * depending on the state, it tries to establish link between flight computer and sending PC
  * receives the actual data
  * confirm the actual data
  */
@@ -1128,14 +1126,15 @@ void checkFlightState(void* pvParameters) {
 
         if(apogee_flag != 1) {
             // states before apogee
-            if(0 < flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
+            //debug("altitude value:"); debugln(flight_data.alt_data.altitude);
+            if(flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
                 current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;
                 debugln("PREFLIGHT");
-                vTaskDelay(STATE_CHANGE_DELAY/portTICK_RATE_MS);
+                delay(STATE_CHANGE_DELAY);
             } else if(LAUNCH_DETECTION_THRESHOLD < flight_data.alt_data.altitude < (LAUNCH_DETECTION_THRESHOLD+LAUNCH_DETECTION_ALTITUDE_WINDOW) ) {
                 current_state = ARMED_FLIGHT_STATE::POWERED_FLIGHT;
                 debugln("POWERED");
-                vTaskDelay(STATE_CHANGE_DELAY/portTICK_RATE_MS);
+                delay(STATE_CHANGE_DELAY);
             } 
 
             // COASTING
@@ -1168,8 +1167,7 @@ void checkFlightState(void* pvParameters) {
             }
 
         } else if(apogee_flag == 1) {
-            
-            
+
             if(LAUNCH_DETECTION_THRESHOLD <= flight_data.alt_data.altitude <= apogee_val) {
                 if(main_eject_flag == 0) {
                     current_state = ARMED_FLIGHT_STATE::MAIN_DEPLOY;
@@ -1181,14 +1179,13 @@ void checkFlightState(void* pvParameters) {
                     debugln("MAIN_DESC");
                     delay(STATE_CHANGE_DELAY);
                 }
+            }
 
-                if(flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
-                    current_state = ARMED_FLIGHT_STATE::POST_FLIGHT_GROUND;
-                    debugln("POST_FLIGHT");
-                    check_done_flag = 1;
-                }
-
-            } 
+            if(flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
+                current_state = ARMED_FLIGHT_STATE::POST_FLIGHT_GROUND;
+                debugln("POST_FLIGHT");
+                check_done_flag = 1;
+            }
 
         }
     }
@@ -1613,6 +1610,14 @@ void setup() {
     //////////////////////////////////////////////////////////////////////////////////////////////
     if(DAQ_MODE) {
         // in test mode we only transfer test data from the testing PC to the SD card
+        deleteFile(SD, test_data_file);
+        File t_file = SD.open(test_data_file, FILE_APPEND);
+        if(t_file) {
+            debugln("Data file ready");
+        } else {
+            debugln("Filed to create data file ");
+        }
+
         debugln();
         debugln(F("=============================================="));
         debugln(F("=== FLIGHT COMPUTER DATA ACQUISITION MODE ===="));
@@ -1920,7 +1925,7 @@ void loop() {
         // testing mode
         } else if(TEST_MODE) {
             /**
-             * Here is where we consume the test data stored in the data.txt file
+             * Here is where we consume the test data stored in the data.csv file
              */
             if(current_test_state == TEST_STATES::DATA_CONSUME) {
                 vTaskResume(checkFlightStateTaskHandle);
@@ -1929,7 +1934,7 @@ void loop() {
                 telemetry_type_t test_data_packet;
 
                 CSV_Parser cp("ff", false, ',');
-                if(cp.readSDfile(test_data_file)) { // to work use f_name
+                if(cp.readSDfile(test_data_file)) { // to work use
                     float* col1 = (float*)cp[0];
                     float* col2 = (float*)cp[1];
 
@@ -1937,7 +1942,7 @@ void loop() {
                         for(int row = 0; row <= cp.getRowsCount(); row++) {
                             double alt = col2[row];
                             test_data_packet.alt_data.altitude = alt;
-                            delay(50);
+                            delay(200);
                             xQueueSend(check_state_queue_handle, &test_data_packet, portMAX_DELAY);
                         }
 
