@@ -279,9 +279,6 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>initDataFiles</b> ()<
 <tr class="memitem:a4139203bf745c4d38fd73bab228d571e" id="r_a4139203bf745c4d38fd73bab228d571e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4139203bf745c4d38fd73bab228d571e">blink_200ms</a> (uint8_t led_pin)</td></tr>
 <tr class="memdesc:a4139203bf745c4d38fd73bab228d571e"><td class="mdescLeft">&#160;</td><td class="mdescRight">implements non-blocking blink  <br /></td></tr>
 <tr class="separator:a4139203bf745c4d38fd73bab228d571e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a116b2d63316554bf84b8f25408795de3" id="r_a116b2d63316554bf84b8f25408795de3"><td class="memItemLeft" align="right" valign="top"><a id="a116b2d63316554bf84b8f25408795de3" name="a116b2d63316554bf84b8f25408795de3"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>ParseSerialBuffer</b> (char *buffer)</td></tr>
-<tr class="separator:a116b2d63316554bf84b8f25408795de3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a102c6561be41c1aafb3bd6da443deed7" id="r_a102c6561be41c1aafb3bd6da443deed7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a102c6561be41c1aafb3bd6da443deed7">ParseSerialNumeric</a> (int <a class="el" href="#ac4f474c82e82cbb89ca7c36dd52be0ed">value</a>)</td></tr>
 <tr class="memdesc:a102c6561be41c1aafb3bd6da443deed7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parse the received serial command if it is a digit We are only interested in numeric values being sent by the transmitter to us, the receiver.  <br /></td></tr>
 <tr class="separator:a102c6561be41c1aafb3bd6da443deed7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -341,9 +338,6 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_Reconnect</b> ()
 <tr class="memitem:a582e3dadcae4266158f0516e7c264bb6" id="r_a582e3dadcae4266158f0516e7c264bb6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a582e3dadcae4266158f0516e7c264bb6">MQTTInit</a> (const char *broker_IP, int broker_port)</td></tr>
 <tr class="memdesc:a582e3dadcae4266158f0516e7c264bb6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize MQTT.  <br /></td></tr>
 <tr class="separator:a582e3dadcae4266158f0516e7c264bb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a71c4b92d5d3a73b01598276d342ca8f3" id="r_a71c4b92d5d3a73b01598276d342ca8f3"><td class="memItemLeft" align="right" valign="top"><a id="a71c4b92d5d3a73b01598276d342ca8f3" name="a71c4b92d5d3a73b01598276d342ca8f3"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>customCheckState</b> ()</td></tr>
-<tr class="separator:a71c4b92d5d3a73b01598276d342ca8f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4fc01d736fe50cf5b977f755b675f11d" id="r_a4fc01d736fe50cf5b977f755b675f11d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4fc01d736fe50cf5b977f755b675f11d">setup</a> ()</td></tr>
 <tr class="memdesc:a4fc01d736fe50cf5b977f755b675f11d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setup - perform initialization of all hardware subsystems, create queues, create queue handles initialize system check table.  <br /></td></tr>
 <tr class="separator:a4fc01d736fe50cf5b977f755b675f11d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -377,6 +371,9 @@ LOG_LEVEL&#160;</td><td class="memItemRight" valign="bottom"><b>level</b> = INFO
 <tr class="memitem:ab83af3e3fef37bbadaa0804e9c1abf66" id="r_ab83af3e3fef37bbadaa0804e9c1abf66"><td class="memItemLeft" align="right" valign="top"><a id="ab83af3e3fef37bbadaa0804e9c1abf66" name="ab83af3e3fef37bbadaa0804e9c1abf66"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>is_flight_mode</b> = 0</td></tr>
 <tr class="separator:ab83af3e3fef37bbadaa0804e9c1abf66"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac392c106aa739ab6bc2f77bd1389f8d5" id="r_ac392c106aa739ab6bc2f77bd1389f8d5"><td class="memItemLeft" align="right" valign="top"><a id="ac392c106aa739ab6bc2f77bd1389f8d5" name="ac392c106aa739ab6bc2f77bd1389f8d5"></a>
+uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>check_done_flag</b> = 0</td></tr>
+<tr class="separator:ac392c106aa739ab6bc2f77bd1389f8d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a12a374be19c9b55750097a0b9fad50fb" id="r_a12a374be19c9b55750097a0b9fad50fb"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a12a374be19c9b55750097a0b9fad50fb">subsystems_state_buffer</a> [10]</td></tr>
 <tr class="separator:a12a374be19c9b55750097a0b9fad50fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5fa0d939030a4ab773be75554017c4aa" id="r_a5fa0d939030a4ab773be75554017c4aa"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5fa0d939030a4ab773be75554017c4aa">SUBSYSTEM_INIT_MASK</a> = 0b00000000</td></tr>
