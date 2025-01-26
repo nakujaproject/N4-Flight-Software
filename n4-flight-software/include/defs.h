@@ -39,7 +39,7 @@
 #define TASK_DELAY 10
 
 /*!< Flight data constants  */
-#define LAUNCH_DETECTION_THRESHOLD 5         /*!< altitude in meters, above which we register that we have launched  */
+#define LAUNCH_DETECTION_THRESHOLD 10         /*!< altitude in meters, above which we register that we have launched  */
 #define LAUNCH_DETECTION_ALTITUDE_WINDOW 20  /*!< Window in meters where we register a launch */
 #define APOGEE_DETECTION_THRESHOLD 5         /*!< value in meters for detecting apogee */
 #define MAIN_EJECTION_HEIGHT 1000            /*!< height to eject the main chute  */
@@ -84,7 +84,7 @@ const char MQTT_TOPIC[30] = "n4/flight-computer-1";             /* make this top
 #define POWERED_FLIGHT_BIT 1
 #define APOGEE_BIT 2
 
-#define STATE_CHANGE_DELAY 50
+#define STATE_CHANGE_DELAY 100
 
 #endif // DEFS_H
 

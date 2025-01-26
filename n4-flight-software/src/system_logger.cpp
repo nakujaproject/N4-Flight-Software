@@ -39,7 +39,7 @@ void SystemLogger::logToFile (fs::FS &fs, uint8_t mode, const char* client, uint
 
         // log to file
         if(f.print(log_buffer)) {
-            Serial.println("- file written");
+            Serial.println("Log OK");
         } else {
             Serial.println("- write failed");
         }
@@ -56,7 +56,7 @@ void SystemLogger::logToFile (fs::FS &fs, uint8_t mode, const char* client, uint
 
         // log to file
         if(f.print(log_buffer)) {
-            Serial.println("- file written");
+            Serial.println("Log OK");
         } else {
             Serial.println("- write failed");
         }

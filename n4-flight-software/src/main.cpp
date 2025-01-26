@@ -64,6 +64,7 @@ enum OPERATION_MODE {
 };
 
 uint8_t is_flight_mode = 0;
+uint8_t check_done_flag = 0;
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////// FLIGHT COMPUTER TESTING SYSTEM  /////////////////////////////////
@@ -537,27 +538,25 @@ void InitXMODEM() {
  * @brief Parse the received serial command if it is a string
  *******************************************************************************/
 int value = 0;
-
-void ParseSerialBuffer(char *buffer) {
-
-    if (strcmp(buffer, SOH_CHR) == 0) {
-        // if(buffer == SOH){
-
-        debugln(F("<Start of transmission>"));
-        SOH_recvd_flag = 1;
-        digitalWrite(red_led, HIGH);
-        debugln(F("<SOH rcvd from receiver> Waiting for data..."));
-
-        // put the MCU in data receive state
-        current_DAQ_state = DAQ_STATES::RECEIVE_TEST_DATA;
-        SwitchLEDs(0, 1);
-
-
-    } else {
-        debugln("Unknown");
-    }
-
-}
+//
+//void ParseSerialBuffer(char *buffer) {
+//
+//    if (strcmp(buffer, SOH_CHR) == 0) {
+//
+//        debugln(F("<Start of transmission>"));
+//        SOH_recvd_flag = 1;
+//        digitalWrite(red_led, HIGH);
+//        debugln(F("<SOH rcvd from receiver> Waiting for data..."));
+//
+//        // put the MCU in data receive state
+//        current_DAQ_state = DAQ_STATES::RECEIVE_TEST_DATA;
+//        SwitchLEDs(0, 1);
+//
+//    } else {
+//        debugln("Unknown");
+//    }
+//
+//}
 
 /*!****************************************************************************
  * @brief Parse the received serial command if it is a digit
@@ -586,7 +585,7 @@ void ParseSerialNumeric(int value) {
 
 /*!****************************************************************************
  * @brief Receive serial message during handshake
- *******************************************************************************/
+ *****************************************************************************/
 void handshakeSerialEvent() {
     SwitchLEDs(1, 0);
     if (Serial.available()) {
@@ -596,7 +595,7 @@ void handshakeSerialEvent() {
             // accumulate value
             value = value * ch + (ch - '0');
         } else if (ch == '\n') { 
-            debug("SerEvent: ");
+            debug("SerialEvent: ");
             debugln(value);
             ParseSerialNumeric(value);
             value = 0; // reset value for the next transmission burst
@@ -683,6 +682,7 @@ void prepareForDataReceive() {
         {
             // this state tries to establish communication with the sending PC
             case DAQ_STATES::HANDSHAKE:
+
                 handshakeSerialEvent();
                 if(!SOH_recvd_flag) {
                     current_NAK_time = millis();
@@ -696,7 +696,6 @@ void prepareForDataReceive() {
 
             // this state receives data sent from the transmitting PC
             case DAQ_STATES::RECEIVE_TEST_DATA:
-                // debugln("RECEIVE_TEST_DATA");
                 receiveTestDataSerialEvent();
                 break;
 
@@ -1134,6 +1133,7 @@ void checkFlightState(void* pvParameters) {
             if(flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
                 current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;
                 debugln("PREFLIGHT");
+                delay(STATE_CHANGE_DELAY);
             } else if(LAUNCH_DETECTION_THRESHOLD < flight_data.alt_data.altitude < (LAUNCH_DETECTION_THRESHOLD+LAUNCH_DETECTION_ALTITUDE_WINDOW) ) {
                 current_state = ARMED_FLIGHT_STATE::POWERED_FLIGHT;
                 debugln("POWERED");  
@@ -1178,7 +1178,7 @@ void checkFlightState(void* pvParameters) {
                     debugln("MAIN");
                     delay(STATE_CHANGE_DELAY);
                     main_eject_flag = 1;
-                } else if(main_eject_flag == 1) {
+                } else if((main_eject_flag == 1) && (check_done_flag == 0) ) { // todo: confirm check_done_flag
                     current_state = ARMED_FLIGHT_STATE::MAIN_DESCENT;
                     debugln("MAIN_DESC");
                     delay(STATE_CHANGE_DELAY);
@@ -1187,7 +1187,9 @@ void checkFlightState(void* pvParameters) {
                 if(flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
                     current_state = ARMED_FLIGHT_STATE::POST_FLIGHT_GROUND;
                     debugln("POST_FLIGHT");
+                    check_done_flag = 1;
                 }
+
             } 
 
         }
@@ -1511,11 +1513,6 @@ void mainChuteDeploy() {
     //     debugln("MAIN CHUTE DEPLOYED");
     // }
 }
-
-void customCheckState() {
-
-}
-
 
 /*!****************************************************************************
  * @brief Setup - perform initialization of all hardware subsystems, create queues, create queue handles
@@ -1890,6 +1887,7 @@ void setup() {
 
         SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "END OF INITIALIZATION\r\n");
 
+        debugln("Ready for DATA CONSUME");
     } // end of setup in running mode 
     
 }
@@ -1908,16 +1906,18 @@ void loop() {
         if(Serial.available()) {
             char ch = Serial.read();
             if(ch >= '0' && ch <= '9') { 
-                if (ch == '1')  checkSubSystems();
+                if (ch == '7')  checkSubSystems();
                 if (ch == '2'){
+                    debugln("SUBSYSTEMS CHECK COMPLETE");
                     sub_check_state = SYSTEM_CHECK_STATES::SUBSYSTEM_DONE_CHECK;
                 }  
             }
         }
 
     } else if(sub_check_state = SYSTEM_CHECK_STATES::SUBSYSTEM_DONE_CHECK) {
-        // data acquisition mode
+        
         if (DAQ_MODE) {
+            // data acquisition mode
             prepareForDataReceive();
 
         // testing mode
