@@ -563,8 +563,8 @@ int value = 0;
  We are only interested in numeric values being sent by the transmitter to us, the receiver
  *******************************************************************************/
 void ParseSerialNumeric(int value) {
-    debug("Receive val: ");
-    debugln(value);
+    //debug("Receive val: ");
+    //debugln(value);
 
     if (value == 1) // SOH: numeric 1 -> ready to receive data
     {
@@ -595,8 +595,8 @@ void handshakeSerialEvent() {
             // accumulate value
             value = value * ch + (ch - '0');
         } else if (ch == '\n') { 
-            debug("SerialEvent: ");
-            debugln(value);
+            //debug("SerialEvent: ");
+            //debugln(value);
             ParseSerialNumeric(value);
             value = 0; // reset value for the next transmission burst
         }
@@ -687,7 +687,8 @@ void prepareForDataReceive() {
                 if(!SOH_recvd_flag) {
                     current_NAK_time = millis();
                     if((current_NAK_time - last_NAK_time) > NAK_INTERVAL) {
-                        InitXMODEM(); // send NAK every NAK_INTERVAL (4 seconds typically)
+                        InitXMODEM();// send NAK every NAK_INTERVAL (4 seconds typically)
+                        debugln("WAITING FOR HANDSHAKE SUCCESS");
                         last_NAK_time = current_NAK_time;
                     }
                 }
@@ -1125,19 +1126,16 @@ void checkFlightState(void* pvParameters) {
     while (1) {
         xQueueReceive(check_state_queue_handle, &flight_data, portMAX_DELAY);
 
-        //debug("Received alt:"); debug(flight_data.alt_data.altitude); debugln();
-
         if(apogee_flag != 1) {
             // states before apogee
-            // PREFLIGHT
-            if(flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
+            if(0 < flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
                 current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;
                 debugln("PREFLIGHT");
-                delay(STATE_CHANGE_DELAY);
+                vTaskDelay(STATE_CHANGE_DELAY/portTICK_RATE_MS);
             } else if(LAUNCH_DETECTION_THRESHOLD < flight_data.alt_data.altitude < (LAUNCH_DETECTION_THRESHOLD+LAUNCH_DETECTION_ALTITUDE_WINDOW) ) {
                 current_state = ARMED_FLIGHT_STATE::POWERED_FLIGHT;
-                debugln("POWERED");  
-                delay(STATE_CHANGE_DELAY);  
+                debugln("POWERED");
+                vTaskDelay(STATE_CHANGE_DELAY/portTICK_RATE_MS);
             } 
 
             // COASTING
@@ -1153,7 +1151,7 @@ void checkFlightState(void* pvParameters) {
 
                 if(apogee_flag == 0) {
                     apogee_val = ( (oldest_val - flight_data.alt_data.altitude) / 2 ) + oldest_val;
-                    //debug("APG_VAL");debugln(apogee_val);
+
                     current_state = ARMED_FLIGHT_STATE::APOGEE;
                     delay(STATE_CHANGE_DELAY);
                     debugln("APOGEE");
@@ -1908,7 +1906,6 @@ void loop() {
             if(ch >= '0' && ch <= '9') { 
                 if (ch == '7')  checkSubSystems();
                 if (ch == '2'){
-                    debugln("SUBSYSTEMS CHECK COMPLETE");
                     sub_check_state = SYSTEM_CHECK_STATES::SUBSYSTEM_DONE_CHECK;
                 }  
             }
@@ -1940,8 +1937,8 @@ void loop() {
                         for(int row = 0; row <= cp.getRowsCount(); row++) {
                             double alt = col2[row];
                             test_data_packet.alt_data.altitude = alt;
-                            delay(200);
-                            xQueueSend(check_state_queue_handle, &test_data_packet, 0);
+                            delay(50);
+                            xQueueSend(check_state_queue_handle, &test_data_packet, portMAX_DELAY);
                         }
 
                         debugln("END OF FILE");
