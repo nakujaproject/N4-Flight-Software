@@ -1166,8 +1166,8 @@ void checkFlightState(void* pvParameters) {
 
             }
 
-        } else if(apogee_flag == 1) {
-
+        //} else if(apogee_flag == 1) {
+        } else {
             if(LAUNCH_DETECTION_THRESHOLD <= flight_data.alt_data.altitude <= apogee_val) {
                 if(main_eject_flag == 0) {
                     current_state = ARMED_FLIGHT_STATE::MAIN_DEPLOY;
@@ -1628,8 +1628,6 @@ void setup() {
         //////////////////////////////////////////////////////////////////////////////////////////////
         //////////////////////////// END OF FLIGHT COMPUTER TESTING SYSTEM  //////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////////////
-
-            
     }  else if (TEST_MODE) {
         debugln();
         debugln(F("=============================================="));
@@ -1917,7 +1915,6 @@ void loop() {
         }
 
     } else if(sub_check_state = SYSTEM_CHECK_STATES::SUBSYSTEM_DONE_CHECK) {
-        
         if (DAQ_MODE) {
             // data acquisition mode
             prepareForDataReceive();
@@ -1957,7 +1954,8 @@ void loop() {
                 }
 
             }
-            else if(current_test_state == TEST_STATES::DONE_TESTING) {
+            else if(current_test_state == TEST_STATES::DONE_TESTING) 
+            {
                 vTaskSuspend(checkFlightStateTaskHandle);
             }
 
