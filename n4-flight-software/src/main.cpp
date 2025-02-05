@@ -38,6 +38,7 @@ void drogueChuteDeploy();
 void mainChuteDeploy();
 float kalmanFilter(float z);
 void checkRunTestToggle();
+void buzz(uint16_t interval);
 
 /* state machine variables*/
 uint8_t operation_mode = 0;                                     /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
@@ -65,6 +66,15 @@ enum OPERATION_MODE {
 /* set initial mode as safe mode */
 
 uint8_t is_flight_mode = 0; /* flag to indicate if we are in test or flight mode */
+
+/* Intervals for buzzer state indication - see docs */
+enum BUZZ_INTERVALS {
+  SETUP_INIT = 200,
+  ARMING_PROCEDURE = 500
+};
+unsigned long current_non_block_time = 0;
+unsigned long last_non_block_time = 0;
+bool buzz_state = 0;
 
 /* hardware init check - to pinpoint any hardware failure during setup */
 #define BMP_CHECK_BIT           0
@@ -185,6 +195,13 @@ char status;
 double T, PRESSURE, p0, a;
 
 /**
+* @brief initialize Buzzer
+*/
+void buzzerInit() {
+    pinMode(BUZZER_PIN, OUTPUT);
+}
+
+/**
 * @brief initialize SPIFFS for event logging during flight
 */
 uint8_t InitSPIFFS() {
@@ -241,7 +258,6 @@ uint8_t initSD() {
     }
 }
 
-
 /*!****************************************************************************
  * @brief Initialize BMP180 barometric sensor
  * @return TODO: 1 if init OK, 0 otherwise
@@ -281,11 +297,22 @@ uint8_t GPSInit() {
 }
 
 /**
+* @brief - non-blocking buzz 
+ */
+void buzz(uint16_t interval) {
+        /* non-blocking buzz */
+    current_non_block_time = millis();
+    if((current_non_block_time - last_non_block_time) > interval) {
+        buzz_state = !buzz_state;
+        last_non_block_time = current_non_block_time;
+        digitalWrite(BUZZER_PIN, buzz_state);
+    }
+
+}
+
+/**
  * ///////////////////////// END OF PERIPHERALS INIT /////////////////////////
  */
-
-
-// a queue for each consuming task
 QueueHandle_t telemetry_data_queue_handle;
 QueueHandle_t log_to_mem_queue_handle;
 QueueHandle_t check_state_queue_handle;
@@ -933,6 +960,11 @@ void mainChuteDeploy() {
  * 
  *******************************************************************************/
 void setup() {
+    buzzerInit();
+
+    /* buzz to indicate start of setup */
+    buzz(BUZZ_INTERVALS::SETUP_INIT);
+
     /* core to run the tasks */
     uint8_t app_id = xPortGetCoreID();
 
@@ -966,6 +998,7 @@ void setup() {
     uint8_t gps_init_state = GPSInit();
     uint8_t sd_init_state = initSD();
     uint8_t flash_init_state = data_logger.loggerInit();
+    
 
     /* initialize mqtt */
     MQTTInit(MQTT_SERVER, MQTT_PORT);
@@ -1213,6 +1246,10 @@ void setup() {
 
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "\nEND OF INITIALIZATION\r\n");
 
+
+    /* buzz to indicate start of setup */
+    buzz(BUZZ_INTERVALS::SETUP_INIT);
+    
 } /* End of setup */
 
 
