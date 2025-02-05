@@ -14,6 +14,7 @@
 #define MQTT 1                                 /*!< set this to 1 if using MQTT for telemetry transfer */
 #define XBEE 1                                 /*!< set to 1 if using XBEE for telemetry transfer */
 
+#define BAUDRATE        115200
 #define GPS_BAUD_RATE 9600                     /*!< baud rate for the GPS module. Change accordingly */
 #define XBEE_BAUD_RATE 9600                    /*!< baud rate for the XBEE HP module. Change accordingly */
 
@@ -23,22 +24,36 @@
 #define DEBUG_TO_TERMINAL 0                   /*!< allow create task that prints data to terminal. Set o 0 before flight  */
 
 #if DEBUGGING
-#define debug(x) Serial.print(x)
-#define debugln(x) Serial.println(x)
-#define debugf(x, y) Serial.printf(x, y)
+    #define debug(x) Serial.print(x)
+    #define debugln(x) Serial.println(x)
+    #define debugf(x, y) Serial.printf(x, y)
 #else
-#define debug(x)
-#define debugln(x)
-#define debugf(x, y)
+    #define debug(x)
+    #define debugln(x)
+    #define debugf(x, y)
 #endif // DEBUG
 
 /* end of debug parameters */
+
+/* MPU config parameters */
+#define MPU_ADDRESS 0x68
+#define MPU_ACCEL_RANGE 16
+#define GYRO_RANGE 1000 /* 1000 deg/s */
+
+/* other pins */
+#define RED_LED_PIN         15               
+#define GREEN_LED_PIN       4
+#define BUZZER_PIN          33
+#define SET_DAQ_MODE_PIN    14     /*!< Pin to set the flight computer to TEST mode */
+#define SET_TEST_MODE_PIN   13      /*!< Pin to set the flight computer to RUN mode */
+#define SD_CS_PIN           26
 
 /* timing constant */
 #define SETUP_DELAY 300
 #define TASK_DELAY 10
 
 /*!< Flight data constants  */
+#define ALTITUDE 1525.0 // altitude of iPIC building, JKUAT, Juja. TODO: Change to launch site altitude
 #define LAUNCH_DETECTION_THRESHOLD 10         /*!< altitude in meters, above which we register that we have launched  */
 #define LAUNCH_DETECTION_ALTITUDE_WINDOW 20  /*!< Window in meters where we register a launch */
 #define APOGEE_DETECTION_THRESHOLD 5         /*!< value in meters for detecting apogee */
@@ -76,9 +91,9 @@ const char MQTT_TOPIC[30] = "n4/flight-computer-1";             /* make this top
 #define GPS_TX 17                           /*!< GPS TX pin */
 #define GPS_RX 16                           /*!< GPS RX pin */
 
+/* File systems defines */
 #define MB_SIZE_DIVISOR 1048576
-
-
+#define FORMAT_SPIFFS_IF_FAILED 1
 
 #define PREFLIGHT_BIT 0
 #define POWERED_FLIGHT_BIT 1
