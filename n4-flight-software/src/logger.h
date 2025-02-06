@@ -33,7 +33,7 @@ class DataLogger {
         bool loggerInit();
         void loggerFormat();
         void loggerInfo();
-        bool loggerTest();
+        void loggerTest();
         void loggerWrite(telemetry_type_t);
         void loggerRead(uint8_t file_pointer, char buffer);
         void loggerSpaces();

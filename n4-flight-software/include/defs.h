@@ -11,7 +11,7 @@
 /*!< To select the telemetry transfer method used */
 /*!< note: u can use wifi and xbee at the same time, so both of these handles can be set */
 /*!< at the same time */
-#define MQTT 1                                 /*!< set this to 1 if using MQTT for telemetry transfer */
+#define MQTT 0                                 /*!< set this to 1 if using MQTT for telemetry transfer */
 #define XBEE 1                                 /*!< set to 1 if using XBEE for telemetry transfer */
 
 #define BAUDRATE        115200
@@ -39,6 +39,7 @@
 #define MPU_ADDRESS 0x68
 #define MPU_ACCEL_RANGE 16
 #define GYRO_RANGE 1000 /* 1000 deg/s */
+#define WIRE_SEND_STOP 0
 
 /* other pins */
 #define RED_LED_PIN         15               

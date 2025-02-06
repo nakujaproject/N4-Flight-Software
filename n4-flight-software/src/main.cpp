@@ -38,7 +38,8 @@ void drogueChuteDeploy();
 void mainChuteDeploy();
 float kalmanFilter(float z);
 void checkRunTestToggle();
-void buzz(uint16_t interval);
+void non_blocking_buzz(uint16_t interval);
+void blocking_buzz(uint16_t interval);
 
 /* state machine variables*/
 uint8_t operation_mode = 0;                                     /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
@@ -299,7 +300,7 @@ uint8_t GPSInit() {
 /**
 * @brief - non-blocking buzz 
  */
-void buzz(uint16_t interval) {
+void non_blocking_buzz(uint16_t interval) {
         /* non-blocking buzz */
     current_non_block_time = millis();
     if((current_non_block_time - last_non_block_time) > interval) {
@@ -308,6 +309,16 @@ void buzz(uint16_t interval) {
         digitalWrite(BUZZER_PIN, buzz_state);
     }
 
+}
+
+/**
+ * @brief blocking buzz 
+ */
+void blocking_buzz(uint16_t interval) {
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(interval);
+    digitalWrite(BUZZER_PIN, LOW);
+    delay(interval);
 }
 
 /**
@@ -954,6 +965,7 @@ void mainChuteDeploy() {
     // }
 }
 
+
 /*!****************************************************************************
  * @brief Setup - perform initialization of all hardware subsystems, create queues, create queue handles
  * initialize system check table
@@ -963,7 +975,7 @@ void setup() {
     buzzerInit();
 
     /* buzz to indicate start of setup */
-    buzz(BUZZ_INTERVALS::SETUP_INIT);
+    blocking_buzz(BUZZ_INTERVALS::SETUP_INIT);
 
     /* core to run the tasks */
     uint8_t app_id = xPortGetCoreID();
@@ -996,7 +1008,7 @@ void setup() {
     uint8_t bmp_init_state = BMPInit();
     uint8_t imu_init_state = imu.init();
     uint8_t gps_init_state = GPSInit();
-    uint8_t sd_init_state = initSD();
+    // uint8_t sd_init_state = initSD();
     uint8_t flash_init_state = data_logger.loggerInit();
     
 
@@ -1005,34 +1017,34 @@ void setup() {
 
     /* update the sub-systems init state table */
     // check if BMP init OK
-    if(bmp_init_state) { 
-        SUBSYSTEM_INIT_MASK |= (1 << BMP_CHECK_BIT);
-    }
+    // if(bmp_init_state) { 
+    //     SUBSYSTEM_INIT_MASK |= (1 << BMP_CHECK_BIT);
+    // }
 
-    // check if MPU init OK
-    if(imu_init_state)  {
-        SUBSYSTEM_INIT_MASK |= (1 << IMU_CHECK_BIT);
-    }
+    // // check if MPU init OK
+    // if(imu_init_state)  {
+    //     SUBSYSTEM_INIT_MASK |= (1 << IMU_CHECK_BIT);
+    // }
 
-    // check if flash memory init OK
-    if (flash_init_state) {
-        SUBSYSTEM_INIT_MASK |= (1 << FLASH_CHECK_BIT);
-    }
+    // // check if flash memory init OK
+    // if (flash_init_state) {
+    //     SUBSYSTEM_INIT_MASK |= (1 << FLASH_CHECK_BIT);
+    // }
 
-    // check if GPS init OK
-    if(gps_init_state) {
-        SUBSYSTEM_INIT_MASK |= (1 << GPS_CHECK_BIT);
-    }
+    // // check if GPS init OK
+    // if(gps_init_state) {
+    //     SUBSYSTEM_INIT_MASK |= (1 << GPS_CHECK_BIT);
+    // }
 
-    // check if SD CARD init OK
-    if(sd_init_state) {
-        SUBSYSTEM_INIT_MASK |= (1 << SD_CHECK_BIT);
-    } 
+    // // check if SD CARD init OK
+    // if(sd_init_state) {
+    //     SUBSYSTEM_INIT_MASK |= (1 << SD_CHECK_BIT);
+    // } 
 
-    // check if SPIFFS init OK
-    if(spiffs_init_state) {
-        SUBSYSTEM_INIT_MASK |= (1 << SPIFFS_CHECK_BIT);
-    }
+    // // check if SPIFFS init OK
+    // if(spiffs_init_state) {
+    //     SUBSYSTEM_INIT_MASK |= (1 << SPIFFS_CHECK_BIT);
+    // }
 
 
     /* initialize the ring buffer - used for apogee detection */
@@ -1159,18 +1171,18 @@ void setup() {
     }
 
     /* TASK 5: CHECK FLIGHT STATE TASK */
-    BaseType_t cf = xTaskCreate(checkFlightState,"checkFlightState",STACK_SIZE*2,NULL,2, &checkFlightStateTaskHandle);
+    // BaseType_t cf = xTaskCreate(checkFlightState,"checkFlightState",STACK_SIZE*2,NULL, 1, &checkFlightStateTaskHandle);
 
-    if(cf == pdPASS) {
-        debugln("[+]checkFlightState task created OK.");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]checkFlightState task created OK.\r\n");
-    } else {
-        debugln("[-]Failed to create checkFlightState task");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create checkFlightState task\r\n");
-    }
+    // if(cf == pdPASS) {
+    //     debugln("[+]checkFlightState task created OK.");
+    //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]checkFlightState task created OK.\r\n");
+    // } else {
+    //     debugln("[-]Failed to create checkFlightState task");
+    //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create checkFlightState task\r\n");
+    // }
 
     /* TASK 6: FLIGHT STATE CALLBACK TASK */
-    BaseType_t fs = xTaskCreate(flightStateCallback, "flightStateCallback", STACK_SIZE*2, NULL, 2, &flightStateCallbackTaskHandle);
+    BaseType_t fs = xTaskCreate(flightStateCallback, "flightStateCallback", STACK_SIZE*2, NULL, 1, &flightStateCallbackTaskHandle);
 
     if(fs == pdPASS) {
         debugln("[+]flightStateCallback task created OK.");
@@ -1180,17 +1192,20 @@ void setup() {
         SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create flightStateCallback task\r\n");
     }
 
-    /* TASK 8: TRANSMIT TELEMETRY DATA */
-    BaseType_t th = xTaskCreate(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*4, NULL, 2, &MQTT_TransmitTelemetryTaskHandle);
+    #if MQTT
+        /* TASK 8: TRANSMIT TELEMETRY DATA */
+        BaseType_t th = xTaskCreate(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*4, NULL, 2, &MQTT_TransmitTelemetryTaskHandle);
 
-    if(th == pdPASS){
-        debugln("[+]MQTT transmit task created OK");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]kalman_filter_queue_handle creation OK.\r\n");
-        
-    } else {
-        debugln("[-]MQTT transmit task failed to create");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]MQTT transmit task failed to create\r\n");
-    }
+        if(th == pdPASS){
+            debugln("[+]MQTT transmit task created OK");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]kalman_filter_queue_handle creation OK.\r\n");
+            
+        } else {
+            debugln("[-]MQTT transmit task failed to create");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]MQTT transmit task failed to create\r\n");
+        }
+
+    #endif
 
     BaseType_t kf = xTaskCreate(kalmanFilterTask, "kalman filter", STACK_SIZE*2, NULL, 2, &kalmanFilterTaskHandle);
 
@@ -1243,12 +1258,11 @@ void setup() {
     debugln(F("========== FINISHED CREATING TASKS ==========="));
     debugln(F("==============================================\n"));
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==FINISHED CREATING TASKS==\r\n");
-
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "\nEND OF INITIALIZATION\r\n");
 
 
     /* buzz to indicate start of setup */
-    buzz(BUZZ_INTERVALS::SETUP_INIT);
+    blocking_buzz(BUZZ_INTERVALS::SETUP_INIT);
     
 } /* End of setup */
 
@@ -1258,6 +1272,6 @@ void setup() {
  *******************************************************************************/
 void loop() {
     /* enable MQTT transmit loop */
-    MQTT_Reconnect();
-    client.loop();
+    // MQTT_Reconnect();
+    // client.loop();
 } /* Enf of main loop*/

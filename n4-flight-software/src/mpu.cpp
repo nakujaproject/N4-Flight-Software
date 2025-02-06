@@ -60,7 +60,7 @@ float MPU6050::readXAcceleration() {
     Wire.write(ACCEL_XOUT_H);
     Wire.endTransmission(true);
 
-    Wire.requestFrom(this->_address, 2, false);
+    Wire.requestFrom(static_cast<int>(this->_address), 2, static_cast<int>(WIRE_SEND_STOP));
     this->acc_x = Wire.read()<<8 | Wire.read();
 
     // divide by the respective factors
@@ -86,7 +86,7 @@ float MPU6050::readYAcceleration() {
     Wire.write(ACCEL_YOUT_H);
     Wire.endTransmission(true);
 
-    Wire.requestFrom(this->_address, 2, false);
+    Wire.requestFrom(static_cast<int>(this->_address), 2, WIRE_SEND_STOP);
     this->acc_y = Wire.read()<<8 | Wire.read();
 
     // divide by the respective factors
@@ -112,7 +112,7 @@ float MPU6050::readZAcceleration() {
     Wire.write(ACCEL_ZOUT_H);
     Wire.endTransmission(true);
 
-    Wire.requestFrom(this->_address, 2, false);
+    Wire.requestFrom(static_cast<int>(this->_address), 2, WIRE_SEND_STOP);
     this->acc_z = Wire.read()<<8 | Wire.read();
 
     // divide by the respective factors
@@ -174,17 +174,17 @@ void MPU6050::filterImu() {
 
 }
 
-float MPU6050::readTemperature() {
-    // write to temp register
-    Wire.beginTransmission(this->_address);
-    Wire.write(TEMP_OUT_H);
-    Wire.endTransmission(true);
+// float MPU6050::readTemperature() {
+//     // write to temp register
+//     Wire.beginTransmission(this->_address);
+//     Wire.write(TEMP_OUT_H);
+//     Wire.endTransmission(true);
 
-    Wire.requestFrom(this->_address, 2, false);
-    this->temp = Wire.read()<<8 | Wire.read();
+//     Wire.requestFrom(static_cast<int>(this->_address), 2, WIRE_SEND_STOP);
+//     this->temp = Wire.read()<<8 | Wire.read();
 
-    // temperature conversion formula 
-    // temp = (TEMP_OUT_VALUE as a signed quantity)/340 +36.53
-}
+//     // temperature conversion formula 
+//     // temp = (TEMP_OUT_VALUE as a signed quantity)/340 +36.53
+// }
 
 

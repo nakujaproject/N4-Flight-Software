@@ -141,7 +141,7 @@ bool DataLogger::loggerInit() {
  * @return true if R/W OK, false otherwise
  * 
 */
-bool DataLogger::loggerTest() {
+void DataLogger::loggerTest() {
     // create a string variable 
     char tst_var[15] = "FlashTesting";
 
