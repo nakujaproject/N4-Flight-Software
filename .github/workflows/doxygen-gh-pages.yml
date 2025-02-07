@@ -6,7 +6,7 @@ name: Doxygen-Documentation
 # events but only for the master branch
 on:
   push:
-    branches: [ main ]
+    branches: [ n4-prod ] # change this to main if using the main branch
   
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
