@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['wificonfig_0',['WIFIConfig',['../class_w_i_f_i_config.html',1,'']]]
+  ['telemetry_5fdata_0',['Telemetry_Data',['../struct_telemetry___data.html',1,'']]],
+  ['test_1',['Test',['../class_test.html',1,'']]]
 ];

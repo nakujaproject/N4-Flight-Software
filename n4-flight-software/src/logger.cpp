@@ -110,22 +110,32 @@ bool DataLogger::loggerInit() {
                     Serial.println();
                 }
                 else {
-                    break; // no more files
+                    break; 
                 }
             }
 
-            uint8_t file_create_status = SerialFlash.create(this->_filename, this->_file_size);
-
-            // create logging file with the provided filename
-            if (!file_create_status) {
-                Serial.println(F("Failed to create file"));
-                return false;
-
+            if(SerialFlash.exists(this->_filename)) {
+                // erase file contents 
+                Serial.println("flight.txt file found. Erasing file contents");
+                SerialFlashFile flight_file;
+                flight_file = SerialFlash.open(this->_filename);
+                flight_file.erase();
+                Serial.println("Done erasing file contents");
             } else {
-                // open the created file 
-                Serial.println(F("Created flight.txt file"));
-                this->_file = SerialFlash.open(this->_filename);
+                Serial.println("flight.txt file does not exist. Creating file");
+                uint8_t file_create_status = SerialFlash.create(this->_filename, this->_file_size);\
+
+                // create logging file with the provided filename - use flight.txt
+                if (!file_create_status) {
+                    Serial.println(F("Failed to create file"));
+                    return false;
+                } else {
+                    // open the created file 
+                    Serial.println(F("Created flight.txt file. Ready for data logging!"));
+                    this->_file = SerialFlash.open(this->_filename);
+                }
             }
+            
         }
         
         this->loggerEquals(); 

@@ -316,6 +316,80 @@ Apogee detection</h1>
 <h1><a class="anchor" id="step26"></a>
 Parachute ejection</h1>
 <dl class="section note"><dt>Note</dt><dd>In development</dd></dl>
+<h1><a class="anchor" id="step27"></a>
+Flight data logging and data recovery</h1>
+<p>Flight data is logged in the external SPI flash memory. The file used is called <em>flight.txt</em>. The contents of the flight.txt are erased during setup of the fight computer. Logging starts after the flight computer has been armed, to prevent logging unnecesary pre-flight data.</p>
+<p>First make sure you have the following serial tool downloaded:</p>
+<p> 
+    <a href="https://docs.ai-thinker.com/en/%E5%BC%80%E5%8F%91%E5%B7%A5">Ai Thinker Serial port debugging assistant</a>
+    </p>
+<p>To recover the file, follow the procedure below to get the data dumped from the flight computer.</p>
+<ul>
+<li>After the rocket has landed, disconnect the computer from the battery in the avionics bay.</li>
+<li>Assuming the onboard ESP32 is not damaged, connect via USB cable and upload the code in  <i>\flight-data-recovery\n4-data-recovery-code</i>  folder, using the command below:</li>
+</ul>
+<div class="fragment"><div class="line">pio run -t upload</div>
+</div><!-- fragment --><ul>
+<li>After the code has uploaded, open the Ai-THINKER serial monitor tool downloaded above.</li>
+<li>Press RESET (EN) on the onboad ESP32. The following window should open:</li>
+</ul>
+<p> 
+        <div style="text-align: center;">
+
+            <img src="show-menu.png" >
+
+        </div>
+    </p>
+<p>This file shows the options you are provided with after running the software. The options are described below:</p><ul>
+<li>List files - List all the files saved in the flash memory</li>
+<li>Dump data - dump all the data in the <b>flight.txt</b> file.</li>
+<li>To select an option, enter the letter shown on the option and press SEND. The corresponding action will occur. For example <b>l</b> to select <b>List all files</b></li>
+<li>To dump the data, enter <em><b>d</b></em> and press send. You should see the data being printed on the console as csv strings. The image below shows this step:</li>
+</ul>
+<p> 
+        <div style="text-align: center;">
+
+            <img src="dump-window.png" >
+
+        </div>
+    </p><ul>
+<li>Wait for the data dump operation to complete. After complete, press the <em><b>Save rec</b></em> file shown below and save the file as <em><b>.txt</b></em></li>
+</ul>
+<p> 
+        <div style="text-align: center;">
+
+            <img src="save-rec.jpg" >
+
+        </div>
+    </p>
+<p>You should have your flight file recovered successfully.</p>
+<p>If the onboard ESP32 has been damaged, use these steps:</p><ul>
+<li>Locate the data dump interface on the flight computer PCB.</li>
+<li><p class="startli">Connect header pins to an external NODEMCU ESP32 to the data dump using the following connection diagram.</p>
+<table class="doxtable">
+<caption>Data dump connection interface </caption>
+<tr>
+<th>FLIGHT COMPUTER </th><th>EXTERNAL ESP PIN    </th></tr>
+<tr>
+<td>MOSI </td><td>23  </td></tr>
+<tr>
+<td>MISO </td><td>19  </td></tr>
+<tr>
+<td>CS </td><td>5  </td></tr>
+<tr>
+<td>SCK </td><td>18  </td></tr>
+<tr>
+<td>GND </td><td>GND  </td></tr>
+<tr>
+<td>3V3 </td><td>3V3   </td></tr>
+</table>
+</li>
+</ul>
+<p>Connect via USB cable and upload the code in  <i>\flight-data-recovery\n4-data-recovery-code</i>  folder, using the command below:</p>
+<div class="fragment"><div class="line">pio run -t upload</div>
+</div><!-- fragment --><ul>
+<li>Open AiThinker serial tool and dump the data into a text file as outlined in the steps above.</li>
+</ul>
 <h1><a class="anchor" id="step30"></a>
 Contributors</h1>
 <p>Our thanks go to the following current and previous avionics team members for their contribution:</p><ol type="1">

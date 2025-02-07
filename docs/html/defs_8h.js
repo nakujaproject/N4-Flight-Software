@@ -1,6 +1,7 @@
 var defs_8h =
 [
     [ "ALTIMETER_QUEUE_LENGTH", "defs_8h.html#a5b60efac67f2c4a6d693e79e9651838e", null ],
+    [ "APOGEE_DETECTION_THRESHOLD", "defs_8h.html#aa60a3d5d5dbbe3a81b5e4ed6b8d9f8f8", null ],
     [ "BASE_ALTITUDE", "defs_8h.html#a522265e76ce6f48d243b5037d731d75d", null ],
     [ "BROKER_IP_ADDRESS_LENGTH", "defs_8h.html#afd0c8e19541273b9dcf57809a4d509f4", null ],
     [ "CALLIBRATION_READINGS", "defs_8h.html#aaa5fd61c579cc26495e42e12f5382e9d", null ],
@@ -14,6 +15,7 @@ var defs_8h =
     [ "GPS_RX", "defs_8h.html#a8cd04b3645e97569755976b99fe190b8", null ],
     [ "GPS_TX", "defs_8h.html#a05b958741e002c6dd8f8af174726665e", null ],
     [ "GYROSCOPE_QUEUE_LENGTH", "defs_8h.html#aa799416c73f46fb02358bcbca97ac1ab", null ],
+    [ "LAUNCH_DETECTION_ALTITUDE_WINDOW", "defs_8h.html#a9f618e641087c9b499b2ecc9d9e113ef", null ],
     [ "LAUNCH_DETECTION_THRESHOLD", "defs_8h.html#a246062a122ce91ff67ff5988b508304c", null ],
     [ "LOG_TO_MEMORY", "defs_8h.html#a872bad07d105729fd8b94cd1a497fa0e", null ],
     [ "MAIN_EJECTION_HEIGHT", "defs_8h.html#a072d5d58ddf935fd073aa59fefa2b9f0", null ],
@@ -21,6 +23,8 @@ var defs_8h =
     [ "MQTT_PORT", "defs_8h.html#aa8632baff6bbb5004385998918f1e6bd", null ],
     [ "MQTT_TOPIC_LENGTH", "defs_8h.html#a237252f3f1f9d37812d9ec005e3a3d6a", null ],
     [ "SEA_LEVEL_PRESSURE", "defs_8h.html#a335fe74f296f8ed3fa8a86c66a2dc237", null ],
+    [ "SET_RUN_MODE_PIN", "defs_8h.html#a2998a9b88a92d8aae5f01d2d8b383894", null ],
+    [ "SET_TEST_MODE_PIN", "defs_8h.html#a891b24973877da2f040f2122e37c9632", null ],
     [ "STACK_SIZE", "defs_8h.html#a6423a880df59733d2d9b509c7718d3a9", null ],
     [ "TASK_DELAY", "defs_8h.html#a74959040d4f3fa78c373849d6f548ca4", null ],
     [ "TELEMETRY_DATA_QUEUE_LENGTH", "defs_8h.html#ab77e67e5549a753abae01ea033075768", null ],

@@ -1,9 +1,7 @@
 var searchData=
 [
-  ['main_5fejection_5fheight_0',['MAIN_EJECTION_HEIGHT',['../defs_8h.html#a072d5d58ddf935fd073aa59fefa2b9f0',1,'defs.h']]],
-  ['max_5fcmd_5flength_1',['MAX_CMD_LENGTH',['../src_2main_8cpp.html#a2e69b1ee7e19bfbe378c886f88e60fac',1,'main.cpp']]],
-  ['max_5fcsv_5flength_2',['MAX_CSV_LENGTH',['../src_2main_8cpp.html#a3aad00c42368296b28f72f623c446925',1,'main.cpp']]],
-  ['mqtt_3',['MQTT',['../defs_8h.html#ae1abe60e35e8bef559df4270f2849f29',1,'defs.h']]],
-  ['mqtt_5fport_4',['MQTT_PORT',['../defs_8h.html#aa8632baff6bbb5004385998918f1e6bd',1,'defs.h']]],
-  ['mqtt_5ftopic_5flength_5',['MQTT_TOPIC_LENGTH',['../defs_8h.html#a237252f3f1f9d37812d9ec005e3a3d6a',1,'defs.h']]]
+  ['sea_5flevel_5fpressure_0',['SEA_LEVEL_PRESSURE',['../defs_8h.html#a335fe74f296f8ed3fa8a86c66a2dc237',1,'defs.h']]],
+  ['set_5frun_5fmode_5fpin_1',['SET_RUN_MODE_PIN',['../defs_8h.html#a2998a9b88a92d8aae5f01d2d8b383894',1,'defs.h']]],
+  ['set_5ftest_5fmode_5fpin_2',['SET_TEST_MODE_PIN',['../defs_8h.html#a891b24973877da2f040f2122e37c9632',1,'defs.h']]],
+  ['stack_5fsize_3',['STACK_SIZE',['../defs_8h.html#a6423a880df59733d2d9b509c7718d3a9',1,'defs.h']]]
 ];

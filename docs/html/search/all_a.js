@@ -2,8 +2,8 @@ var searchData=
 [
   ['latitude_0',['latitude',['../struct_g_p_s___data.html#afb3da9032a0865674a8257fbb3ec0716',1,'GPS_Data']]],
   ['launch_20detection_1',['Launch detection',['../index.html#step24',1,'']]],
-  ['launch_5fdetection_5fthreshold_2',['LAUNCH_DETECTION_THRESHOLD',['../defs_8h.html#a246062a122ce91ff67ff5988b508304c',1,'defs.h']]],
-  ['listdir_3',['listDir',['../src_2main_8cpp.html#a8841578fe91cace6206676f0e751cab5',1,'main.cpp']]],
+  ['launch_5fdetection_5faltitude_5fwindow_2',['LAUNCH_DETECTION_ALTITUDE_WINDOW',['../defs_8h.html#a9f618e641087c9b499b2ecc9d9e113ef',1,'defs.h']]],
+  ['launch_5fdetection_5fthreshold_3',['LAUNCH_DETECTION_THRESHOLD',['../defs_8h.html#a246062a122ce91ff67ff5988b508304c',1,'defs.h']]],
   ['log_5fsample_5finterval_4',['log_sample_interval',['../src_2main_8cpp.html#affaa6e6cce540b233b04e558e3d164b2',1,'main.cpp']]],
   ['log_5fto_5fmemory_5',['LOG_TO_MEMORY',['../defs_8h.html#a872bad07d105729fd8b94cd1a497fa0e',1,'defs.h']]],
   ['logger_2ecpp_6',['logger.cpp',['../logger_8cpp.html',1,'']]],
@@ -14,13 +14,14 @@ var searchData=
   ['loggerinit_11',['loggerInit',['../class_data_logger.html#a0cf2853582b7f2194eb0024d3d6d4944',1,'DataLogger']]],
   ['loggerread_12',['loggerRead',['../class_data_logger.html#a5a0deefb9372f1577636014a59025e6f',1,'DataLogger']]],
   ['loggerspaces_13',['loggerSpaces',['../class_data_logger.html#aa2e189964fbebc28dc2a327fdccc5684',1,'DataLogger']]],
-  ['loggertest_14',['loggerTest',['../class_data_logger.html#ae8a69bf0cc965365057e93a164ca9239',1,'DataLogger']]],
+  ['loggertest_14',['loggerTest',['../class_data_logger.html#a7d025f82d005c537a0f003bcd85d928d',1,'DataLogger']]],
   ['loggerwrite_15',['loggerWrite',['../class_data_logger.html#a411ac6fd751d3a87cef0375fccaad028',1,'DataLogger']]],
   ['logging_16',['System Logging',['../index.html#step3',1,'']]],
   ['logging_17',['Flight data logging',['../index.html#step5',1,'']]],
-  ['logtofile_18',['logToFile',['../class_system_logger.html#ac2ec03f175633189362a08955a29a5ad',1,'SystemLogger']]],
-  ['logtomemory_19',['logToMemory',['../src_2main_8cpp.html#a7df146b43e503e23146e698154d5096d',1,'main.cpp']]],
-  ['longitude_20',['longitude',['../struct_g_p_s___data.html#af3acb0e092149273638675c427cb4b5d',1,'GPS_Data']]],
-  ['loop_21',['loop',['../src_2main_8cpp.html#afe461d27b9c48d5921c00d521181f12f',1,'main.cpp']]],
-  ['lora_20wifi_20telemetry_20selection_22',['XBEE, MQTT, LORA, WIFI telemetry selection',['../index.html#step8',1,'']]]
+  ['logging_20and_20data_20recovery_18',['Flight data logging and data recovery',['../index.html#step27',1,'']]],
+  ['logtofile_19',['logToFile',['../class_system_logger.html#ac2ec03f175633189362a08955a29a5ad',1,'SystemLogger']]],
+  ['logtomemory_20',['logToMemory',['../src_2main_8cpp.html#a7df146b43e503e23146e698154d5096d',1,'main.cpp']]],
+  ['longitude_21',['longitude',['../struct_g_p_s___data.html#af3acb0e092149273638675c427cb4b5d',1,'GPS_Data']]],
+  ['loop_22',['loop',['../src_2main_8cpp.html#afe461d27b9c48d5921c00d521181f12f',1,'main.cpp']]],
+  ['lora_20wifi_20telemetry_20selection_23',['XBEE, MQTT, LORA, WIFI telemetry selection',['../index.html#step8',1,'']]]
 ];

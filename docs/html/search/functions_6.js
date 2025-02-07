@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['init_5fkalman_5fmatrices_0',['init_kalman_matrices',['../kalman__filter_8h.html#a7cbd9975e7fe97ff08dcd7d140c01c2c',1,'kalman_filter.cpp']]],
-  ['initdynamicwifi_1',['initDynamicWIFI',['../src_2main_8cpp.html#a29b878fa9aee771a49679759f9f10da1',1,'main.cpp']]],
-  ['inittestgpio_2',['initTestGPIO',['../src_2main_8cpp.html#a7e2d538eec5c54386e40bbc0b99d0ac1',1,'main.cpp']]],
-  ['initxmodem_3',['InitXMODEM',['../src_2main_8cpp.html#abf447a0860a5fec74fecf8654172fec0',1,'main.cpp']]]
+  ['kalmanfilter_0',['kalmanFilter',['../src_2main_8cpp.html#a9d009c484353785c540503d359e22097',1,'main.cpp']]],
+  ['kalmanfiltertask_1',['kalmanFilterTask',['../src_2main_8cpp.html#a7ce5e586674f4cd4260bd2aaba246757',1,'main.cpp']]]
 ];

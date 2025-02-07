@@ -54,6 +54,7 @@ var NAVTREE =
     [ "Launch detection", "index.html#step24", null ],
     [ "Apogee detection", "index.html#step25", null ],
     [ "Parachute ejection", "index.html#step26", null ],
+    [ "Flight data logging and data recovery", "index.html#step27", null ],
     [ "Contributors", "index.html#step30", null ],
     [ "README", "md_n4-flight-software_2_r_e_a_d_m_e.html", null ],
     [ "Flight computer pin assignment", "md_n4-flight-software_2src_2pin__assignment.html", null ],
@@ -77,7 +78,6 @@ var NAVTREE =
         [ "Variables", "globals_vars.html", null ],
         [ "Typedefs", "globals_type.html", null ],
         [ "Enumerations", "globals_enum.html", null ],
-        [ "Enumerator", "globals_eval.html", null ],
         [ "Macros", "globals_defs.html", null ]
       ] ]
     ] ]
