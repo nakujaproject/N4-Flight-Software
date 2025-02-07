@@ -101,7 +101,7 @@ WIFIConfig wifi_config;
 
 uint8_t drogue_pyro = 25;
 uint8_t main_pyro = 12;
-uint8_t flash_cs_pin = 5;           /*!< External flash memory chip select pin */
+uint8_t flash_cs_pin = 5;                   /*!< External flash memory chip select pin */
 uint8_t remote_switch = 27;
 
 /* Flight data logging */
@@ -113,9 +113,10 @@ uint32_t FILE_SIZE_4M  = 4194304L;          /*!< 4MB */
 SerialFlashFile file;                       /*!< object representing file object for flash memory */
 unsigned long long previous_log_time = 0;   /*!< The last time we logged data to memory */
 unsigned long long current_log_time = 0;    /*!< What is the processor time right now? */
-uint16_t log_sample_interval = 10;          /*!< After how long should we sample and log data to flash memory? */
+uint16_t log_sample_interval = 5;          /*!< After how long should we sample and log data to flash memory? */
 
-DataLogger data_logger(flash_cs_pin, flash_led_pin, filename, file,  FILE_SIZE_4M);
+/* create flash memory log object */
+DataLogger data_logger(flash_cs_pin, RED_LED_PIN, filename, file, FILE_SIZE_4M);
 
 /* position integration variables */
 long long current_time = 0;
@@ -148,7 +149,11 @@ void initDynamicWIFI() {
 * Check the toggle pin for TESTING or RUN mode 
  */
 void checkRunTestToggle() {
-    debugln("Check");
+    if(digitalRead(SET_RUN_MODE_PIN) == 0) {
+        debugln("MODE:RUN");
+    } else {
+        debugln("MODE:TEST");
+    }
 }
 
 /**
@@ -913,6 +918,8 @@ void MQTTInit(const char* broker_IP, int broker_port) {
     debugln("[+]Initializing MQTT\n");
     client.setServer(broker_IP, broker_port);
     delay(2000);
+    debugln("[+]MQTT init OK");
+
 }
 
 /*!****************************************************************************
@@ -966,19 +973,141 @@ void mainChuteDeploy() {
 }
 
 
+void xCreateAllTasks() {
+    
+        debugln("Creating all tasks");
+        //vTaskDelay(200/portTICK_PERIOD_MS);
+
+        /* TASK 1: READ ACCELERATION DATA */
+        BaseType_t gr = xTaskCreatePinnedToCore(readAccelerationTask, "readAccelerometer", STACK_SIZE*4, NULL, 2, &readAccelerationTaskHandle, 1);
+        if(gr == pdPASS) {
+            debugln("[+]Read acceleration task created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Read acceleration task created OK.\r\n");
+        } else {
+            debugln("[-]Read acceleration task creation failed");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Read acceleration task creation failed\r\n");
+        }
+
+        /* TASK 2: READ ALTIMETER DATA */
+        BaseType_t ra = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*4,NULL,1, &readAltimeterTaskHandle, 1);
+        if(ra == pdPASS) {
+            debugln("[+]readAltimeterTask created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]readAltimeterTask created OK.\r\n");
+        } else {
+            debugln("[-]Failed to create readAltimeterTask");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create readAltimeterTask\r\n");
+        }
+
+        /* TASK 3: READ GPS DATA */
+        BaseType_t rg = xTaskCreatePinnedToCore(readGPSTask, "readGPS", STACK_SIZE*4, NULL,2, &readGPSTaskHandle, 1);
+        if(rg == pdPASS) {
+            debugln("[+]Read GPS task created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Read GPS task created OK.\r\n");
+        } else {
+            debugln("[-]Failed to create GPS task");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create GPS task\r\n");
+        }
+
+        /* TASK 5: CHECK FLIGHT STATE TASK */
+        // BaseType_t cf = xTaskCreatePinnedToCore(checkFlightState,"checkFlightState",STACK_SIZE*4,NULL, 1, &checkFlightStateTaskHandle, app_core_id);
+
+        // if(cf == pdPASS) {
+        //     debugln("[+]checkFlightState task created OK.");
+        //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]checkFlightState task created OK.\r\n");
+        // } else {
+        //     debugln("[-]Failed to create checkFlightState task");
+        //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create checkFlightState task\r\n");
+        // }
+
+        /* TASK 6: FLIGHT STATE CALLBACK TASK */
+        BaseType_t fs = xTaskCreatePinnedToCore(flightStateCallback, "flightStateCallback", STACK_SIZE*4, NULL, 1, &flightStateCallbackTaskHandle, 1);
+
+        if(fs == pdPASS) {
+            debugln("[+]flightStateCallback task created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]flightStateCallback task created OK.\r\n");
+        } else {
+            debugln("[-]Failed to create flightStateCallback task");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create flightStateCallback task\r\n");
+        }
+
+        #if MQTT
+            /* TASK 8: TRANSMIT TELEMETRY DATA */
+            BaseType_t th = xTaskCreatePinnedToCore(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*4, NULL, 2, &MQTT_TransmitTelemetryTaskHandle, 1);
+
+            if(th == pdPASS){
+                debugln("[+]MQTT transmit task created OK");
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]kalman_filter_queue_handle creation OK.\r\n");
+                
+            } else {
+                debugln("[-]MQTT transmit task failed to create");
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]MQTT transmit task failed to create\r\n");
+            }
+
+        #endif
+
+        BaseType_t kf = xTaskCreatePinnedToCore(kalmanFilterTask, "kalman filter", STACK_SIZE*4, NULL, 2, &kalmanFilterTaskHandle, 1);
+
+        if(kf == pdPASS) {
+            debugln("[+]kalmanFilter task created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]kalman_filter_queue_handle creation OK.\r\n");
+        } else {
+            debugln("[-]kalmanFilter task failed to create");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]kalmanFilter task failed to create\r\n");
+        }
+
+        #if DEBUG_TO_TERMINAL   // set DEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
+
+            /* TASK 7: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
+            BaseType_t dt = xTaskCreatePinnedToCore(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE*4, NULL,2,&debugToTerminalTaskHandle, 1);
+        
+            if(dt == pdPASS) {
+                debugln("[+]debugToTerminal task created OK");
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]debugToTerminal task created OK\r\n");
+            } else {
+                debugln("[-]debugToTerminal task not created");
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]debugToTerminal task not created\r\n");
+            }
+        
+        #endif // DEBUG_TO_TERMINAL_TASK
+
+        #if LOG_TO_MEMORY   // set LOG_TO_MEMORY to 1 to allow logging to memory 
+            /* TASK 9: LOG DATA TO MEMORY */
+            if(xTaskCreatePinnedToCore(logToMemory,"logToMemory",STACK_SIZE*4,NULL,2,&logToMemoryTaskHandle,1) != pdPASS){
+                debugln("[-]logToMemory task failed to create");
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]logToMemory task failed to create\r\n");
+
+            }else{
+                debugln("[+]logToMemory task created OK.");
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]logToMemory task created OK.\r\n");
+            }
+        #endif // LOG_TO_MEMORY
+
+        debugln();
+        debugln(F("=============================================="));
+        debugln(F("========== FINISHED CREATING TASKS ==========="));
+        debugln(F("==============================================\n"));
+
+        // delete this task
+        vTaskDelete(NULL);
+    
+    
+}
+
 /*!****************************************************************************
  * @brief Setup - perform initialization of all hardware subsystems, create queues, create queue handles
  * initialize system check table
  * 
  *******************************************************************************/
 void setup() {
+    delay(2000);
+    debugln("=========INITIALIZING COMPUTER============");
     buzzerInit();
 
     /* buzz to indicate start of setup */
     blocking_buzz(BUZZ_INTERVALS::SETUP_INIT);
 
     /* core to run the tasks */
-    uint8_t app_id = xPortGetCoreID();
+    uint8_t app_core_id = xPortGetCoreID();
 
     /* initialize serial */
     Serial.begin(BAUDRATE);
@@ -1010,7 +1139,7 @@ void setup() {
     uint8_t gps_init_state = GPSInit();
     // uint8_t sd_init_state = initSD();
     uint8_t flash_init_state = data_logger.loggerInit();
-    
+    debug("Flash memory init state:"); debugln(flash_init_state);
 
     /* initialize mqtt */
     MQTTInit(MQTT_SERVER, MQTT_PORT);
@@ -1138,125 +1267,11 @@ void setup() {
     * Task priority 
     * task handle that can be passed to other tasks to reference the task 
     *
-    * /
+    *
+    */
 
-    /* TASK 1: READ ACCELERATION DATA */
-    BaseType_t gr = xTaskCreate(readAccelerationTask, "readGyroscope", STACK_SIZE*2, NULL, 2, &readAccelerationTaskHandle);
-    if(gr == pdPASS) {
-        debugln("[+]Read acceleration task created OK.");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Read acceleration task created OK.\r\n");
-    } else {
-        debugln("[-]Read acceleration task creation failed");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Read acceleration task creation failed\r\n");
-    }
+    xCreateAllTasks();
 
-    /* TASK 2: READ ALTIMETER DATA */
-    BaseType_t ra = xTaskCreate(readAltimeterTask,"readAltimeter",STACK_SIZE*3,NULL,2, &readAltimeterTaskHandle);
-    if(ra == pdPASS) {
-        debugln("[+]readAltimeterTask created OK.");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]readAltimeterTask created OK.\r\n");
-    } else {
-        debugln("[-]Failed to create readAltimeterTask");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create readAltimeterTask\r\n");
-    }
-
-    /* TASK 3: READ GPS DATA */
-    BaseType_t rg = xTaskCreate(readGPSTask, "readGPS", STACK_SIZE*2, NULL,2, &readGPSTaskHandle);
-    if(rg == pdPASS) {
-        debugln("[+]Read GPS task created OK.");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Read GPS task created OK.\r\n");
-    } else {
-        debugln("[-]Failed to create GPS task");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create GPS task\r\n");
-    }
-
-    /* TASK 5: CHECK FLIGHT STATE TASK */
-    // BaseType_t cf = xTaskCreate(checkFlightState,"checkFlightState",STACK_SIZE*2,NULL, 1, &checkFlightStateTaskHandle);
-
-    // if(cf == pdPASS) {
-    //     debugln("[+]checkFlightState task created OK.");
-    //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]checkFlightState task created OK.\r\n");
-    // } else {
-    //     debugln("[-]Failed to create checkFlightState task");
-    //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create checkFlightState task\r\n");
-    // }
-
-    /* TASK 6: FLIGHT STATE CALLBACK TASK */
-    BaseType_t fs = xTaskCreate(flightStateCallback, "flightStateCallback", STACK_SIZE*2, NULL, 1, &flightStateCallbackTaskHandle);
-
-    if(fs == pdPASS) {
-        debugln("[+]flightStateCallback task created OK.");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]flightStateCallback task created OK.\r\n");
-    } else {
-        debugln("[-]Failed to create flightStateCallback task");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create flightStateCallback task\r\n");
-    }
-
-    #if MQTT
-        /* TASK 8: TRANSMIT TELEMETRY DATA */
-        BaseType_t th = xTaskCreate(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*4, NULL, 2, &MQTT_TransmitTelemetryTaskHandle);
-
-        if(th == pdPASS){
-            debugln("[+]MQTT transmit task created OK");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]kalman_filter_queue_handle creation OK.\r\n");
-            
-        } else {
-            debugln("[-]MQTT transmit task failed to create");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]MQTT transmit task failed to create\r\n");
-        }
-
-    #endif
-
-    BaseType_t kf = xTaskCreate(kalmanFilterTask, "kalman filter", STACK_SIZE*2, NULL, 2, &kalmanFilterTaskHandle);
-
-    if(kf == pdPASS) {
-        debugln("[+]kalmanFilter task created OK.");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]kalman_filter_queue_handle creation OK.\r\n");
-    } else {
-        debugln("[-]kalmanFilter task failed to create");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]kalmanFilter task failed to create\r\n");
-    }
-
-    #if DEBUG_TO_TERMINAL   // set DEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
-
-        /* TASK 7: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
-        BaseType_t dt = xTaskCreate(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE*4, NULL,2,&debugToTerminalTaskHandle);
-    
-        if(dt == pdPASS) {
-            debugln("[+]debugToTerminal task created OK");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]debugToTerminal task created OK\r\n");
-        } else {
-            debugln("[-]debugToTerminal task not created");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]debugToTerminal task not created\r\n");
-        }
-    
-    #endif // DEBUG_TO_TERMINAL_TASK
-
-    #if LOG_TO_MEMORY   // set LOG_TO_MEMORY to 1 to allow logging to memory 
-        /* TASK 9: LOG DATA TO MEMORY */
-        if(xTaskCreate(
-                logToMemory,
-                "logToMemory",
-                STACK_SIZE,
-                NULL,
-                2,
-                &logToMemoryTaskHandle
-        ) != pdPASS){
-            debugln("[-]logToMemory task failed to create");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]logToMemory task failed to create\r\n");
-            vTaskSuspend(logToMemoryTaskHandle);
-
-        }else{
-            debugln("[+]logToMemory task created OK.");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]logToMemory task created OK.\r\n");
-
-        }
-    #endif // LOG_TO_MEMORY
-
-    debugln();
-    debugln(F("=============================================="));
-    debugln(F("========== FINISHED CREATING TASKS ==========="));
-    debugln(F("==============================================\n"));
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==FINISHED CREATING TASKS==\r\n");
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "\nEND OF INITIALIZATION\r\n");
 

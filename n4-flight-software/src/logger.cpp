@@ -16,7 +16,7 @@ char pckt_buff[50];
  * pass the chip select pin as a parameter for that class instance
  * 
  * @param cs_pin chip select pin
- * @param flas_led LED to show formatting status
+ * @param flash_led LED to show formatting status
  * @param filename the filename of the file being created
  * @param file_size the size of the file being created
 */
@@ -80,7 +80,7 @@ bool DataLogger::loggerInit() {
     if (!SerialFlash.begin(this->_cs_pin)) {
         return false;
     } else {
-        this->loggerEquals(); // prettify
+        this->loggerEquals();
         this->loggerInfo();
 
         // init flash LED
@@ -99,6 +99,7 @@ bool DataLogger::loggerInit() {
             Serial.println(F("Files currently in flash:")); // TODO: LOG TO SYSTEM LOGGER
             SerialFlash.opendir();
 
+            // list all files in memory
             while (1) {
                 uint32_t filesize;
                 if (SerialFlash.readdir(filename, sizeof(filename), filesize)) {
@@ -122,10 +123,9 @@ bool DataLogger::loggerInit() {
 
             } else {
                 // open the created file 
-                Serial.println(F("Created flight txt file"));
+                Serial.println(F("Created flight.txt file"));
                 this->_file = SerialFlash.open(this->_filename);
             }
-
         }
         
         this->loggerEquals(); 
@@ -144,11 +144,6 @@ bool DataLogger::loggerInit() {
 void DataLogger::loggerTest() {
     // create a string variable 
     char tst_var[15] = "FlashTesting";
-
-    // write 
-
-    // read 
-
 }
 
 /**
@@ -159,52 +154,49 @@ void DataLogger::loggerTest() {
  * 
 */
 void DataLogger::loggerWrite(telemetry_type_t packet){
-
-    // Serial.print("FROM LOGGER: ");
-    // Serial.println(t->alt_data.altitude);
-
     // write the record to the flash chip
     
-    sprintf(pckt_buff, "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n",
-            packet.acc_data.ax,
-            packet.acc_data.ay,
-            packet.acc_data.az,
-            packet.acc_data.pitch,
-            packet.acc_data.roll,
-            packet.alt_data.pressure);
+    // sprintf(pckt_buff, 
+    //         "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n",
+    //         packet.acc_data.ax,
+    //         packet.acc_data.ay,
+    //         packet.acc_data.az,
+    //         packet.acc_data.pitch,
+    //         packet.acc_data.roll,
+    //         packet.alt_data.pressure);
 
     // write the packet to memory
     this->_file.write((uint8_t*)&packet, sizeof(packet));
 
-    Serial.print( packet.record_number );
-    Serial.print( "," );
-    Serial.print( packet.operation_mode );
-    Serial.print( "," );
-    Serial.print( packet.state );
-    Serial.print( "," );
-    Serial.print( packet.acc_data.ax );
-    Serial.print( "," );
-    Serial.print( packet.acc_data.ay );
-    Serial.print( "," );
-    Serial.print( packet.acc_data. az );
-    Serial.print( "," );
-    Serial.print( packet.acc_data.pitch );
-    Serial.print( "," );
-    Serial.print( packet.acc_data.roll );
-    Serial.print( "," );
-    Serial.print( packet.gyro_data.gx );
-    Serial.print( "," );
-    Serial.print( packet.gyro_data.gy );
-    Serial.print( "," );
-    Serial.print( packet.gyro_data.gz );
-    Serial.print( "," );
-    Serial.print( packet.alt_data.altitude );
-    Serial.print( "," );
-    Serial.print( packet.alt_data.velocity );
-    Serial.print( "," );
-    Serial.print( packet.alt_data.pressure );
-    Serial.print( "," );
-    Serial.println( packet.alt_data.temperature );
+    // Serial.print( packet.record_number );
+    // Serial.print( "," );
+    // Serial.print( packet.operation_mode );
+    // Serial.print( "," );
+    // Serial.print( packet.state );
+    // Serial.print( "," );
+    // Serial.print( packet.acc_data.ax );
+    // Serial.print( "," );
+    // Serial.print( packet.acc_data.ay );
+    // Serial.print( "," );
+    // Serial.print( packet.acc_data. az );
+    // Serial.print( "," );
+    // Serial.print( packet.acc_data.pitch );
+    // Serial.print( "," );
+    // Serial.print( packet.acc_data.roll );
+    // Serial.print( "," );
+    // Serial.print( packet.gyro_data.gx );
+    // Serial.print( "," );
+    // Serial.print( packet.gyro_data.gy );
+    // Serial.print( "," );
+    // Serial.print( packet.gyro_data.gz );
+    // Serial.print( "," );
+    // Serial.print( packet.alt_data.altitude );
+    // Serial.print( "," );
+    // Serial.print( packet.alt_data.velocity );
+    // Serial.print( "," );
+    // Serial.print( packet.alt_data.pressure );
+    // Serial.print( "," );
+    // Serial.println( packet.alt_data.temperature );
 
     // Serial.println(F("logged"));
     

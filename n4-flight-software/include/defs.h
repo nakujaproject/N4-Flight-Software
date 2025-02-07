@@ -20,8 +20,8 @@
 
 /* debug parameters for use during testing - set to 0 for production */
 #define DEBUGGING 1                           /*!< allow debugging to terminal. Set to 0 pre flight to disable serial terminal printing and improve speed  */
-#define LOG_TO_MEMORY 0                       /*!< allow data logging to memory. Set to 1 to log data to external flash memory. Must be set during flight */
-#define DEBUG_TO_TERMINAL 0                   /*!< allow create task that prints data to terminal. Set o 0 before flight  */
+#define LOG_TO_MEMORY 1                      /*!< allow data logging to memory. Set to 1 to log data to external flash memory. Must be set during flight */
+#define DEBUG_TO_TERMINAL 1                  /*!< allow create task that prints data to terminal. Set to 0 before flight  */
 
 #if DEBUGGING
     #define debug(x) Serial.print(x)
@@ -45,8 +45,8 @@
 #define RED_LED_PIN         15               
 #define GREEN_LED_PIN       4
 #define BUZZER_PIN          33
-#define SET_DAQ_MODE_PIN    14     /*!< Pin to set the flight computer to TEST mode */
-#define SET_TEST_MODE_PIN   13      /*!< Pin to set the flight computer to RUN mode */
+#define SET_TEST_MODE_PIN    14     /*!< Pin to set the flight computer to TEST mode */
+#define SET_RUN_MODE_PIN     13      /*!< Pin to set the flight computer to RUN mode */
 #define SD_CS_PIN           26
 
 /* timing constant */
