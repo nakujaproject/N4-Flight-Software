@@ -7,6 +7,6 @@ var classDataLogger =
     [ "loggerInit", "classDataLogger.html#a0cf2853582b7f2194eb0024d3d6d4944", null ],
     [ "loggerRead", "classDataLogger.html#a5a0deefb9372f1577636014a59025e6f", null ],
     [ "loggerSpaces", "classDataLogger.html#aa2e189964fbebc28dc2a327fdccc5684", null ],
-    [ "loggerTest", "classDataLogger.html#ae8a69bf0cc965365057e93a164ca9239", null ],
+    [ "loggerTest", "classDataLogger.html#a7d025f82d005c537a0f003bcd85d928d", null ],
     [ "loggerWrite", "classDataLogger.html#a411ac6fd751d3a87cef0375fccaad028", null ]
 ];

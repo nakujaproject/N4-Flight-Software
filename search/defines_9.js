@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['nak_0',['NAK',['../src_2main_8cpp.html#a7ff3e502ffb5d509612c6c6741de45cc',1,'main.cpp']]],
-  ['nak_5finterval_1',['NAK_INTERVAL',['../src_2main_8cpp.html#a394162e74bbeb9bf67d3009cc38e0466',1,'main.cpp']]]
+  ['task_5fdelay_0',['TASK_DELAY',['../defs_8h.html#a74959040d4f3fa78c373849d6f548ca4',1,'defs.h']]],
+  ['telemetry_5fdata_5fqueue_5flength_1',['TELEMETRY_DATA_QUEUE_LENGTH',['../defs_8h.html#ab77e67e5549a753abae01ea033075768',1,'defs.h']]]
 ];

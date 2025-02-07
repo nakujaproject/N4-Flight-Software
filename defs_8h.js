@@ -23,6 +23,8 @@ var defs_8h =
     [ "MQTT_PORT", "defs_8h.html#aa8632baff6bbb5004385998918f1e6bd", null ],
     [ "MQTT_TOPIC_LENGTH", "defs_8h.html#a237252f3f1f9d37812d9ec005e3a3d6a", null ],
     [ "SEA_LEVEL_PRESSURE", "defs_8h.html#a335fe74f296f8ed3fa8a86c66a2dc237", null ],
+    [ "SET_RUN_MODE_PIN", "defs_8h.html#a2998a9b88a92d8aae5f01d2d8b383894", null ],
+    [ "SET_TEST_MODE_PIN", "defs_8h.html#a891b24973877da2f040f2122e37c9632", null ],
     [ "STACK_SIZE", "defs_8h.html#a6423a880df59733d2d9b509c7718d3a9", null ],
     [ "TASK_DELAY", "defs_8h.html#a74959040d4f3fa78c373849d6f548ca4", null ],
     [ "TELEMETRY_DATA_QUEUE_LENGTH", "defs_8h.html#ab77e67e5549a753abae01ea033075768", null ],

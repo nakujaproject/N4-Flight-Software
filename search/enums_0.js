@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['daq_5fstates_0',['DAQ_STATES',['../src_2main_8cpp.html#aae0dcb6f6e84dab5b57ab3ba5ea559b4',1,'main.cpp']]]
+  ['operation_5fmode_0',['OPERATION_MODE',['../src_2main_8cpp.html#a9dd8c0bc72877aecb789ae6d08811d54',1,'main.cpp']]]
 ];
