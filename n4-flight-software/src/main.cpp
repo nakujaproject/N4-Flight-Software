@@ -41,12 +41,14 @@ void checkRunTestToggle();
 void non_blocking_buzz(uint16_t interval);
 void blocking_buzz(uint16_t interval);
 
+
 /* state machine variables*/
 uint8_t operation_mode = 0;                                     /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
 uint8_t current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;	    /*!< The starting state - we start at PRE_FLIGHT_GROUND state */
 uint8_t STATE_BIT_MASK = 0;
 
 /* GPS object */
+HardwareSerial gpsSerial(2); // PIN 16 AND 17 
 TinyGPSPlus gps;
 
 /* system logger */
@@ -193,7 +195,7 @@ telemetry_type_t telemetry_packet;
  * set gyro to max deg to 1000 deg/sec
  * set accel fs reading to 16g
 */
-MPU6050 imu(MPU_ADDRESS, MPU_ACCEL_RANGE, GYRO_RANGE); // TODO: remove magic numbers 
+MPU6050 imu(MPU_ADDRESS, MPU_ACCEL_RANGE, GYRO_RANGE); 
 
 /* create BMP object */
 SFE_BMP180 altimeter;
@@ -272,7 +274,6 @@ uint8_t initSD() {
 uint8_t BMPInit() {
     if(altimeter.begin()) {
         debugln("[+]BMP init OK.");
-        // TODO: update system table
         return 1;
     } else {
         debugln("[+]BMP init failed");
@@ -355,9 +356,13 @@ void readAccelerationTask(void* pvParameter) {
         acc_data_lcl.record_number++;
         acc_data_lcl.state = 0;
 
+        // read acceleration
         acc_data_lcl.acc_data.ax = imu.readXAcceleration();
         acc_data_lcl.acc_data.ay = imu.readYAcceleration();
         acc_data_lcl.acc_data.az = 0;
+
+        // read angular velocities
+        acc_data_lcl.acc_data.gx = imu.readXAngularVelocity();
 
         // get pitch and roll
         acc_data_lcl.acc_data.pitch = imu.getPitch();
@@ -468,11 +473,6 @@ void readAltimeterTask(void* pvParameters) {
         alt_data_lcl.alt_data.velocity = 0;
         alt_data_lcl.alt_data.temperature = T;
 
-        alt_data_lcl.alt_data.pressure = 0;
-        alt_data_lcl.alt_data.altitude = 0;
-        alt_data_lcl.alt_data.velocity = 0;
-        alt_data_lcl.alt_data.temperature = 0;
-
         // send this pressure data to queue
         // do not wait for the queue if it is full because the data rate is so high, 
         // we might lose some data as we wait for the queue to get space
@@ -483,7 +483,8 @@ void readAltimeterTask(void* pvParameters) {
         xQueueSend(debug_to_term_queue_handle, &alt_data_lcl, 0);
 
         vTaskDelay(CONSUME_TASK_DELAY / portTICK_PERIOD_MS);
-    }
+
+    } // end main while 
 
 }
 
@@ -499,45 +500,23 @@ void readGPSTask(void* pvParameters){
     telemetry_type_t gps_data_lcl;
 
     while(true){
-        // if(Serial2.available()) {
-        //     char c = Serial2.read();
+        if(gpsSerial.available() > 0) {
+            gps.encode(gpsSerial.read());
 
-        //     if(gps.encode(c)) {
-        //         // GPS lock hs been acquired 
-        //         // set the new data lock to 1
-        //         debugln(c); // dump gps data
-        //     } else {
-        //        // set new data lock to 0
-        //     } 
-        // }
+            /* get GPS coordinates */
+            if(gps.location.isUpdated()) {
+                gps_data_lcl.gps_data.latitude = gps.location.lat();
+                gps_data_lcl.gps_data.longitude = gps.location.lng();
+            } 
 
-        if (Serial2.available()) {
-            char c = Serial2.read();
-            if(gps.encode(c)){
-                // get location, latitude and longitude 
-                if(gps.location.isValid()) {
-                    gps_data_lcl.gps_data.latitude = gps.location.lat();
-                    gps_data_lcl.gps_data.longitude = gps.location.lng();
-                } else {
-                    // debugln("Invalid GPS location");
-                    gps_data_lcl.gps_data.latitude = 0;
-                    gps_data_lcl.gps_data.longitude = 0;
-                }
-
-                // if(gps.time.isValid()) {
-                //     gps_data_lcl.gps_data.time = gps.time.value(); // decode this time value post flight - write a script for that
-                // } else {
-                //     debugln("Invalid GPS time");
-                // }
-
-                if(gps.altitude.isValid()) {
-                    gps_data_lcl.gps_data.gps_altitude = gps.altitude.meters();
-                } else {
-                    // debugln("Invalid altitude data"); // TODO: LOG to system logger
-                    gps_data_lcl.gps_data.gps_altitude = 0;
-                }
+            /* get GPS time */
+            if(gps.altitude.isUpdated()) {
+                gps_data_lcl.gps_data.gps_altitude = gps.altitude.meters();
             }
         }
+
+        debug(gps_data_lcl.gps_data.latitude); debug(",");
+        debugln(gps_data_lcl.gps_data.longitude);
 
         xQueueSend(telemetry_data_queue_handle, &gps_data_lcl, portMAX_DELAY);
         xQueueSend(log_to_mem_queue_handle, &gps_data_lcl, portMAX_DELAY);
@@ -734,7 +713,7 @@ void debugToTerminalTask(void* pvParameters){
 
     while(true){
         // get telemetry data
-        xQueueReceive(log_to_mem_queue_handle, &telemetry_received_packet, portMAX_DELAY);
+        xQueueReceive(debug_to_term_queue_handle, &telemetry_received_packet, portMAX_DELAY);
         
         /**
          * record number
@@ -1099,8 +1078,11 @@ void xCreateAllTasks() {
  * 
  *******************************************************************************/
 void setup() {
-    delay(2000);
-    debugln("=========INITIALIZING COMPUTER============");
+    /* initialize serial */
+    Serial.begin(BAUDRATE);
+    // delay(2000);
+
+    debugln("=========INITIALIZING FLIGHT COMPUTER============"); // todo: log
     buzzerInit();
 
     /* buzz to indicate start of setup */
@@ -1108,10 +1090,6 @@ void setup() {
 
     /* core to run the tasks */
     uint8_t app_core_id = xPortGetCoreID();
-
-    /* initialize serial */
-    Serial.begin(BAUDRATE);
-    delay(100);
 
     // SPIFFS Must be initialized first to allow event logging from the word go
     uint8_t spiffs_init_state = InitSPIFFS();

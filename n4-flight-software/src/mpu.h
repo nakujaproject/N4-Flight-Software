@@ -80,7 +80,6 @@ class MPU6050 {
         void filterImu();
         float getRoll();
         float getPitch();
-
 };
 
 #endif

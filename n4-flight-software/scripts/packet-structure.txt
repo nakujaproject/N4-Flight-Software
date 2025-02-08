@@ -1,0 +1,17 @@
+record number
+operation mode (armed or safe)
+state
+ax 
+ay 
+az 
+pitch 
+roll 
+gx 
+gy 
+latitude 
+longitude
+gps_altitude
+pressure
+temperature
+AGL - from altimeter 
+velocity 

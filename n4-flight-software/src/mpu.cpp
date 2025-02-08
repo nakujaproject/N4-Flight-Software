@@ -12,26 +12,27 @@ MPU6050::MPU6050(uint8_t address, uint32_t accel_fs_range, uint32_t gyro_fs_rang
 // initialize the MPU6050 
 uint8_t  MPU6050::init() {
     // initialize the MPU6050 
-    Wire.begin(static_cast<int>(SDA), static_cast<int>(SCL));
+    bool x = Wire.begin(static_cast<int>(SDA), static_cast<int>(SCL));
     Wire.beginTransmission(this->_address);
     Wire.write(PWR_MNGMT_1); // power on the device 
     Wire.write(RESET);
     Wire.endTransmission(true);
     delay(50);
 
-    // // configure the gyroscope
-    // Wire.beginTransmission(this->_address);
-    // Wire.begin(GYRO_CONFIG);
-    // if(this->_gyro_fs_range == 250) {
-    //     Wire.write(SET_GYRO_FS_250);
-    // } else if(this->_gyro_fs_range == 500) {
-    //     Wire.write(SET_GYRO_FS_500);
-    // } else if (this->_gyro_fs_range == 1000) {
-    //     Wire.write(SET_GYRO_FS_1000);
-    // } else if (this->_gyro_fs_range == 2000) {
-    //     Wire.write(SET_GYRO_FS_2000);
-    // }
-    // Wire.endTransmission(true);
+    // configure the gyroscope
+    Wire.beginTransmission(this->_address);
+    Wire.write(GYRO_CONFIG);
+    if(this->_gyro_fs_range == 250) {
+        Wire.write(SET_GYRO_FS_250);
+    } else if(this->_gyro_fs_range == 500) {
+        Wire.write(SET_GYRO_FS_500);
+    } else if (this->_gyro_fs_range == 1000) {
+        Wire.write(SET_GYRO_FS_1000);
+    } else if (this->_gyro_fs_range == 2000) {
+        Wire.write(SET_GYRO_FS_2000);
+    }
+    Wire.endTransmission(true);
+    delay(50);
 
     // configure the accelerometer
     Wire.beginTransmission(this->_address);
@@ -48,8 +49,16 @@ uint8_t  MPU6050::init() {
     }
     Wire.endTransmission(true);
 
-    Serial.println(F("[+]MPU6050 init OK."));
-    return 1; // FIXME: what did you check?
+    // TODO: ceck initialization properly
+    if (x) {
+        Serial.println(F("[+]MPU6050 init OK."));
+        return 1;
+    }
+    else {
+        Serial.println(F("[-]MPU6050 init failed."));
+        return 0;
+    }
+    
 }
 
 /**
@@ -160,6 +169,30 @@ float MPU6050::getPitch() {
 
     return this->pitch_angle * TO_DEG_FACTOR;
 }
+
+float MPU6050::readXAngularVelocity() {
+    Wire.beginTransmission(this->_address);
+    Wire.write(GYRO_XOUT_H);
+    Wire.endTransmission(true);
+
+    Wire.requestFrom(static_cast<int>(this->_address), 2, static_cast<int>(WIRE_SEND_STOP));
+    this->ang_vel_x = Wire.read() << 8 | Wire.read();
+
+    // divide by the confiured settings 
+    if(this->_gyro_fs_range == 250) {
+        this->ang_vel_x_real = (float) ang_vel_x / GYRO_FACTOR_250; 
+    } else if (this->_gyro_fs_range == 500) {
+        this->ang_vel_x_real = (float) ang_vel_x / GYRO_FACTOR_500; 
+    } else if(this->_gyro_fs_range == 1000) {
+        this->ang_vel_x_real = (float) ang_vel_x / GYRO_FACTOR_1000; 
+    } else if(this->_gyro_fs_range == 2000) {
+        this->ang_vel_x_real = (float) ang_vel_x / GYRO_FACTOR_2000; 
+    }
+
+    return this->ang_vel_x_real;
+
+}
+
 
 
 /**

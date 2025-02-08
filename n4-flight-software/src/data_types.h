@@ -15,6 +15,9 @@ typedef struct Acceleration_Data{
     float ax;                   /*!< x axis acceleration */
     float ay;                   /*!< y axis acceleration */
     float az;                   /*!< z axis acceleration */
+    float gx;                   /*!< x angular velocity */
+    float gy;                   /*!< y angular velocity */
+    float gz;                   /*!< z angular velocity */
     float pitch;                /*!< pitch angle */
     float roll;                 /*!< roll angle */
 } accel_type_t;
