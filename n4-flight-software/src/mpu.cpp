@@ -165,7 +165,12 @@ float MPU6050::getPitch() {
     // convert the imu readings to m/s^2
     this->acc_x_ms = this->readXAcceleration() * ONE_G;
 
-    this->pitch_angle = asin(this->acc_x_ms/ONE_G);
+    double u = this->acc_x_ms / ONE_G;
+
+    // clip to [-1, +1] bound before passing to arcsine
+    if( ! ( (u > 1) || (u < -1) )) {
+        this->pitch_angle = asin(this->acc_x_ms/ONE_G);
+    }
 
     return this->pitch_angle * TO_DEG_FACTOR;
 }
@@ -178,7 +183,7 @@ float MPU6050::readXAngularVelocity() {
     Wire.requestFrom(static_cast<int>(this->_address), 2, static_cast<int>(WIRE_SEND_STOP));
     this->ang_vel_x = Wire.read() << 8 | Wire.read();
 
-    // divide by the confiured settings 
+    // divide by the configured settings 
     if(this->_gyro_fs_range == 250) {
         this->ang_vel_x_real = (float) ang_vel_x / GYRO_FACTOR_250; 
     } else if (this->_gyro_fs_range == 500) {
@@ -190,7 +195,50 @@ float MPU6050::readXAngularVelocity() {
     }
 
     return this->ang_vel_x_real;
+}
 
+float MPU6050::readYAngularVelocity() {
+    Wire.beginTransmission(this->_address);
+    Wire.write(GYRO_YOUT_H);
+    Wire.endTransmission(true);
+
+    Wire.requestFrom(static_cast<int>(this->_address), 2, static_cast<int>(WIRE_SEND_STOP));
+    this->ang_vel_y = Wire.read() << 8 | Wire.read();
+
+    // divide by the confiured settings 
+    if(this->_gyro_fs_range == 250) {
+        this->ang_vel_y_real = (float) ang_vel_y / GYRO_FACTOR_250; 
+    } else if (this->_gyro_fs_range == 500) {
+        this->ang_vel_y_real = (float) ang_vel_y / GYRO_FACTOR_500; 
+    } else if(this->_gyro_fs_range == 1000) {
+        this->ang_vel_y_real = (float) ang_vel_y / GYRO_FACTOR_1000; 
+    } else if(this->_gyro_fs_range == 2000) {
+        this->ang_vel_y_real = (float) ang_vel_y / GYRO_FACTOR_2000; 
+    }
+
+    return this->ang_vel_y_real;
+}
+
+float MPU6050::readZAngularVelocity() {
+    Wire.beginTransmission(this->_address);
+    Wire.write(GYRO_ZOUT_H);
+    Wire.endTransmission(true);
+
+    Wire.requestFrom(static_cast<int>(this->_address), 2, static_cast<int>(WIRE_SEND_STOP));
+    this->ang_vel_z= Wire.read() << 8 | Wire.read();
+
+    // divide by the confiured settings 
+    if(this->_gyro_fs_range == 250) {
+        this->ang_vel_z_real = (float) ang_vel_z / GYRO_FACTOR_250; 
+    } else if (this->_gyro_fs_range == 500) {
+        this->ang_vel_z_real = (float) ang_vel_z / GYRO_FACTOR_500; 
+    } else if(this->_gyro_fs_range == 1000) {
+        this->ang_vel_z_real = (float) ang_vel_z / GYRO_FACTOR_1000; 
+    } else if(this->_gyro_fs_range == 2000) {
+        this->ang_vel_z_real = (float) ang_vel_z / GYRO_FACTOR_2000; 
+    }
+
+    return this->ang_vel_z_real;
 }
 
 

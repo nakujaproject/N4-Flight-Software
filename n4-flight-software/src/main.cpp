@@ -287,7 +287,7 @@ uint8_t BMPInit() {
  * 
  *******************************************************************************/
 uint8_t GPSInit() {
-    Serial2.begin(GPS_BAUD_RATE);
+    gpsSerial.begin(GPS_BAUD_RATE);
     delay(100); // wait for GPS to init
 
     debugln("[+]GPS init OK!"); 
@@ -351,6 +351,7 @@ QueueHandle_t kalman_filter_queue_handle;
 void readAccelerationTask(void* pvParameter) {
     telemetry_type_t acc_data_lcl;
 
+
     while(1) {
         acc_data_lcl.operation_mode = operation_mode; // TODO: move these to check state function
         acc_data_lcl.record_number++;
@@ -359,10 +360,12 @@ void readAccelerationTask(void* pvParameter) {
         // read acceleration
         acc_data_lcl.acc_data.ax = imu.readXAcceleration();
         acc_data_lcl.acc_data.ay = imu.readYAcceleration();
-        acc_data_lcl.acc_data.az = 0;
+        acc_data_lcl.acc_data.az = imu.readZAcceleration();
 
         // read angular velocities
-        acc_data_lcl.acc_data.gx = imu.readXAngularVelocity();
+        acc_data_lcl.gyro_data.gx = imu.readXAngularVelocity();
+        acc_data_lcl.gyro_data.gy = imu.readYAngularVelocity();
+        acc_data_lcl.gyro_data.gz = imu.readZAngularVelocity();
 
         // get pitch and roll
         acc_data_lcl.acc_data.pitch = imu.getPitch();
@@ -588,7 +591,6 @@ void checkFlightState(void* pvParameters) {
 
             //debug("Curr val:");debug(flight_data.alt_data.altitude); debug("    "); debugln(oldest_val);
             if((oldest_val - flight_data.alt_data.altitude) >= APOGEE_DETECTION_THRESHOLD) {
-
                 if(apogee_flag == 0) {
                     apogee_val = ( (oldest_val - flight_data.alt_data.altitude) / 2 ) + oldest_val;
 
@@ -737,7 +739,7 @@ void debugToTerminalTask(void* pvParameters){
          *
          */
         sprintf(telemetry_packet_buffer,
-                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n",
+                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n",
 
                 telemetry_received_packet.record_number,
                 telemetry_received_packet.operation_mode,
@@ -749,6 +751,7 @@ void debugToTerminalTask(void* pvParameters){
                 telemetry_received_packet.acc_data.roll,
                 telemetry_received_packet.gyro_data.gx,
                 telemetry_received_packet.gyro_data.gy,
+                telemetry_received_packet.gyro_data.gz,
                 telemetry_received_packet.gps_data.latitude,
                 telemetry_received_packet.gps_data.longitude,
                 telemetry_received_packet.gps_data.gps_altitude,
