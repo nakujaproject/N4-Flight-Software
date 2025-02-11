@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['filterimu_0',['filterImu',['../classMPU6050.html#aed4696b264b467844771ef28b274541b',1,'MPU6050']]],
-  ['flightstatecallback_1',['flightStateCallback',['../src_2main_8cpp.html#a6648d201a9f47aa836d36e5339e78ef3',1,'main.cpp']]]
+  ['datalogger_0',['DataLogger',['../classDataLogger.html#a9ddfc501b4bd4f004f11854c3552d574',1,'DataLogger']]],
+  ['debugtoterminaltask_1',['debugToTerminalTask',['../src_2main_8cpp.html#aaa1a5716bd567e8c37465dabe33e6396',1,'main.cpp']]],
+  ['droguechutedeploy_2',['drogueChuteDeploy',['../src_2main_8cpp.html#aee373e9d6ea48f0b376bdaa1c2970510',1,'main.cpp']]]
 ];

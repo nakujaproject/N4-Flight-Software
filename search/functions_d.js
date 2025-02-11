@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['wificonnect_0',['WifiConnect',['../class_w_i_f_i_config.html#a4971db261d244a871303c9ee402b3ef9',1,'WIFIConfig']]]
+  ['wificonnect_0',['WifiConnect',['../classWIFIConfig.html#a4971db261d244a871303c9ee402b3ef9',1,'WIFIConfig']]]
 ];

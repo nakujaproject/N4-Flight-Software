@@ -195,6 +195,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>non_blocking_buzz</b>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>blocking_buzz</b> (uint16_t interval)</td></tr>
 <tr class="memdesc:a0c5f5f09bfc3d0aea8ed3e2cb0be895d"><td class="mdescLeft">&#160;</td><td class="mdescRight">blocking buzz <br /></td></tr>
 <tr class="separator:a0c5f5f09bfc3d0aea8ed3e2cb0be895d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9cf7e4c8024aa7624fe5c67a2f370aa9" id="r_a9cf7e4c8024aa7624fe5c67a2f370aa9"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9cf7e4c8024aa7624fe5c67a2f370aa9">altimeter_get_pressure</a> ()</td></tr>
+<tr class="memdesc:a9cf7e4c8024aa7624fe5c67a2f370aa9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the raw pressure from the altimeter.  <br /></td></tr>
+<tr class="separator:a9cf7e4c8024aa7624fe5c67a2f370aa9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada0b37a0896347ee2b4c96efef4e75e7" id="r_ada0b37a0896347ee2b4c96efef4e75e7"><td class="memItemLeft" align="right" valign="top"><a id="ada0b37a0896347ee2b4c96efef4e75e7" name="ada0b37a0896347ee2b4c96efef4e75e7"></a>
 HardwareSerial&#160;</td><td class="memItemRight" valign="bottom"><b>gpsSerial</b> (2)</td></tr>
 <tr class="separator:ada0b37a0896347ee2b4c96efef4e75e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -278,6 +281,12 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>STATE_BIT_MASK</b>
 <tr class="memitem:a169c53997a7da1d0fb99aec1b4675ce8" id="r_a169c53997a7da1d0fb99aec1b4675ce8"><td class="memItemLeft" align="right" valign="top"><a id="a169c53997a7da1d0fb99aec1b4675ce8" name="a169c53997a7da1d0fb99aec1b4675ce8"></a>
 TinyGPSPlus&#160;</td><td class="memItemRight" valign="bottom"><b>gps</b></td></tr>
 <tr class="separator:a169c53997a7da1d0fb99aec1b4675ce8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8488aebd82057499879e52ffb28aec80" id="r_a8488aebd82057499879e52ffb28aec80"><td class="memItemLeft" align="right" valign="top"><a id="a8488aebd82057499879e52ffb28aec80" name="a8488aebd82057499879e52ffb28aec80"></a>
+char&#160;</td><td class="memItemRight" valign="bottom"><b>gps_buffer</b> [20]</td></tr>
+<tr class="separator:a8488aebd82057499879e52ffb28aec80"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a046365591d1e986fbbcecd7f44f99753" id="r_a046365591d1e986fbbcecd7f44f99753"><td class="memItemLeft" align="right" valign="top"><a id="a046365591d1e986fbbcecd7f44f99753" name="a046365591d1e986fbbcecd7f44f99753"></a>
+<a class="el" href="data__types_8h.html#a876d9394b51566660d43cc1747ae7ac3">gps_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>gps_packet</b></td></tr>
+<tr class="separator:a046365591d1e986fbbcecd7f44f99753"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad172a32bd5320bedcec6d6537a76f0a9" id="r_ad172a32bd5320bedcec6d6537a76f0a9"><td class="memItemLeft" align="right" valign="top"><a id="ad172a32bd5320bedcec6d6537a76f0a9" name="ad172a32bd5320bedcec6d6537a76f0a9"></a>
 <a class="el" href="classSystemLogger.html">SystemLogger</a>&#160;</td><td class="memItemRight" valign="bottom"><b>SYSTEM_LOGGER</b></td></tr>
 <tr class="separator:ad172a32bd5320bedcec6d6537a76f0a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -353,6 +362,9 @@ char&#160;</td><td class="memItemRight" valign="bottom"><b>telemetry_packet_buff
 <tr class="memitem:a577a4fa3c3242dedd504db6426ff9f4e" id="r_a577a4fa3c3242dedd504db6426ff9f4e"><td class="memItemLeft" align="right" valign="top"><a id="a577a4fa3c3242dedd504db6426ff9f4e" name="a577a4fa3c3242dedd504db6426ff9f4e"></a>
 <a class="el" href="structring__buffer.html">ring_buffer</a>&#160;</td><td class="memItemRight" valign="bottom"><b>altitude_ring_buffer</b></td></tr>
 <tr class="separator:a577a4fa3c3242dedd504db6426ff9f4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3ed0bb4daedd873ee77834d3929fadd" id="r_ad3ed0bb4daedd873ee77834d3929fadd"><td class="memItemLeft" align="right" valign="top"><a id="ad3ed0bb4daedd873ee77834d3929fadd" name="ad3ed0bb4daedd873ee77834d3929fadd"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>baseline</b> = 0.0</td></tr>
+<tr class="separator:ad3ed0bb4daedd873ee77834d3929fadd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f27d8a93e93d1d2a66498debda70abc" id="r_a2f27d8a93e93d1d2a66498debda70abc"><td class="memItemLeft" align="right" valign="top"><a id="a2f27d8a93e93d1d2a66498debda70abc" name="a2f27d8a93e93d1d2a66498debda70abc"></a>
 float&#160;</td><td class="memItemRight" valign="bottom"><b>curr_val</b></td></tr>
 <tr class="separator:a2f27d8a93e93d1d2a66498debda70abc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -413,21 +425,12 @@ TaskHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>logToMemoryTa
 <tr class="memitem:a92e0738c1b3bff971ec9a9d57465b3d3" id="r_a92e0738c1b3bff971ec9a9d57465b3d3"><td class="memItemLeft" align="right" valign="top"><a id="a92e0738c1b3bff971ec9a9d57465b3d3" name="a92e0738c1b3bff971ec9a9d57465b3d3"></a>
 SFE_BMP180&#160;</td><td class="memItemRight" valign="bottom"><b>altimeter</b></td></tr>
 <tr class="separator:a92e0738c1b3bff971ec9a9d57465b3d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a051c9e198ee930358372c407a17e8b78" id="r_a051c9e198ee930358372c407a17e8b78"><td class="memItemLeft" align="right" valign="top"><a id="a051c9e198ee930358372c407a17e8b78" name="a051c9e198ee930358372c407a17e8b78"></a>
-char&#160;</td><td class="memItemRight" valign="bottom"><b>status</b></td></tr>
-<tr class="separator:a051c9e198ee930358372c407a17e8b78"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac94a6e5794c2d7b59588b14025cfba20" id="r_ac94a6e5794c2d7b59588b14025cfba20"><td class="memItemLeft" align="right" valign="top"><a id="ac94a6e5794c2d7b59588b14025cfba20" name="ac94a6e5794c2d7b59588b14025cfba20"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>T</b></td></tr>
-<tr class="separator:ac94a6e5794c2d7b59588b14025cfba20"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac0ce89f1ccf18d4f5fd88839572b29c1" id="r_ac0ce89f1ccf18d4f5fd88839572b29c1"><td class="memItemLeft" align="right" valign="top"><a id="ac0ce89f1ccf18d4f5fd88839572b29c1" name="ac0ce89f1ccf18d4f5fd88839572b29c1"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>PRESSURE</b></td></tr>
-<tr class="separator:ac0ce89f1ccf18d4f5fd88839572b29c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8be9de5ac626cddcd15c5ec181619694" id="r_a8be9de5ac626cddcd15c5ec181619694"><td class="memItemLeft" align="right" valign="top"><a id="a8be9de5ac626cddcd15c5ec181619694" name="a8be9de5ac626cddcd15c5ec181619694"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>p0</b></td></tr>
-<tr class="separator:a8be9de5ac626cddcd15c5ec181619694"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1031d0e0a97a340abfe0a6ab9e831045" id="r_a1031d0e0a97a340abfe0a6ab9e831045"><td class="memItemLeft" align="right" valign="top"><a id="a1031d0e0a97a340abfe0a6ab9e831045" name="a1031d0e0a97a340abfe0a6ab9e831045"></a>
-double&#160;</td><td class="memItemRight" valign="bottom"><b>a</b></td></tr>
-<tr class="separator:a1031d0e0a97a340abfe0a6ab9e831045"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab067d41795bd2ec373c343f31ffd2c56" id="r_ab067d41795bd2ec373c343f31ffd2c56"><td class="memItemLeft" align="right" valign="top"><a id="ab067d41795bd2ec373c343f31ffd2c56" name="ab067d41795bd2ec373c343f31ffd2c56"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>altimeter_temperature</b> = 0.0</td></tr>
+<tr class="separator:ab067d41795bd2ec373c343f31ffd2c56"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a322df57b9b516edf27149743aa31354d" id="r_a322df57b9b516edf27149743aa31354d"><td class="memItemLeft" align="right" valign="top"><a id="a322df57b9b516edf27149743aa31354d" name="a322df57b9b516edf27149743aa31354d"></a>
+<a class="el" href="data__types_8h.html#a0e0b67dddbfb6f7c8688db7f0bce572a">altimeter_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><b>altimeter_packet</b></td></tr>
+<tr class="separator:a322df57b9b516edf27149743aa31354d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abe0f2d917a4d91446385606b903276ea" id="r_abe0f2d917a4d91446385606b903276ea"><td class="memItemLeft" align="right" valign="top">QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abe0f2d917a4d91446385606b903276ea">telemetry_data_queue_handle</a></td></tr>
 <tr class="separator:abe0f2d917a4d91446385606b903276ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f8c4f2ee1334dd033c60dd025894e08" id="r_a2f8c4f2ee1334dd033c60dd025894e08"><td class="memItemLeft" align="right" valign="top"><a id="a2f8c4f2ee1334dd033c60dd025894e08" name="a2f8c4f2ee1334dd033c60dd025894e08"></a>
@@ -466,6 +469,26 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalman_filte
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
+<a id="a9cf7e4c8024aa7624fe5c67a2f370aa9" name="a9cf7e4c8024aa7624fe5c67a2f370aa9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9cf7e4c8024aa7624fe5c67a2f370aa9">&#9670;&#160;</a></span>altimeter_get_pressure()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double altimeter_get_pressure </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read the raw pressure from the altimeter. </p>
+<hr  />
+  
+</div>
+</div>
 <a id="a8bd22523fa85c7cdc0b1ce2ca2ad9340" name="a8bd22523fa85c7cdc0b1ce2ca2ad9340"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8bd22523fa85c7cdc0b1ce2ca2ad9340">&#9670;&#160;</a></span>BMPInit()</h2>
 
@@ -616,7 +639,6 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalman_filte
 <hr  />
  <dl class="section return"><dt>Returns</dt><dd>1 if init OK, 0 otherwise </dd></dl>
 <p>FIXME: Proper GPS init check! Look into if the GPS has acquired a LOCK on satelites Only if it has a lock then can we return a 1</p>
-<p>GPS is low priority at the time of writing this but make it work!</p>
 
 </div>
 </div>
