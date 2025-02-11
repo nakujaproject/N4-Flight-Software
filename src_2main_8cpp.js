@@ -1,8 +1,8 @@
 var src_2main_8cpp =
 [
     [ "OPERATION_MODE", "src_2main_8cpp.html#a9dd8c0bc72877aecb789ae6d08811d54", [
-      [ "SAFE", "src_2main_8cpp.html#a84c9071ddbba60e4348da0ba99c47b11a1e7778fe1d20fa869e701cfe1f301c7b", null ],
-      [ "ARMED", "src_2main_8cpp.html#a84c9071ddbba60e4348da0ba99c47b11ad7d2bb8c4216182a7fe9e3e4ca6e4f08", null ]
+      [ "SAFE_MODE", "src_2main_8cpp.html#a9dd8c0bc72877aecb789ae6d08811d54a65305b334897a18c7e6f0e35ecbb05ca", null ],
+      [ "ARMED_MODE", "src_2main_8cpp.html#a9dd8c0bc72877aecb789ae6d08811d54ad885191e721ae41356ee53ddbe326ba9", null ]
     ] ],
     [ "altimeter_get_pressure", "src_2main_8cpp.html#a9cf7e4c8024aa7624fe5c67a2f370aa9", null ],
     [ "blocking_buzz", "src_2main_8cpp.html#a0c5f5f09bfc3d0aea8ed3e2cb0be895d", null ],

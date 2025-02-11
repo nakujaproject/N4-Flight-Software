@@ -156,16 +156,16 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:a9dd8c0bc72877aecb789ae6d08811d54" id="r_a9dd8c0bc72877aecb789ae6d08811d54"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9dd8c0bc72877aecb789ae6d08811d54">OPERATION_MODE</a> { <b>SAFE</b> = 0
-, <b>ARMED</b> = 300
+<tr class="memitem:a9dd8c0bc72877aecb789ae6d08811d54" id="r_a9dd8c0bc72877aecb789ae6d08811d54"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9dd8c0bc72877aecb789ae6d08811d54">OPERATION_MODE</a> { <b>SAFE_MODE</b> = 0
+, <b>ARMED_MODE</b>
  }</td></tr>
 <tr class="separator:a9dd8c0bc72877aecb789ae6d08811d54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada09b633eab8bb767bdf2eba90af3d73" id="r_ada09b633eab8bb767bdf2eba90af3d73"><td class="memItemLeft" align="right" valign="top"><a id="ada09b633eab8bb767bdf2eba90af3d73" name="ada09b633eab8bb767bdf2eba90af3d73"></a>enum &#160;</td><td class="memItemRight" valign="bottom"><b>BUZZ_INTERVALS</b> { <b>SETUP_INIT</b> = 200
 , <b>ARMING_PROCEDURE</b> = 500
  }</td></tr>
 <tr class="separator:ada09b633eab8bb767bdf2eba90af3d73"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a84c9071ddbba60e4348da0ba99c47b11" id="r_a84c9071ddbba60e4348da0ba99c47b11"><td class="memItemLeft" align="right" valign="top"><a id="a84c9071ddbba60e4348da0ba99c47b11" name="a84c9071ddbba60e4348da0ba99c47b11"></a>enum &#160;</td><td class="memItemRight" valign="bottom"><b>BLINK_INTERVALS</b> { <b>SAFE</b> = 0
-, <b>ARMED</b> = 300
+<tr class="memitem:a84c9071ddbba60e4348da0ba99c47b11" id="r_a84c9071ddbba60e4348da0ba99c47b11"><td class="memItemLeft" align="right" valign="top"><a id="a84c9071ddbba60e4348da0ba99c47b11" name="a84c9071ddbba60e4348da0ba99c47b11"></a>enum &#160;</td><td class="memItemRight" valign="bottom"><b>BLINK_INTERVALS</b> { <b>SAFE_BLINK</b> = 100
+, <b>ARMED_BLINK</b> = 300
  }</td></tr>
 <tr class="separator:a84c9071ddbba60e4348da0ba99c47b11"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -267,7 +267,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_Reconnect</b> ()
 <tr class="memdesc:a582e3dadcae4266158f0516e7c264bb6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize MQTT.  <br /></td></tr>
 <tr class="separator:a582e3dadcae4266158f0516e7c264bb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a47c195624ef1a623d86bf5b3895d89dd" id="r_a47c195624ef1a623d86bf5b3895d89dd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a47c195624ef1a623d86bf5b3895d89dd">xOperationModeIndicateTask</a> (void *pvParameters)</td></tr>
-<tr class="memdesc:a47c195624ef1a623d86bf5b3895d89dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">lights green LED for safe mode and red LED for armed mode  <br /></td></tr>
+<tr class="memdesc:a47c195624ef1a623d86bf5b3895d89dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">blinks green LED for safe mode and red LED for armed mode  <br /></td></tr>
 <tr class="separator:a47c195624ef1a623d86bf5b3895d89dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac3cd28890b81c40614420a6fa15a6c6" id="r_aac3cd28890b81c40614420a6fa15a6c6"><td class="memItemLeft" align="right" valign="top"><a id="aac3cd28890b81c40614420a6fa15a6c6" name="aac3cd28890b81c40614420a6fa15a6c6"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>xCreateAllTasks</b> ()</td></tr>
@@ -309,7 +309,7 @@ LOG_LEVEL&#160;</td><td class="memItemRight" valign="bottom"><b>level</b> = INFO
 <tr class="memitem:a5bef7886537f878149917a29939a5cb0" id="r_a5bef7886537f878149917a29939a5cb0"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5bef7886537f878149917a29939a5cb0">rocket_ID</a> = &quot;FC1&quot;</td></tr>
 <tr class="separator:a5bef7886537f878149917a29939a5cb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae6c96d722e1a8d2f83a4f05ebd388833" id="r_ae6c96d722e1a8d2f83a4f05ebd388833"><td class="memItemLeft" align="right" valign="top"><a id="ae6c96d722e1a8d2f83a4f05ebd388833" name="ae6c96d722e1a8d2f83a4f05ebd388833"></a>
-uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>is_safe_mode</b> = OPERATION_MODE::SAFE</td></tr>
+uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>is_safe_mode</b> = OPERATION_MODE::SAFE_MODE</td></tr>
 <tr class="separator:ae6c96d722e1a8d2f83a4f05ebd388833"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5d297ec11e5012972da099cd582d6b9d" id="r_a5d297ec11e5012972da099cd582d6b9d"><td class="memItemLeft" align="right" valign="top"><a id="a5d297ec11e5012972da099cd582d6b9d" name="a5d297ec11e5012972da099cd582d6b9d"></a>
 unsigned long&#160;</td><td class="memItemRight" valign="bottom"><b>current_non_block_time</b> = 0</td></tr>
@@ -930,7 +930,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalman_filte
       </table>
 </div><div class="memdoc">
 
-<p>lights green LED for safe mode and red LED for armed mode </p>
+<p>blinks green LED for safe mode and red LED for armed mode </p>
 <hr  />
   
 </div>
