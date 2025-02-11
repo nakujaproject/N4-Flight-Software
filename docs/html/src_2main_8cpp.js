@@ -4,6 +4,7 @@ var src_2main_8cpp =
       [ "SAFE_MODE", "src_2main_8cpp.html#a9dd8c0bc72877aecb789ae6d08811d54a65305b334897a18c7e6f0e35ecbb05ca", null ],
       [ "ARMED_MODE", "src_2main_8cpp.html#a9dd8c0bc72877aecb789ae6d08811d54ad885191e721ae41356ee53ddbe326ba9", null ]
     ] ],
+    [ "altimeter_get_pressure", "src_2main_8cpp.html#a9cf7e4c8024aa7624fe5c67a2f370aa9", null ],
     [ "blocking_buzz", "src_2main_8cpp.html#a0c5f5f09bfc3d0aea8ed3e2cb0be895d", null ],
     [ "BMPInit", "src_2main_8cpp.html#a8bd22523fa85c7cdc0b1ce2ca2ad9340", null ],
     [ "buzzerInit", "src_2main_8cpp.html#ab39bc50f65525981c015786371a7892f", null ],
@@ -21,6 +22,7 @@ var src_2main_8cpp =
     [ "logToMemory", "src_2main_8cpp.html#a7df146b43e503e23146e698154d5096d", null ],
     [ "loop", "src_2main_8cpp.html#afe461d27b9c48d5921c00d521181f12f", null ],
     [ "mainChuteDeploy", "src_2main_8cpp.html#a9074d493ccf55d0cfa3acd2d173f665a", null ],
+    [ "mqtt_command_processor", "src_2main_8cpp.html#adcada09d9a4fa64bed7b0175e180b25e", null ],
     [ "MQTT_Reconnect", "src_2main_8cpp.html#a5a48a88cefb37379fe58c0f58d0c274f", null ],
     [ "MQTT_TransmitTelemetry", "src_2main_8cpp.html#a623ea109418725f80cfc705f49fd7a55", null ],
     [ "MQTTInit", "src_2main_8cpp.html#a582e3dadcae4266158f0516e7c264bb6", null ],
@@ -29,6 +31,7 @@ var src_2main_8cpp =
     [ "readAltimeterTask", "src_2main_8cpp.html#a5947e71102388e9d5bfd09f8e97d668c", null ],
     [ "readGPSTask", "src_2main_8cpp.html#aa8ea491ed98b16bb5292ad184537f0b5", null ],
     [ "setup", "src_2main_8cpp.html#a4fc01d736fe50cf5b977f755b675f11d", null ],
+    [ "xOperationModeIndicateTask", "src_2main_8cpp.html#a47c195624ef1a623d86bf5b3895d89dd", null ],
     [ "acc_data", "src_2main_8cpp.html#a5db507f1ef37ed2d76f24c064e4e6a85", null ],
     [ "current_log_time", "src_2main_8cpp.html#a318b23db9cedde5ea8466af114f0c203", null ],
     [ "current_state", "src_2main_8cpp.html#ac559654865b2d48ea0b77b1a1f4a097b", null ],

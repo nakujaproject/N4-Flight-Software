@@ -188,68 +188,33 @@ Hardware, pin assignment and peripherals</h1>
     </div>
  </p>
 <p>The pin assignment to ESP32 are listed in the following file: <a href="https://github.com/nakujaproject/N4-Flight-Software/blob/main/flight-computer-pin-assignment-version-1.xlsx">https://github.com/nakujaproject/N4-Flight-Software/blob/main/flight-computer-pin-assignment-version-1.xlsx</a></p>
-<h1><a class="anchor" id="step14"></a>
-Integration and Testing Procedures</h1>
-<p>To perform testing and integration of the flight computer, follow the steps below:</p>
-<h2><a class="anchor" id="step15"></a>
-Hardware setup</h2>
-<ul>
-<li>Referring to the N4 flight computer pinout, make sure the Test/Run toggle is set to TEST-MODE</li>
-</ul>
-<p> 
-    <div style="text-align: center;">
-
-        <img src="test-run-mode.png" >
-
-    </div>
- </p>
-<ul>
-<li>Upload the n4-flight-software code to the flight computer as per the instructions in the [Upload and run] section above</li>
-</ul>
-<h2><a class="anchor" id="step16"></a>
-How to use the Nakuja Flight Computer Testing Engine</h2>
-<p>The testing engine is built to streamline the testing procedures and help inteprate the commands received from the Device Under <a class="el" href="class_test.html">Test</a> during the testing phase. It also helps in downloading the test data to the Flight Computer for simulation.</p>
-<h2><a class="anchor" id="step17"></a>
-Installation</h2>
-<dl class="section note"><dt>Note</dt><dd>In development</dd></dl>
-<h2><a class="anchor" id="step18"></a>
-Downloading the test data</h2>
-<ul>
-<li>Double click on the app to open. The following window appears.</li>
-<li>Select the COM port that the flight computer is connected to.</li>
-<li>Select the baud rate</li>
-<li>Choose the test-data CSV file.</li>
-<li>Click Connect. The flight computer will be connected to the PC via serial. [Connected on COM[X] ] shows on the status bar.</li>
-<li>On the flight computer, press on the RESET/EN button and observe the serial Monitor. A code 21 should be received on the Serial Monitor every 4 seconds. Here is the X-MODEM commands list for quick reference:</li>
-</ul>
-<table class="doxtable">
-<caption>X-MODEM Commands</caption>
-<tr>
-<th>Command </th><th>HEX </th><th>DEC </th><th>Description    </th></tr>
-<tr>
-<td>SOH </td><td>01 </td><td>1 </td><td>Start of Heading  </td></tr>
-<tr>
-<td>ACK </td><td>06 </td><td>6 </td><td>Positive acknowledge  </td></tr>
-<tr>
-<td>NAK </td><td>15 </td><td>21 </td><td>Negative acknowledge  </td></tr>
-<tr>
-<td>CAN </td><td>18 </td><td>24 </td><td>Cancel  </td></tr>
-<tr>
-<td>EOT </td><td>04 </td><td>4 </td><td>End of transmission   </td></tr>
-</table>
-<ul>
-<li>Click on Link Data. The test engine will download the test data to the flight computer, and the progress will be indicated on the serial Monitor</li>
-</ul>
 <h1><a class="anchor" id="step20"></a>
 Pre-flight software checks</h1>
-<p>The following checks MUST be performed pre-flight to ensure the software operates as designed:</p><ol type="1">
-<li>test mode pin toggle</li>
-<li>telemetry protocol selection</li>
-<li>clientID (rocket ID)</li>
-<li>arming check</li>
-<li>DEBUG_to_terminal check - <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a></li>
-<li>LOG_TO_MEMORY - <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a></li>
-</ol>
+<p>The following checks MUST be performed pre-flight to ensure the software operates as designed:</p>
+<ul>
+<li><b>TEST/RUN mode pin toggle</b></li>
+</ul>
+<p>The flight computer MUST be in the RUN mode during launch. RUN mode is set by setting the toggle pin on the side labelled as RUN</p>
+<ul>
+<li><b>Telemetry protocol selection (MQTT or XBEE)</b></li>
+</ul>
+<p>If using MQTT with WIFI, ensure that the #define MQTT in <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a> is set to 1 If using XBEE, ensure that the #define #define XBEE in <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a> is set to 1 If using both, enure both are set to 1</p>
+<ul>
+<li><b>ClientID (rocket ID)</b></li>
+</ul>
+<p>Ideally, every rocket is named before launch. So change the rocket_ID variable in main.cpp before uploading the code to a specific flight computer. This naming will help with the log files to know which data belongs to which computer.</p>
+<ul>
+<li><b>Arming check</b></li>
+</ul>
+<p>In SAFE MODE, The green LED on the flight computer should be blinking, the red LED should be OFF. In ARMED MODE, the red LED should be blinking, the green LED should be OFF. Do not connect the pyro-technic charges while the flight computer is in ARMED MODE. Arming is done only from the base station, away from the rocket to prevent any misfires.</p>
+<ul>
+<li><b>DEBUG_TO_TERMINAL check</b></li>
+</ul>
+<p>Debug via the serial monitor should be enabled only on ground during development and testing. During flight, debugging to terminal should be disabled. To disable debugging, set the DEBUG_TO_TERMINAL constant in <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a> to 0.</p>
+<ul>
+<li><b>LOG_TO_MEMORY check</b></li>
+</ul>
+<p>During development, it is discovered that logging to memory every time is a waste of memory resources, which are scarce. Log to memory only when needed. Set the LOG_TO_MEMORY constant in <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a> to 0 to disable logging to memory and set to 1 to enable. This variable MUST be set to 1 during flight, otherwise there will be no data collected.</p>
 <h1><a class="anchor" id="step21"></a>
 WIFI network configuration</h1>
 <p>The software is written such that it allows connection to any WIFI being used, without hardcoding the WIFI credentials into the flight software. This will make the launch preparation faster as no code uploading needs to be done on-site. Follow the procedure below to connect to WIFI:</p><ul>
@@ -390,7 +355,59 @@ Flight data logging and data recovery</h1>
 </div><!-- fragment --><ul>
 <li>Open AiThinker serial tool and dump the data into a text file as outlined in the steps above.</li>
 </ul>
-<h1><a class="anchor" id="step30"></a>
+<h1><a class="anchor" id="step31"></a>
+Integration and Testing Procedures</h1>
+<p>To perform testing and integration of the flight computer, follow the steps below:</p>
+<h2><a class="anchor" id="step15"></a>
+Hardware setup</h2>
+<ul>
+<li>Referring to the N4 flight computer pinout, make sure the Test/Run toggle is set to TEST-MODE</li>
+</ul>
+<p> 
+    <div style="text-align: center;">
+
+        <img src="test-run-mode.png" >
+
+    </div>
+ </p>
+<ul>
+<li>Upload the n4-flight-software code to the flight computer as per the instructions in the [Upload and run] section above</li>
+</ul>
+<h2><a class="anchor" id="step32"></a>
+How to use the Nakuja Flight Computer Testing Engine</h2>
+<p>The testing engine is built to streamline the testing procedures and help inteprate the commands received from the Device Under <a class="el" href="class_test.html">Test</a> during the testing phase. It also helps in downloading the test data to the Flight Computer for simulation.</p>
+<h2><a class="anchor" id="step17"></a>
+Installation</h2>
+<dl class="section note"><dt>Note</dt><dd>In development</dd></dl>
+<h2><a class="anchor" id="step33"></a>
+Downloading the test data</h2>
+<ul>
+<li>Double click on the app to open. The following window appears.</li>
+<li>Select the COM port that the flight computer is connected to.</li>
+<li>Select the baud rate</li>
+<li>Choose the test-data CSV file.</li>
+<li>Click Connect. The flight computer will be connected to the PC via serial. [Connected on COM[X] ] shows on the status bar.</li>
+<li>On the flight computer, press on the RESET/EN button and observe the serial Monitor. A code 21 should be received on the Serial Monitor every 4 seconds. Here is the X-MODEM commands list for quick reference:</li>
+</ul>
+<table class="doxtable">
+<caption>X-MODEM Commands</caption>
+<tr>
+<th>Command </th><th>HEX </th><th>DEC </th><th>Description    </th></tr>
+<tr>
+<td>SOH </td><td>01 </td><td>1 </td><td>Start of Heading  </td></tr>
+<tr>
+<td>ACK </td><td>06 </td><td>6 </td><td>Positive acknowledge  </td></tr>
+<tr>
+<td>NAK </td><td>15 </td><td>21 </td><td>Negative acknowledge  </td></tr>
+<tr>
+<td>CAN </td><td>18 </td><td>24 </td><td>Cancel  </td></tr>
+<tr>
+<td>EOT </td><td>04 </td><td>4 </td><td>End of transmission   </td></tr>
+</table>
+<ul>
+<li>Click on Link Data. The test engine will download the test data to the flight computer, and the progress will be indicated on the serial Monitor</li>
+</ul>
+<h1><a class="anchor" id="step34"></a>
 Contributors</h1>
 <p>Our thanks go to the following current and previous avionics team members for their contribution:</p><ol type="1">
 <li>Edwin Mwiti</li>

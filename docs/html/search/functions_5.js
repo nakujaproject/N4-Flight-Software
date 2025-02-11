@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['init_5fkalman_5fmatrices_0',['init_kalman_matrices',['../kalman__filter_8h.html#a7cbd9975e7fe97ff08dcd7d140c01c2c',1,'kalman_filter.cpp']]],
-  ['initdynamicwifi_1',['initDynamicWIFI',['../src_2main_8cpp.html#a29b878fa9aee771a49679759f9f10da1',1,'main.cpp']]],
-  ['initsd_2',['initSD',['../src_2main_8cpp.html#aedbb4a03b76d7246ea721233c6540ba1',1,'main.cpp']]],
-  ['initspiffs_3',['InitSPIFFS',['../src_2main_8cpp.html#a31b6932835b12c5ea4db3e24f4b9dd7f',1,'main.cpp']]]
+  ['getloglevelstring_0',['getLogLevelString',['../class_system_logger.html#ad6feeadde357832516761347ff4cf25c',1,'SystemLogger']]],
+  ['getpitch_1',['getPitch',['../class_m_p_u6050.html#aa8d0edd31d2892d6703b4dce77d4dfc7',1,'MPU6050']]],
+  ['getroll_2',['getRoll',['../class_m_p_u6050.html#adcecd29f4445b6670aafa2452a26f197',1,'MPU6050']]],
+  ['gpsinit_3',['GPSInit',['../src_2main_8cpp.html#a7614084d3b4eca93954d98680cc2443d',1,'main.cpp']]]
 ];
