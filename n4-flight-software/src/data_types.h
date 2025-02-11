@@ -46,7 +46,7 @@ typedef struct GPS_Data{
  */
 typedef struct Altimeter_Data{
     double pressure;             /*!< atmospheric pressure */
-    double altitude;             /*!< current altitude read by the altimeter */
+    double rel_altitude;             /*!< current relative altitude read by the altimeter */
     double velocity;             /*!< velocity from the altimeter */
     double temperature;          /*!< altimeter temperature */
     double AGL;                  /*!< altitude above ground level */

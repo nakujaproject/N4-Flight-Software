@@ -8,6 +8,7 @@ pitch
 roll 
 gx 
 gy 
+gz
 latitude 
 longitude
 gps_altitude

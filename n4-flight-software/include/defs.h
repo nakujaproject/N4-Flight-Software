@@ -21,7 +21,7 @@
 /* debug parameters for use during testing - set to 0 for production */
 #define DEBUGGING 1                           /*!< allow debugging to terminal. Set to 0 pre flight to disable serial terminal printing and improve speed  */
 #define LOG_TO_MEMORY 0                      /*!< allow data logging to memory. Set to 1 to log data to external flash memory. Must be set during flight */
-#define DEBUG_TO_TERMINAL 1                  /*!< allow create task that prints data to terminal. Set to 0 before flight  */
+#define DEBUG_TO_TERMINAL 1                 /*!< allow create task that prints data to terminal. Set to 0 before flight  */
 
 #if DEBUGGING
     #define debug(x) Serial.print(x)

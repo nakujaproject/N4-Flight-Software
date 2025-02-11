@@ -40,6 +40,7 @@ float kalmanFilter(float z);
 void checkRunTestToggle();
 void non_blocking_buzz(uint16_t interval);
 void blocking_buzz(uint16_t interval);
+double altimeter_get_pressure();
 
 
 /* state machine variables*/
@@ -50,6 +51,8 @@ uint8_t STATE_BIT_MASK = 0;
 /* GPS object */
 HardwareSerial gpsSerial(2); // PIN 16 AND 17 
 TinyGPSPlus gps;
+char gps_buffer[20];
+gps_type_t gps_packet;
 
 /* system logger */
 SystemLogger SYSTEM_LOGGER;
@@ -127,10 +130,11 @@ long long previous_time = 0;
 /* To store the main telemetry packet being sent over MQTT */
 char telemetry_packet_buffer[256];
 ring_buffer altitude_ring_buffer;
+double baseline = 0.0; // to store baseline pressure from the altimeter
 float curr_val;
 float oldest_val;
 uint8_t apogee_flag =0; // to signal that we have detected apogee
-static int apogee_val = 0; // apogee altitude aproximmation
+static int apogee_val = 0; // apogee altitude aproximation
 uint8_t main_eject_flag = 0;
 
 /**
@@ -199,8 +203,8 @@ MPU6050 imu(MPU_ADDRESS, MPU_ACCEL_RANGE, GYRO_RANGE);
 
 /* create BMP object */
 SFE_BMP180 altimeter;
-char status;
-double T, PRESSURE, p0, a;
+double altimeter_temperature = 0.0;
+altimeter_type_t altimeter_packet;
 
 /**
 * @brief initialize Buzzer
@@ -287,8 +291,8 @@ uint8_t BMPInit() {
  * 
  *******************************************************************************/
 uint8_t GPSInit() {
-    gpsSerial.begin(GPS_BAUD_RATE);
-    delay(100); // wait for GPS to init
+    gpsSerial.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_RX, GPS_TX);
+    delay(50);
 
     debugln("[+]GPS init OK!"); 
 
@@ -296,8 +300,6 @@ uint8_t GPSInit() {
      * FIXME: Proper GPS init check!
      * Look into if the GPS has acquired a LOCK on satelites 
      * Only if it has a lock then can we return a 1
-     * 
-     * GPS is low priority at the time of writing this but make it work! 
      * */ 
 
     return 1;
@@ -370,12 +372,13 @@ void readAccelerationTask(void* pvParameter) {
         // get pitch and roll
         acc_data_lcl.acc_data.pitch = imu.getPitch();
         acc_data_lcl.acc_data.roll = imu.getRoll();
-        
-
+    
         xQueueSend(telemetry_data_queue_handle, &acc_data_lcl, 0);
         xQueueSend(log_to_mem_queue_handle, &acc_data_lcl, 0);
         xQueueSend(check_state_queue_handle, &acc_data_lcl, 0);
         xQueueSend(debug_to_term_queue_handle, &acc_data_lcl, 0);
+
+        vTaskDelay(CONSUME_TASK_DELAY/ portTICK_PERIOD_MS);
     }
 
 }
@@ -385,109 +388,52 @@ void readAccelerationTask(void* pvParameter) {
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!****************************************************************************
+ * @brief Read the raw pressure from the altimeter
+ *******************************************************************************/
+double altimeter_get_pressure()
+{
+    char status;
+    double T, P, p0, a;
+    status = altimeter.startTemperature();
+    if(status != 0)
+    {
+        delay(status);
+        status = altimeter.getTemperature(T);
+        altimeter_temperature = T;
+        if(status != 0)
+        {
+            status = altimeter.startPressure(3);
+            if(status != 0)
+            {
+                delay(status);
+                status = altimeter.getPressure(P, T);
+                if(status != 0)
+                {
+                    return P;
+                } else debugln("Error getting pressure");
+            } else debugln("error starting pressure");
+        } else debugln("error getting temperature");
+    } else debugln("error starting pressure measurement");
+
+}
+
+/*!****************************************************************************
  * @brief Read atm pressure data from the barometric sensor onboard
  *******************************************************************************/
 void readAltimeterTask(void* pvParameters) {
     telemetry_type_t alt_data_lcl;
 
     while(1) {
-        // If you want to measure altitude, and not pressure, you will instead need
-        // to provide a known baseline pressure. This is shown at the end of the sketch.
+        double a, P;
+        P = altimeter_get_pressure();
+        a = altimeter.altitude(P, baseline);
 
-        // You must first get a temperature measurement to perform a pressure reading.
-        
-        // Start a temperature measurement:
-        // If request is successful, the number of ms to wait is returned.
-        // If request is unsuccessful, 0 is returned.
-        status = altimeter.startTemperature();
-        if(status !=0 ) {
-            // wait for measurement to complete
-            delay(status);
-
-            // retrieve the completed temperature measurement 
-            // temperature is stored in variable T
-
-            status = altimeter.getTemperature(T);
-            if(status != 0) {
-                // print out the measurement 
-                // debug("temperature: ");
-                // debug(T, 2);
-                // debug(" \xB0 C, ");
-
-                // start pressure measurement 
-                // The parameter is the oversampling setting, from 0 to 3 (highest res, longest wait).
-                // If request is successful, the number of ms to wait is returned.
-                // If request is unsuccessful, 0 is returned.
-                status = altimeter.startPressure(3);
-                if(status != 0) {
-                    // wait for the measurement to complete
-                    delay(status);
-
-                    // Retrieve the completed pressure measurement:
-                    // Note that the measurement is stored in the variable P.
-                    // Note also that the function requires the previous temperature measurement (T).
-                    // (If temperature is stable, you can do one temperature measurement for a number of pressure measurements.)
-                    // Function returns 1 if successful, 0 if failure.
-
-                    status = altimeter.getPressure(PRESSURE, T);
-                    if(status != 0) {
-                        // print out the measurement
-                        // debug("absolute pressure: ");
-                        // debug(P, 2);
-                        // debug(" mb, "); // in millibars
-
-                        p0 = altimeter.sealevel(PRESSURE,ALTITUDE);
-                        // If you want to determine your altitude from the pressure reading,
-                        // use the altitude function along with a baseline pressure (sea-level or other).
-                        // Parameters: P = absolute pressure in mb, p0 = baseline pressure in mb.
-                        // Result: a = altitude in m.
-
-                        a = altimeter.altitude(PRESSURE, p0);
-                        //debug(a);
-
-                        // feed the altitude into the kalman filter
-                        estimated_altitude = kalmanFilter(a);
-                        //debug(",");
-                        //debugln(estimated_altitude);
-
-                    } else {
-                        debugln("error retrieving pressure measurement\n");
-                    } 
-                
-                } else {
-                    debugln("error starting pressure measurement\n");
-                }
-
-            } else {
-                debugln("error retrieving temperature measurement\n");
-            }
-
-        } else {
-            debugln("error starting temperature measurement\n");
-        }
-
-        // delay(2000);
-
-        // TODO: compute the velocity from the altimeter data
-
-        // assign data to queue
-        alt_data_lcl.alt_data.pressure = PRESSURE;
-        alt_data_lcl.alt_data.altitude = a;
-        alt_data_lcl.alt_data.velocity = 0;
-        alt_data_lcl.alt_data.temperature = T;
-
-        // send this pressure data to queue
-        // do not wait for the queue if it is full because the data rate is so high, 
-        // we might lose some data as we wait for the queue to get space
-
-        xQueueSend(telemetry_data_queue_handle, &alt_data_lcl, 0);
-        xQueueSend(log_to_mem_queue_handle, &alt_data_lcl, 0);
-        xQueueSend(check_state_queue_handle, &alt_data_lcl, 0);
-        xQueueSend(debug_to_term_queue_handle, &alt_data_lcl, 0);
-
-        vTaskDelay(CONSUME_TASK_DELAY / portTICK_PERIOD_MS);
-
-    } // end main while 
+        /* TODO: ignore negative values */
+        /* send to altimeter global packet */
+        altimeter_packet.temperature = altimeter_temperature;
+        altimeter_packet.pressure = P;
+        altimeter_packet.rel_altitude = a;
+    }
 
 }
 
@@ -499,35 +445,30 @@ void readAltimeterTask(void* pvParameters) {
  * 
  *******************************************************************************/
 void readGPSTask(void* pvParameters){
+    float latitude, longitude, g_altitude;
 
-    telemetry_type_t gps_data_lcl;
+    gps_type_t gps_data_lcl;
 
-    while(true){
+    while(1){
         if(gpsSerial.available() > 0) {
             gps.encode(gpsSerial.read());
 
             /* get GPS coordinates */
-            if(gps.location.isUpdated()) {
-                gps_data_lcl.gps_data.latitude = gps.location.lat();
-                gps_data_lcl.gps_data.longitude = gps.location.lng();
+            if(gps.location.isValid()) {
+                latitude = gps.location.lat();
+                longitude = gps.location.lng();
             } 
 
-            /* get GPS time */
-            if(gps.altitude.isUpdated()) {
-                gps_data_lcl.gps_data.gps_altitude = gps.altitude.meters();
+            /* get GPS altitude */
+            if(gps.altitude.isValid()) {
+                g_altitude = gps.altitude.meters();
             }
         }
 
-        debug(gps_data_lcl.gps_data.latitude); debug(",");
-        debugln(gps_data_lcl.gps_data.longitude);
-
-        xQueueSend(telemetry_data_queue_handle, &gps_data_lcl, portMAX_DELAY);
-        xQueueSend(log_to_mem_queue_handle, &gps_data_lcl, portMAX_DELAY);
-        xQueueSend(check_state_queue_handle, &gps_data_lcl, portMAX_DELAY);
-        xQueueSend(debug_to_term_queue_handle, &gps_data_lcl, portMAX_DELAY);
-
+        gps_packet.latitude = latitude;
+        gps_packet.longitude = longitude;
+        gps_packet.gps_altitude = g_altitude;
     }
-
 }
 
 /**
@@ -570,12 +511,12 @@ void checkFlightState(void* pvParameters) {
 
         if(apogee_flag != 1) {
             // states before apogee
-            //debug("altitude value:"); debugln(flight_data.alt_data.altitude);
-            if(flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
+            // debug("altitude value:"); debugln(flight_data.alt_data.altitude);
+            if(flight_data.alt_data.rel_altitude < LAUNCH_DETECTION_THRESHOLD) {
                 current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;
                 debugln("PREFLIGHT");
                 delay(STATE_CHANGE_DELAY);
-            } else if(LAUNCH_DETECTION_THRESHOLD < flight_data.alt_data.altitude < (LAUNCH_DETECTION_THRESHOLD+LAUNCH_DETECTION_ALTITUDE_WINDOW) ) {
+            } else if(LAUNCH_DETECTION_THRESHOLD < flight_data.alt_data.rel_altitude < (LAUNCH_DETECTION_THRESHOLD+LAUNCH_DETECTION_ALTITUDE_WINDOW) ) {
                 current_state = ARMED_FLIGHT_STATE::POWERED_FLIGHT;
                 debugln("POWERED");
                 delay(STATE_CHANGE_DELAY);
@@ -584,15 +525,15 @@ void checkFlightState(void* pvParameters) {
             // COASTING
 
             // APOGEE and APOGEE DETECTION
-            ring_buffer_put(&altitude_ring_buffer, flight_data.alt_data.altitude);
+            ring_buffer_put(&altitude_ring_buffer, flight_data.alt_data.rel_altitude);
             if(ring_buffer_full(&altitude_ring_buffer) == 1) {
                 oldest_val = ring_buffer_get(&altitude_ring_buffer);
             }
 
             //debug("Curr val:");debug(flight_data.alt_data.altitude); debug("    "); debugln(oldest_val);
-            if((oldest_val - flight_data.alt_data.altitude) >= APOGEE_DETECTION_THRESHOLD) {
+            if((oldest_val - flight_data.alt_data.rel_altitude) >= APOGEE_DETECTION_THRESHOLD) {
                 if(apogee_flag == 0) {
-                    apogee_val = ( (oldest_val - flight_data.alt_data.altitude) / 2 ) + oldest_val;
+                    apogee_val = ( (oldest_val - flight_data.alt_data.rel_altitude) / 2 ) + oldest_val;
 
                     current_state = ARMED_FLIGHT_STATE::APOGEE;
                     delay(STATE_CHANGE_DELAY);
@@ -606,12 +547,11 @@ void checkFlightState(void* pvParameters) {
                     delay(STATE_CHANGE_DELAY);
                     apogee_flag = 1;
                 }
-
             }
 
         } else if(apogee_flag == 1) {
 
-            if(LAUNCH_DETECTION_THRESHOLD <= flight_data.alt_data.altitude <= apogee_val) {
+            if(LAUNCH_DETECTION_THRESHOLD <= flight_data.alt_data.rel_altitude <= apogee_val) {
                 if(main_eject_flag == 0) {
                     current_state = ARMED_FLIGHT_STATE::MAIN_DEPLOY;
                     debugln("MAIN");
@@ -624,13 +564,15 @@ void checkFlightState(void* pvParameters) {
                 }
             }
 
-            if(flight_data.alt_data.altitude < LAUNCH_DETECTION_THRESHOLD) {
+            if(flight_data.alt_data.rel_altitude < LAUNCH_DETECTION_THRESHOLD) {
                 current_state = ARMED_FLIGHT_STATE::POST_FLIGHT_GROUND;
                 debugln("POST_FLIGHT");
             }
-
         }
-    }
+
+        flight_data.state = current_state;
+
+    } // end while 
 
 }
 
@@ -715,7 +657,7 @@ void debugToTerminalTask(void* pvParameters){
 
     while(true){
         // get telemetry data
-        xQueueReceive(debug_to_term_queue_handle, &telemetry_received_packet, portMAX_DELAY);
+        xQueueReceive(debug_to_term_queue_handle, &telemetry_received_packet, 0);
         
         /**
          * record number
@@ -739,7 +681,7 @@ void debugToTerminalTask(void* pvParameters){
          *
          */
         sprintf(telemetry_packet_buffer,
-                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n",
+                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.2f,%.2f,%.2f,%.2f\n",
 
                 telemetry_received_packet.record_number,
                 telemetry_received_packet.operation_mode,
@@ -752,17 +694,16 @@ void debugToTerminalTask(void* pvParameters){
                 telemetry_received_packet.gyro_data.gx,
                 telemetry_received_packet.gyro_data.gy,
                 telemetry_received_packet.gyro_data.gz,
-                telemetry_received_packet.gps_data.latitude,
-                telemetry_received_packet.gps_data.longitude,
-                telemetry_received_packet.gps_data.gps_altitude,
-                telemetry_received_packet.alt_data.pressure,
-                telemetry_received_packet.alt_data.temperature,
-                telemetry_received_packet.alt_data.AGL,
-                telemetry_received_packet.alt_data.velocity
-                );
+                gps_packet.latitude,
+                gps_packet.longitude,
+                gps_packet.gps_altitude,
+                altimeter_packet.pressure,
+                altimeter_packet.temperature,
+                altimeter_packet.rel_altitude
+              );
         
         debugln(telemetry_packet_buffer);
-        vTaskDelay(CONSUME_TASK_DELAY/portTICK_PERIOD_MS);
+        vTaskDelay(CONSUME_TASK_DELAY / portTICK_PERIOD_MS);
     }
 }
 
@@ -971,7 +912,7 @@ void xCreateAllTasks() {
         }
 
         /* TASK 2: READ ALTIMETER DATA */
-        BaseType_t ra = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*4,NULL,1, &readAltimeterTaskHandle, 1);
+        BaseType_t ra = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*4,NULL,2, &readAltimeterTaskHandle, 1);
         if(ra == pdPASS) {
             debugln("[+]readAltimeterTask created OK.");
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]readAltimeterTask created OK.\r\n");
@@ -981,7 +922,7 @@ void xCreateAllTasks() {
         }
 
         /* TASK 3: READ GPS DATA */
-        BaseType_t rg = xTaskCreatePinnedToCore(readGPSTask, "readGPS", STACK_SIZE*4, NULL,2, &readGPSTaskHandle, 1);
+        BaseType_t rg = xTaskCreatePinnedToCore(readGPSTask, "readGPS", STACK_SIZE*4, NULL, 2, &readGPSTaskHandle, 1);
         if(rg == pdPASS) {
             debugln("[+]Read GPS task created OK.");
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Read GPS task created OK.\r\n");
@@ -991,7 +932,7 @@ void xCreateAllTasks() {
         }
 
         /* TASK 5: CHECK FLIGHT STATE TASK */
-        // BaseType_t cf = xTaskCreatePinnedToCore(checkFlightState,"checkFlightState",STACK_SIZE*4,NULL, 1, &checkFlightStateTaskHandle, app_core_id);
+        // BaseType_t cf = xTaskCreatePinnedToCore(checkFlightState,"checkFlightState",STACK_SIZE*4,NULL, 2, &checkFlightStateTaskHandle, 1);
 
         // if(cf == pdPASS) {
         //     debugln("[+]checkFlightState task created OK.");
@@ -1002,7 +943,7 @@ void xCreateAllTasks() {
         // }
 
         /* TASK 6: FLIGHT STATE CALLBACK TASK */
-        BaseType_t fs = xTaskCreatePinnedToCore(flightStateCallback, "flightStateCallback", STACK_SIZE*4, NULL, 1, &flightStateCallbackTaskHandle, 1);
+        BaseType_t fs = xTaskCreatePinnedToCore(flightStateCallback, "flightStateCallback", STACK_SIZE*4, NULL, 2, &flightStateCallbackTaskHandle, 1);
 
         if(fs == pdPASS) {
             debugln("[+]flightStateCallback task created OK.");
@@ -1156,6 +1097,8 @@ void setup() {
     //     SUBSYSTEM_INIT_MASK |= (1 << SPIFFS_CHECK_BIT);
     // }
 
+    /* register the baseline pressure at launch site - check docs to see how this works */
+    baseline = altimeter_get_pressure();
 
     /* initialize the ring buffer - used for apogee detection */
     ring_buffer_init(&altitude_ring_buffer);
