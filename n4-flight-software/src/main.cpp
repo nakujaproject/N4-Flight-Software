@@ -66,15 +66,15 @@ const char* rocket_ID = "FC1";             /*!< Unique ID of the rocket. Change 
  * these states are to be used for flight
 **/
 enum OPERATION_MODE {
-    SAFE = 0, /* Pyro-charges are disarmed  */
-    ARMED      /* Pyro charges are armed and ready to deploy on apogee --see docs for more-- */
+    SAFE_MODE = 0, /* Pyro-charges are disarmed  */
+    ARMED_MODE      /* Pyro charges are armed and ready to deploy on apogee --see docs for more-- */
 };
 
 /* set initial mode as safe mode
  * flag to indicate if we are in test or flight mode - This will
  * be changed by a command from the base station
  * */
-uint8_t is_safe_mode = OPERATION_MODE::SAFE;
+uint8_t is_safe_mode = OPERATION_MODE::SAFE_MODE;
 
 /* Intervals for buzzer state indication - see docs */
 enum BUZZ_INTERVALS {
@@ -84,8 +84,8 @@ enum BUZZ_INTERVALS {
 
 /* LED blink intervals */
 enum BLINK_INTERVALS {
-    SAFE = 100,
-    ARMED = 300
+    SAFE_BLINK = 100,
+    ARMED_BLINK = 300
 };
 
 unsigned long current_non_block_time = 0;
@@ -110,6 +110,7 @@ uint8_t SUBSYSTEM_INIT_MASK = 0b00000000;
 WiFiClient wifi_client;
 PubSubClient client(wifi_client);
 uint8_t MQTTInit(const char* broker_IP, uint16_t broker_port);
+
 
 /* WIFI configuration class object */
 WIFIConfig wifi_config;
@@ -630,7 +631,7 @@ void flightStateCallback(void* pvParameters) {
             // DROGUE_DEPLOY
             case ARMED_FLIGHT_STATE::DROGUE_DEPLOY:
                 /* fire charges ony if the flight computer has been armed */
-                if(operation_mode == OPERATION_MODE::ARMED) {
+                if(operation_mode == OPERATION_MODE::ARMED_MODE) {
                     drogueChuteDeploy();
                 }
 
@@ -642,7 +643,7 @@ void flightStateCallback(void* pvParameters) {
 
             // MAIN_DEPLOY
             case ARMED_FLIGHT_STATE::MAIN_DEPLOY:
-                if(operation_mode == OPERATION_MODE::ARMED) {
+                if(operation_mode == OPERATION_MODE::ARMED_MODE) {
                     mainChuteDeploy();
                 }
 
@@ -827,7 +828,7 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
         //     debugln("[-]Data not sent");
         // }
 
-        client.publish(MQTT_TOPIC, telemetry_packet_buffer);
+        client.publish(MQTT_TELEMETRY_TOPIC, telemetry_packet_buffer);
     }
 
     vTaskDelay(CONSUME_TASK_DELAY/ portTICK_PERIOD_MS);
@@ -864,25 +865,24 @@ void MQTTInit(const char* broker_IP, int broker_port) {
 }
 
 /*!****************************************************************************
- * @brief lights green LED for safe mode and red LED for armed mode
+ * @brief blinks green LED for safe mode and red LED for armed mode
  *******************************************************************************/
 void xOperationModeIndicateTask(void* pvParameters) {
-    uint8_t mode;
-    mode = (uint8_t*) pvParameters;
-
+    uint8_t mode = operation_mode;
     while(1)
     {
         if (mode) {
             /* armed */
             digitalWrite(RED_LED_PIN, HIGH);
-            vTaskDelay(BLINK_INTERVALS::SAFE);
+            vTaskDelay(BLINK_INTERVALS::ARMED_BLINK);
             digitalWrite(RED_LED_PIN, LOW);
-            vTaskDelay(BLINK_INTERVALS::SAFE);
+            vTaskDelay(BLINK_INTERVALS::ARMED_BLINK);
         } else if(!mode) {
             /* safe */
             digitalWrite(GREEN_LED_PIN, HIGH);
-            delay(1)
-
+            vTaskDelay(BLINK_INTERVALS::SAFE_BLINK);
+            digitalWrite(GREEN_LED_PIN, LOW);
+            vTaskDelay(BLINK_INTERVALS::SAFE_BLINK);
         }
     }
 }
@@ -1074,9 +1074,8 @@ void xCreateAllTasks() {
 void setup() {
     /* initialize serial */
     Serial.begin(BAUDRATE);
-    // delay(2000);
 
-    debugln("=========INITIALIZING FLIGHT COMPUTER============"); // todo: log
+    debugln("=========INITIALIZING FLIGHT COMPUTER============");
     buzzerInit();
 
     /* buzz to indicate start of setup */
@@ -1266,4 +1265,4 @@ void loop() {
 
 
 
-} /* Enf of main loop*/
+} /* End of main loop*/
