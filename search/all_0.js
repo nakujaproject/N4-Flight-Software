@@ -14,7 +14,7 @@ var searchData=
   ['and_20flight_20modes_11',['SAFE and FLIGHT modes',['../index.html#step7',1,'']]],
   ['and_20kalman_20filtering_12',['Flight Data Collection and Kalman Filtering',['../index.html#step23',1,'']]],
   ['and_20peripherals_13',['Hardware, pin assignment and peripherals',['../index.html#step13',1,'']]],
-  ['and_20testing_20procedures_14',['Integration and Testing Procedures',['../index.html#step14',1,'']]],
+  ['and_20testing_20procedures_14',['Integration and Testing Procedures',['../index.html#step31',1,'']]],
   ['apogee_15',['apogee',['../namespaceapogee.html',1,'']]],
   ['apogee_20detection_16',['Apogee detection',['../index.html#step25',1,'']]],
   ['apogee_5fdetection_5fthreshold_17',['APOGEE_DETECTION_THRESHOLD',['../defs_8h.html#aa60a3d5d5dbbe3a81b5e4ed6b8d9f8f8',1,'defs.h']]],
