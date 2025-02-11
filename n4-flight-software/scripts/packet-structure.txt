@@ -1,5 +1,5 @@
-record number
-operation mode (armed or safe)
+record_number
+operation_mode (armed or safe)
 state
 ax 
 ay 
@@ -14,5 +14,5 @@ longitude
 gps_altitude
 pressure
 temperature
-AGL - from altimeter 
-velocity 
+relative_altitude
+

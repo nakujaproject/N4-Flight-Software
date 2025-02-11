@@ -737,7 +737,7 @@ void logToMemory(void* pvParameter) {
 
 /*!****************************************************************************
  * @brief send flight data to ground
- * @param pvParameter - A value that is passed as the paramater to the created task.
+ * @param pvParameter - A value that is passed as the parameter to the created task.
  * If pvParameter is set to the address of a variable then the variable must still exist when the created task executes -
  * so it is not valid to pass the address of a stack variable.
  *
@@ -770,37 +770,31 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
          * latitude
          * longitude
          * gps_altitude
-         * gps_time
          * pressure
          * temperature
-         * altitude_agl
-         * velocity
-         * pyro1_state // not used
-         * pyro2_state // not used
-         * battery_voltage // not used
-         *
+         * relative_altitude
          */
         sprintf(telemetry_packet_buffer,
-            "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n",
+                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.2f,%.2f,%.2f,%.2f\n",
 
-            telemetry_received_packet.record_number,
-            telemetry_received_packet.operation_mode,
-            telemetry_received_packet.state,
-            telemetry_received_packet.acc_data.ax,
-            telemetry_received_packet.acc_data.ay,
-            telemetry_received_packet.acc_data.az,
-            telemetry_received_packet.acc_data.pitch,
-            telemetry_received_packet.acc_data.roll,
-            telemetry_received_packet.gyro_data.gx,
-            telemetry_received_packet.gyro_data.gy,
-            telemetry_received_packet.gps_data.latitude,
-            telemetry_received_packet.gps_data.longitude,
-            telemetry_received_packet.gps_data.gps_altitude,
-            telemetry_received_packet.alt_data.pressure,
-            telemetry_received_packet.alt_data.temperature,
-            telemetry_received_packet.alt_data.AGL,
-            telemetry_received_packet.alt_data.velocity
-            );
+                telemetry_received_packet.record_number,
+                telemetry_received_packet.operation_mode,
+                telemetry_received_packet.state,
+                telemetry_received_packet.acc_data.ax,
+                telemetry_received_packet.acc_data.ay,
+                telemetry_received_packet.acc_data.az,
+                telemetry_received_packet.acc_data.pitch,
+                telemetry_received_packet.acc_data.roll,
+                telemetry_received_packet.gyro_data.gx,
+                telemetry_received_packet.gyro_data.gy,
+                telemetry_received_packet.gyro_data.gz,
+                gps_packet.latitude,
+                gps_packet.longitude,
+                gps_packet.gps_altitude,
+                altimeter_packet.pressure,
+                altimeter_packet.temperature,
+                altimeter_packet.rel_altitude
+        );
 
         /* Send to MQTT topic  */
         // if(client.publish(MQTT_TOPIC, telemetry_packet_buffer) ) {
