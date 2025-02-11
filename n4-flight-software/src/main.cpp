@@ -41,11 +41,12 @@ void checkRunTestToggle();
 void non_blocking_buzz(uint16_t interval);
 void blocking_buzz(uint16_t interval);
 double altimeter_get_pressure();
-
+void mqtt_command_processor(char*, char*);
 
 /* state machine variables*/
-uint8_t operation_mode = 0;                                     /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
+uint8_t operation_mode = 0;                                         /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
 uint8_t current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;	    /*!< The starting state - we start at PRE_FLIGHT_GROUND state */
+
 uint8_t STATE_BIT_MASK = 0;
 
 /* GPS object */
@@ -65,19 +66,28 @@ const char* rocket_ID = "FC1";             /*!< Unique ID of the rocket. Change 
  * these states are to be used for flight
 **/
 enum OPERATION_MODE {
-    SAFE_MODE = 0, /* Pyro-charges are disarmed  */
-    ARMED_MODE      /* Pyro charges are armed and ready to deploy on apogee --see docs for more-- */
+    SAFE = 0, /* Pyro-charges are disarmed  */
+    ARMED      /* Pyro charges are armed and ready to deploy on apogee --see docs for more-- */
 };
 
-/* set initial mode as safe mode */
-
-uint8_t is_flight_mode = 0; /* flag to indicate if we are in test or flight mode */
+/* set initial mode as safe mode
+ * flag to indicate if we are in test or flight mode - This will
+ * be changed by a command from the base station
+ * */
+uint8_t is_safe_mode = OPERATION_MODE::SAFE;
 
 /* Intervals for buzzer state indication - see docs */
 enum BUZZ_INTERVALS {
   SETUP_INIT = 200,
   ARMING_PROCEDURE = 500
 };
+
+/* LED blink intervals */
+enum BLINK_INTERVALS {
+    SAFE = 100,
+    ARMED = 300
+};
+
 unsigned long current_non_block_time = 0;
 unsigned long last_non_block_time = 0;
 bool buzz_state = 0;
@@ -162,6 +172,15 @@ void checkRunTestToggle() {
     }
 }
 
+/*!
+ * @brief process commands sent from the base station
+ * @param command
+ */
+void mqtt_command_processor(char* topic, char* command)
+{
+
+}
+
 /**
  * Task creation handles
  */
@@ -175,6 +194,7 @@ void checkRunTestToggle() {
  TaskHandle_t kalmanFilterTaskHandle;
  TaskHandle_t debugToTerminalTaskHandle;
  TaskHandle_t logToMemoryTaskHandle;
+ TaskHandle_t opModeIndicateTaskHandle;
 
 /**
  * ///////////////////////// DATA TYPES /////////////////////////
@@ -609,19 +629,23 @@ void flightStateCallback(void* pvParameters) {
 
             // DROGUE_DEPLOY
             case ARMED_FLIGHT_STATE::DROGUE_DEPLOY:
-                //debugln("DROGUE DEPLOY");
-                drogueChuteDeploy();
+                /* fire charges ony if the flight computer has been armed */
+                if(operation_mode == OPERATION_MODE::ARMED) {
+                    drogueChuteDeploy();
+                }
+
                 break;
 
             // DROGUE_DESCENT
             case ARMED_FLIGHT_STATE::DROGUE_DESCENT:
-            //    debugln("DROGUE DESCENT");
                 break;
 
             // MAIN_DEPLOY
             case ARMED_FLIGHT_STATE::MAIN_DEPLOY:
-            //    debugln("MAIN CHUTE DEPLOY");
-                mainChuteDeploy();
+                if(operation_mode == OPERATION_MODE::ARMED) {
+                    mainChuteDeploy();
+                }
+
                 break;
 
             // MAIN_DESCENT
@@ -840,6 +864,30 @@ void MQTTInit(const char* broker_IP, int broker_port) {
 }
 
 /*!****************************************************************************
+ * @brief lights green LED for safe mode and red LED for armed mode
+ *******************************************************************************/
+void xOperationModeIndicateTask(void* pvParameters) {
+    uint8_t mode;
+    mode = (uint8_t*) pvParameters;
+
+    while(1)
+    {
+        if (mode) {
+            /* armed */
+            digitalWrite(RED_LED_PIN, HIGH);
+            vTaskDelay(BLINK_INTERVALS::SAFE);
+            digitalWrite(RED_LED_PIN, LOW);
+            vTaskDelay(BLINK_INTERVALS::SAFE);
+        } else if(!mode) {
+            /* safe */
+            digitalWrite(GREEN_LED_PIN, HIGH);
+            delay(1)
+
+        }
+    }
+}
+
+/*!****************************************************************************
  * @brief fires the pyro-charge to deploy the drogue chute
  * Turn on the drogue chute ejection circuit by running the GPIO 
  * HIGH for a preset No. of seconds.  
@@ -998,6 +1046,14 @@ void xCreateAllTasks() {
                 SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]logToMemory task created OK.\r\n");
             }
         #endif // LOG_TO_MEMORY
+
+        if(xTaskCreatePinnedToCore(xOperationModeIndicateTask,"xOperationModeIndicateTask",STACK_SIZE*4,NULL,2,&opModeIndicateTaskHandle,1) != pdPASS){
+            debugln("[-]xOperationModeIndicateTask task failed to create");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]xOperationModeIndicateTask task failed to create\r\n");
+        }else{
+            debugln("[+]xOperationModeIndicateTask task created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]xOperationModeIndicateTask task created OK.\r\n");
+        }
 
         debugln();
         debugln(F("=============================================="));
@@ -1207,4 +1263,7 @@ void loop() {
     /* enable MQTT transmit loop */
     // MQTT_Reconnect();
     // client.loop();
+
+
+
 } /* Enf of main loop*/
