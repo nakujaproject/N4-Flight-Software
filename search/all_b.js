@@ -4,7 +4,7 @@ var searchData=
   ['main_5fejection_5fheight_1',['MAIN_EJECTION_HEIGHT',['../defs_8h.html#a072d5d58ddf935fd073aa59fefa2b9f0',1,'defs.h']]],
   ['mainchutedeploy_2',['mainChuteDeploy',['../src_2main_8cpp.html#a9074d493ccf55d0cfa3acd2d173f665a',1,'main.cpp']]],
   ['major_20features_3',['Major features',['../index.html#step1',1,'']]],
-  ['modes_4',['SAFE and FLIGHT modes',['../index.html#step7',1,'']]],
+  ['modes_4',['SAFE and ARMED modes',['../index.html#step7',1,'']]],
   ['modularity_5',['Modularity',['../index.html#step2',1,'']]],
   ['mpu6050_6',['MPU6050',['../classMPU6050.html',1,'']]],
   ['mqtt_7',['MQTT',['../defs_8h.html#ae1abe60e35e8bef559df4270f2849f29',1,'defs.h']]],

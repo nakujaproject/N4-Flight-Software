@@ -134,9 +134,9 @@ Data dump interface</h2>
 <li>A data dumping hardware interface has been added to ease the retrieval of data post flight data.</li>
 </ul>
 <h2><a class="anchor" id="step7"></a>
-SAFE and FLIGHT modes</h2>
+SAFE and ARMED modes</h2>
 <ul>
-<li>To prevent misfires during intergration and testing, this firmware implements SAFE_MODE that among others operations, disables the pyro-charges before POWERED_FLIGHT.</li>
+<li>To prevent misfires during integration and testing, this firmware implements SAFE_MODE that among others operations, disables the pyro-charges before ARMING is done.</li>
 </ul>
 <h2><a class="anchor" id="step8"></a>
 XBEE, MQTT, LORA, WIFI telemetry selection</h2>
@@ -210,7 +210,7 @@ Pre-flight software checks</h1>
 <ul>
 <li><b>DEBUG_TO_TERMINAL check</b></li>
 </ul>
-<p>Debug via the serial monitor should be enabled only on ground during development and testing. During flight, debugging to terminal should be disabled. To disable debugging, set the DEBUG_TO_TERMINAL constant in <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a> to 0.</p>
+<p>Debug via the serial monitor should be enabled only on ground during development and testing. During flight, debugging to terminal should be disabled. To disable debugging, set the DEBUG and DEBUG_TO_TERMINAL constants in <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a> to 0.</p>
 <ul>
 <li><b>LOG_TO_MEMORY check</b></li>
 </ul>
@@ -272,15 +272,16 @@ Flight Data Collection and Kalman Filtering</h1>
 <p>To learn more about the Kalman filter implementation, refer to the kalman.h and kalman.cpp files in the src folder of the n4-flight-software.</p>
 <h1><a class="anchor" id="step24"></a>
 Launch detection</h1>
-<dl class="section note"><dt>Note</dt><dd>In development</dd></dl>
+<p>Launch is detected using the altimeter data. There is a set threshold above which a rocket is considered to be launched. This variable is in the LAUNCH_DETECTION_THRESHOLD in <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a>. If the onboard altimeter registers that the current relative altitude is above this threshold, then the rocket is considered as launched.</p>
+<p>If the flight computer is not armed when launch is detected, it is automatically armed to override the arming command from base station.</p>
 <h1><a class="anchor" id="step25"></a>
 Apogee detection</h1>
-<p>We detect apogee using the altitude values from the altimeter. The logic we use is that the * rocket's altitude increases as it ascends up continously. On reaching apogee, the rocket's altitude *starts decreasing.</p>
+<p>We detect apogee using relative altitude values from the altimeter. The logic we use is that the * rocket's altitude increases as it ascends up continuously. On reaching apogee, the rocket's altitude *starts decreasing.</p>
 <p>To detect the decrease in altitude, we keep track of the last SIZE_OF_BUFFER items (see *ring_buffer.h). We then check the current altitude value against the oldest value in the ring *buffer. If the difference is more than the set THRESHOLD (usually 5 meters), we are sure that at *this point the rocket is coming down and we register APOGEE.</p>
-<p>This is made possible using a ring buffer(circular buffer), that is implemented to always keep *track of the previous SIZE_OF_BUFFER. From this buffer we can infer apogee.</p>
+<p>This is made possible using a ring buffer(circular buffer), that is implemented to always keep track of the previous SIZE_OF_BUFFER. From this buffer we can infer apogee.</p>
 <h1><a class="anchor" id="step26"></a>
 Parachute ejection</h1>
-<dl class="section note"><dt>Note</dt><dd>In development</dd></dl>
+<p>This version of the flight software implements double ejection mechanism. ... [TODO]</p>
 <h1><a class="anchor" id="step27"></a>
 Flight data logging and data recovery</h1>
 <p>Flight data is logged in the external SPI flash memory. The file used is called <em>flight.txt</em>. The contents of the flight.txt are erased during setup of the fight computer. Logging starts after the flight computer has been armed, to prevent logging unnecesary pre-flight data.</p>
@@ -355,8 +356,22 @@ Flight data logging and data recovery</h1>
 </div><!-- fragment --><ul>
 <li>Open AiThinker serial tool and dump the data into a text file as outlined in the steps above</li>
 </ul>
+<h1><a class="anchor" id="step30"></a>
+Avionics Integration and Power-Up procedure</h1>
+<p>This section describes how the avionics is integrated into the rocket and how it is powered up.</p>
+<p><em><b>Integration procedure</b></em> </p><dl class="section note"><dt>Note</dt><dd>In development</dd></dl>
+<p><em><b>Power Up procedure</b></em></p>
+<p>Once the flight computer is inserted into the body tube, the RBF pin must be inserted into the pre-allocated RBF hole on the body tube.</p>
+<p>These next steps describe the sequence of events and observations made after the RBF pin is removed.</p><ul>
+<li>Pull out the RBF pin</li>
+<li>The flight computer beeps once and goes through its boot-up sequence. If debugging this via the serial terminal, you should see a bunch of messages showing messages from the flight computer. If not seeing any messages, ensure the DEBUGGING and DEBUG_TO_TERMINAL in <a class="el" href="defs_8h.html" title="necessary miscellaneous defines for various tasks and functions">defs.h</a> are set to 1.</li>
+<li>The green LED lights up and starts blinking to indicate the flight computer is in SAFE MODE.</li>
+<li>The flight computer creates an access point to allow for WIFI configuration. (see WIFI configuration section to see how to connect the flight computer to the network)</li>
+<li>Once the WIFI is connected successfully, the base station should start receiving the telemetry packet from the flight computer.</li>
+<li>If a telemetry packet is received from the base station, then the flight computer avionics is a GO!</li>
+</ul>
 <h1><a class="anchor" id="step31"></a>
-Integration and Testing Procedures</h1>
+Testing Procedures</h1>
 <p>To perform testing and integration of the flight computer, follow the steps below:</p>
 <h2><a class="anchor" id="step15"></a>
 Hardware setup</h2>

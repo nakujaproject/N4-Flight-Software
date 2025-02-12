@@ -6,7 +6,7 @@ var searchData=
   ['initsd_3',['initSD',['../src_2main_8cpp.html#aedbb4a03b76d7246ea721233c6540ba1',1,'main.cpp']]],
   ['initspiffs_4',['InitSPIFFS',['../src_2main_8cpp.html#a31b6932835b12c5ea4db3e24f4b9dd7f',1,'main.cpp']]],
   ['installation_5',['Installation',['../index.html#step17',1,'']]],
-  ['integration_20and_20testing_20procedures_6',['Integration and Testing Procedures',['../index.html#step31',1,'']]],
+  ['integration_20and_20power_20up_20procedure_6',['Avionics Integration and Power-Up procedure',['../index.html#step30',1,'']]],
   ['interface_7',['Data dump interface',['../index.html#step6',1,'']]],
   ['introduction_8',['Introduction',['../index.html#intro_sec',1,'']]]
 ];

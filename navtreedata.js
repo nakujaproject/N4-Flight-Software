@@ -32,7 +32,7 @@ var NAVTREE =
       [ "HIL Testing Engine", "index.html#step4", null ],
       [ "Flight data logging", "index.html#step5", null ],
       [ "Data dump interface", "index.html#step6", null ],
-      [ "SAFE and FLIGHT modes", "index.html#step7", null ],
+      [ "SAFE and ARMED modes", "index.html#step7", null ],
       [ "XBEE, MQTT, LORA, WIFI telemetry selection", "index.html#step8", null ],
       [ "Double ejection", "index.html#step9", null ]
     ] ],
@@ -49,7 +49,8 @@ var NAVTREE =
     [ "Apogee detection", "index.html#step25", null ],
     [ "Parachute ejection", "index.html#step26", null ],
     [ "Flight data logging and data recovery", "index.html#step27", null ],
-    [ "Integration and Testing Procedures", "index.html#step31", [
+    [ "Avionics Integration and Power-Up procedure", "index.html#step30", null ],
+    [ "Testing Procedures", "index.html#step31", [
       [ "Hardware setup", "index.html#step15", null ],
       [ "How to use the Nakuja Flight Computer Testing Engine", "index.html#step32", null ],
       [ "Installation", "index.html#step17", null ],

@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['safe_20and_20flight_20modes_0',['SAFE and FLIGHT modes',['../index.html#step7',1,'']]],
+  ['safe_20and_20armed_20modes_0',['SAFE and ARMED modes',['../index.html#step7',1,'']]],
   ['sea_5flevel_5fpressure_1',['SEA_LEVEL_PRESSURE',['../defs_8h.html#a335fe74f296f8ed3fa8a86c66a2dc237',1,'defs.h']]],
   ['selection_2',['XBEE, MQTT, LORA, WIFI telemetry selection',['../index.html#step8',1,'']]],
   ['set_5frun_5fmode_5fpin_3',['SET_RUN_MODE_PIN',['../defs_8h.html#a2998a9b88a92d8aae5f01d2d8b383894',1,'defs.h']]],

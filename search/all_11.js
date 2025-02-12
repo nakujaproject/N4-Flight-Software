@@ -10,7 +10,7 @@ var searchData=
   ['test_7',['Test',['../classTest.html',1,'']]],
   ['test_20data_8',['Downloading the test data',['../index.html#step33',1,'']]],
   ['testing_20engine_9',['Testing Engine',['../index.html#step4',1,'HIL Testing Engine'],['../index.html#step32',1,'How to use the Nakuja Flight Computer Testing Engine']]],
-  ['testing_20procedures_10',['Integration and Testing Procedures',['../index.html#step31',1,'']]],
+  ['testing_20procedures_10',['Testing Procedures',['../index.html#step31',1,'']]],
   ['the_20code_11',['Building the code',['../index.html#step11',1,'']]],
   ['the_20nakuja_20flight_20computer_20testing_20engine_12',['How to use the Nakuja Flight Computer Testing Engine',['../index.html#step32',1,'']]],
   ['the_20test_20data_13',['Downloading the test data',['../index.html#step33',1,'']]],

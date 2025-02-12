@@ -15,9 +15,8 @@ var searchData=
   ['flight_20data_20collection_20and_20kalman_20filtering_12',['Flight Data Collection and Kalman Filtering',['../index.html#step23',1,'']]],
   ['flight_20data_20logging_13',['Flight data logging',['../index.html#step5',1,'']]],
   ['flight_20data_20logging_20and_20data_20recovery_14',['Flight data logging and data recovery',['../index.html#step27',1,'']]],
-  ['flight_20modes_15',['SAFE and FLIGHT modes',['../index.html#step7',1,'']]],
-  ['flight_20software_16',['N4 Flight Software',['../index.html',1,'']]],
-  ['flight_20software_20checks_17',['Pre-flight software checks',['../index.html#step20',1,'']]],
-  ['flight_5fstates_5fqueue_5flength_18',['FLIGHT_STATES_QUEUE_LENGTH',['../defs_8h.html#abd673191f3e9c335b90a35c237a4786f',1,'defs.h']]],
-  ['flightstatecallback_19',['flightStateCallback',['../src_2main_8cpp.html#a6648d201a9f47aa836d36e5339e78ef3',1,'main.cpp']]]
+  ['flight_20software_15',['N4 Flight Software',['../index.html',1,'']]],
+  ['flight_20software_20checks_16',['Pre-flight software checks',['../index.html#step20',1,'']]],
+  ['flight_5fstates_5fqueue_5flength_17',['FLIGHT_STATES_QUEUE_LENGTH',['../defs_8h.html#abd673191f3e9c335b90a35c237a4786f',1,'defs.h']]],
+  ['flightstatecallback_18',['flightStateCallback',['../src_2main_8cpp.html#a6648d201a9f47aa836d36e5339e78ef3',1,'main.cpp']]]
 ];
