@@ -84,8 +84,8 @@ enum BUZZ_INTERVALS {
 
 /* LED blink intervals */
 enum BLINK_INTERVALS {
-    SAFE_BLINK = 100,
-    ARMED_BLINK = 300
+    SAFE_BLINK = 400,
+    ARMED_BLINK = 100
 };
 
 unsigned long current_non_block_time = 0;
@@ -145,7 +145,7 @@ double baseline = 0.0; // to store baseline pressure from the altimeter
 float curr_val;
 float oldest_val;
 uint8_t apogee_flag =0; // to signal that we have detected apogee
-static int apogee_val = 0; // apogee altitude aproximation
+static int apogee_val = 0; // apogee altitude aproximmation
 uint8_t main_eject_flag = 0;
 
 /**
@@ -232,6 +232,11 @@ altimeter_type_t altimeter_packet;
 */
 void buzzerInit() {
     pinMode(BUZZER_PIN, OUTPUT);
+}
+
+void LED_init() {
+    pinMode(GREEN_LED_PIN, OUTPUT);
+    pinMode(RED_LED_PIN, OUTPUT);
 }
 
 /**
@@ -635,7 +640,6 @@ void flightStateCallback(void* pvParameters) {
                     drogueChuteDeploy();
                 }
 
-
                 break;
 
             // DROGUE_DESCENT
@@ -869,16 +873,15 @@ void MQTTInit(const char* broker_IP, int broker_port) {
  * @brief blinks green LED for safe mode and red LED for armed mode
  *******************************************************************************/
 void xOperationModeIndicateTask(void* pvParameters) {
-    uint8_t mode = operation_mode;
     while(1)
     {
-        if (mode) {
+        if (operation_mode) {
             /* armed */
             digitalWrite(RED_LED_PIN, HIGH);
             vTaskDelay(BLINK_INTERVALS::ARMED_BLINK);
             digitalWrite(RED_LED_PIN, LOW);
             vTaskDelay(BLINK_INTERVALS::ARMED_BLINK);
-        } else if(!mode) {
+        } else if(!operation_mode) {
             /* safe */
             digitalWrite(GREEN_LED_PIN, HIGH);
             vTaskDelay(BLINK_INTERVALS::SAFE_BLINK);
@@ -1077,6 +1080,9 @@ void setup() {
     Serial.begin(BAUDRATE);
 
     debugln("=========INITIALIZING FLIGHT COMPUTER============");
+    LED_init();
+    digitalWrite(GREEN_LED_PIN, LOW);
+    digitalWrite(RED_LED_PIN, LOW);
     buzzerInit();
 
     /* buzz to indicate start of setup */

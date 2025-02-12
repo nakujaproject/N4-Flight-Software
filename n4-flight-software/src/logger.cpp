@@ -55,18 +55,17 @@ void DataLogger::loggerFormat() {
     Serial.println(F("Done"));
 
     // while the flash is formatting, blink the LED at a frequency of 10Hz
-    while(!SerialFlash.ready()) {
-        digitalWrite(this->_led_pin, HIGH);
-        delay(_flash_delay);
-        digitalWrite(this->_led_pin, LOW);
-        delay(_flash_delay);
-    }
+    //while(!SerialFlash.ready()) {
+        //digitalWrite(this->_led_pin, HIGH);
+       // delay(_flash_delay);
+        //digitalWrite(this->_led_pin, LOW);
+        //delay(_flash_delay);
+    //}
 
-    // remain solid lit once formatting is done 
-    digitalWrite(this->_led_pin, HIGH);
+    // remain OFF once formatting is done
+    //digitalWrite(this->_led_pin, LOW);
 
     this->loggerEquals();
-
 }
 
 /**
@@ -84,8 +83,8 @@ bool DataLogger::loggerInit() {
         this->loggerInfo();
 
         // init flash LED
-        pinMode(this->_led_pin, OUTPUT);
-        digitalWrite(this->_led_pin, HIGH);        
+        //pinMode(this->_led_pin, OUTPUT);
+        //digitalWrite(this->_led_pin, HIGH);
 
         // return a list of files currently in the memory
         if(!SerialFlash.exists("dummy.txt")) {

@@ -42,8 +42,8 @@
 #define WIRE_SEND_STOP 0
 
 /* other pins */
-#define RED_LED_PIN         15               
-#define GREEN_LED_PIN       4
+#define GREEN_LED_PIN         15
+#define RED_LED_PIN       4
 #define BUZZER_PIN          33
 #define SET_TEST_MODE_PIN    14     /*!< Pin to set the flight computer to TEST mode */
 #define SET_RUN_MODE_PIN     13      /*!< Pin to set the flight computer to RUN mode */
