@@ -111,7 +111,6 @@ WiFiClient wifi_client;
 PubSubClient client(wifi_client);
 uint8_t MQTTInit(const char* broker_IP, uint16_t broker_port);
 
-
 /* WIFI configuration class object */
 WIFIConfig wifi_config;
 
