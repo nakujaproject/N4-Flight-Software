@@ -41,7 +41,21 @@ void checkRunTestToggle();
 void non_blocking_buzz(uint16_t interval);
 void blocking_buzz(uint16_t interval);
 double altimeter_get_pressure();
-void mqtt_command_processor(char*, char*);
+void mqtt_command_processor(const char*, const char*);
+void arm_pyros();
+void disarm_pyros();
+
+void arm_pyros() {
+    digitalWrite(REMOTE_SWITCH, HIGH);
+    // todo: confirm arming
+}
+
+/**
+ *
+ */
+void disarm_pyros() {
+    digitalWrite(REMOTE_SWITCH, LOW);
+}
 
 /* state machine variables*/
 uint8_t operation_mode = 0;                                         /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
@@ -175,9 +189,32 @@ void checkRunTestToggle() {
 /*!
  * @brief process commands sent from the base station
  * @param command
+ * ARM
+ * DISARM
+ * RESET
  */
-void mqtt_command_processor(char* topic, char* command)
+void mqtt_command_processor(const char* topic, const char* command)
 {
+    debugln("processing command");
+
+    // check topic
+    if(topic == "n4/commands")
+    {
+      if(command == "ARM")
+      {
+          arm_pyros();
+          operation_mode = 1;
+          non_blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE); // IGNORE ARMING PROCEDURE
+
+      }  else if(command == "DISARM") {
+          disarm_pyros();
+          operation_mode = 0;
+          non_blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
+      } else if(command == "RESET"){
+          // reset ESP via software
+
+      }
+    }
 
 }
 
@@ -250,7 +287,6 @@ uint8_t InitSPIFFS() {
         return 1;
     }
 }
-
 
 /**
 * @brief initilize SD card 
@@ -341,7 +377,6 @@ void non_blocking_buzz(uint16_t interval) {
         last_non_block_time = current_non_block_time;
         digitalWrite(BUZZER_PIN, buzz_state);
     }
-
 }
 
 /**
@@ -844,15 +879,34 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
  */
 void MQTT_Reconnect() {
      if(!client.connected()){
-         debug("[..]Attempting MQTT connection..."); // TODO: SYS LOGGER
+         debugln("[..]Attempting MQTT connection..."); // TODO: SYS LOGGER
          String client_id = "[+]Flight-computer-1 client: ";
          client_id += String(random(0XFFFF), HEX);
 
          if(client.connect(client_id.c_str())){
              debugln("[+]MQTT reconnected");
+             client.subscribe("n4/commands"); // TODO: USE DEFINE here
+         } else {
+             debug("failed, rc=");
+             debugln(client.state());
+             delay(20);
          }
+
     }
 }
+
+// This function is called whenever an MQTT message is received
+void mqtt_Callback(char* topic, byte* payload, unsigned int length) {
+    String message = ""; // Initialize an empty string to store the received message
+    for (unsigned int i = 0; i < length; i++) {
+        message += (char)payload[i]; // Convert the received payload to a string
+    }
+
+    // convert to char*
+    const char* command = message.c_str();
+    mqtt_command_processor(topic, command);
+}
+
 
 
 /*!****************************************************************************
@@ -863,9 +917,9 @@ void MQTTInit(const char* broker_IP, int broker_port) {
     // client.setBufferSize(MQTT_BUFFER_SIZE);
     debugln("[+]Initializing MQTT\n");
     client.setServer(broker_IP, broker_port);
-    delay(2000);
+    client.setCallback(mqtt_Callback);
+    delay(1000);
     debugln("[+]MQTT init OK");
-
 }
 
 /*!****************************************************************************
@@ -940,9 +994,7 @@ void mainChuteDeploy() {
     // }
 }
 
-
 void xCreateAllTasks() {
-    
         debugln("Creating all tasks");
         //vTaskDelay(200/portTICK_PERIOD_MS);
 
@@ -1103,7 +1155,7 @@ void setup() {
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==CREATING DYNAMIC WIFI==\r\n");
 
     // create and wait for dynamic WIFI connection
-    //initDynamicWIFI(); // TODO - uncomment on live testing and production
+    initDynamicWIFI(); // TODO - uncomment on live testing and production
 
     debugln();
     debugln(F("=============================================="));
@@ -1266,9 +1318,10 @@ void setup() {
  *******************************************************************************/
 void loop() {
     /* enable MQTT transmit loop */
-    // MQTT_Reconnect();
-    // client.loop();
+     MQTT_Reconnect();
+     client.loop();
 
-
+    /* listen for mqtt commands */
+    mqtt_command_processor("n4/commands", "");
 
 } /* End of main loop*/

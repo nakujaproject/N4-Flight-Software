@@ -21,7 +21,7 @@
 /* debug parameters for use during testing - set to 0 for production */
 #define DEBUGGING 1                           /*!< allow debugging to terminal. Set to 0 pre flight to disable serial terminal printing and improve speed  */
 #define LOG_TO_MEMORY 0                      /*!< allow data logging to memory. Set to 1 to log data to external flash memory. Must be set during flight */
-#define DEBUG_TO_TERMINAL 1                 /*!< allow create task that prints data to terminal. Set to 0 before flight  */
+#define DEBUG_TO_TERMINAL 0                 /*!< allow create task that prints data to terminal. Set to 0 before flight  */
 
 #if DEBUGGING
     #define debug(x) Serial.print(x)
@@ -48,6 +48,7 @@
 #define SET_TEST_MODE_PIN    14     /*!< Pin to set the flight computer to TEST mode */
 #define SET_RUN_MODE_PIN     13      /*!< Pin to set the flight computer to RUN mode */
 #define SD_CS_PIN           26
+#define REMOTE_SWITCH       27
 
 /* timing constant */
 #define SETUP_DELAY 300
@@ -76,10 +77,10 @@
 /* MQTT constants */
 //const char MQTT_SERVER[30] = "192.168.1.101";
 // const char MQTT_SERVER[30] = "broker.emqx.io";
-const char MQTT_SERVER[30] = "192.168.1.113";
+const char MQTT_SERVER[30] = "192.168.0.106";
 const char MQTT_TELEMETRY_TOPIC[30] = "n4/flight-computer-1";             /* make this topic unique to every rocket */
 const char MQTT_ARMING_TOPIC[30] = "n4/commands";             /* make this topic unique to every rocket */
-#define MQTT_PORT 1883                               /*!< MQTT broker port */
+#define MQTT_PORT 1883                              /*!< MQTT broker port */
 
 #define BROKER_IP_ADDRESS_LENGTH    20      /*!< length of broker ip address string */
 #define MQTT_TOPIC_LENGTH           10      /*!< length of mqtt topic string */
