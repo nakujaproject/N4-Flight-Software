@@ -78,7 +78,7 @@
 // const char MQTT_SERVER[30] = "broker.emqx.io";
 const char MQTT_SERVER[30] = "192.168.1.113";
 const char MQTT_TELEMETRY_TOPIC[30] = "n4/flight-computer-1";             /* make this topic unique to every rocket */
-const char MQTT_ARMING_TOPIC[30] = "n4/flight-computer-1";             /* make this topic unique to every rocket */
+const char MQTT_ARMING_TOPIC[30] = "n4/commands";             /* make this topic unique to every rocket */
 #define MQTT_PORT 1883                               /*!< MQTT broker port */
 
 #define BROKER_IP_ADDRESS_LENGTH    20      /*!< length of broker ip address string */

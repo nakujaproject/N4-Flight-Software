@@ -25,8 +25,8 @@
 * @subsection step6 Data dump interface
 * - A data dumping hardware interface has been added to ease the retrieval of data post flight data. 
 * 
-* @subsection step7 SAFE and FLIGHT modes
-* - To prevent misfires during intergration and testing, this firmware implements SAFE_MODE that among others operations, disables the pyro-charges before POWERED_FLIGHT.
+* @subsection step7 SAFE and ARMED modes
+* - To prevent misfires during integration and testing, this firmware implements SAFE_MODE that among others operations, disables the pyro-charges before ARMING is done.
 *
 * @subsection step8 XBEE, MQTT, LORA, WIFI telemetry selection
 * - For backward and forward compatibility, we implement a method to allow choice of data telemetry protocol being used. 
@@ -122,7 +122,7 @@ The pin assignment to ESP32 are listed in the following file: https://github.com
 
  Debug via the serial monitor should be enabled only on ground during development and testing. During flight,
  debugging to terminal should be disabled.
- To disable debugging, set the DEBUG_TO_TERMINAL constant in defs.h to 0.
+ To disable debugging, set the DEBUG and DEBUG_TO_TERMINAL constants in defs.h to 0.
 
  - **LOG_TO_MEMORY check**
 
@@ -198,21 +198,25 @@ This shows that the flight computer has created a web portal and is waiting for 
 
 
   *@section step24 Launch detection
-   * @note In development
-    *
+   * Launch is detected using the altimeter data. There is a set threshold above which a rocket is considered to be launched. This variable is in the
+   LAUNCH_DETECTION_THRESHOLD in defs.h. If the onboard altimeter registers that the current relative altitude is above this threshold,
+   then the rocket is considered as launched.
+
+   If the flight computer is not armed when launch is detected, it is automatically armed to override the
+   arming command from base station.
 
     *@section step25 Apogee detection
-    *We detect apogee using the altitude values from the altimeter. The logic we use is that the *
-    *rocket's altitude increases as it ascends up continously. On reaching apogee, the rocket's altitude *starts decreasing. 
+    *We detect apogee using relative altitude values from the altimeter. The logic we use is that the *
+    *rocket's altitude increases as it ascends up continuously. On reaching apogee, the rocket's altitude *starts decreasing.
 
-    *To detect the decrease in altitude, we keep track of the last SIZE_OF_BUFFER items (see *ring_buffer.h). We then check the current altitude value against the oldest value in the ring *buffer. If the difference is more than the set THRESHOLD (usually 5 meters), we are sure that at *this point the rocket is coming down and we register APOGEE. 
+    *To detect the decrease in altitude, we keep track of the last SIZE_OF_BUFFER items (see *ring_buffer.h). We then check the current altitude value against the oldest value in the ring *buffer.
+    If the difference is more than the set THRESHOLD (usually 5 meters), we are sure that at *this point the rocket is coming down and we register APOGEE.
 
-    *This is made possible using a ring buffer(circular buffer), that is implemented to always keep *track of the previous SIZE_OF_BUFFER. From this buffer we can infer apogee.
-    *
+    *This is made possible using a ring buffer(circular buffer), that is implemented to always keep
+    track of the previous SIZE_OF_BUFFER. From this buffer we can infer apogee.
 
     *@section step26 Parachute ejection
-    * @note In development 
-    *
+    This version of the flight software implements double ejection mechanism. ... [TODO]
 
     *@section step27 Flight data logging and data recovery
     * Flight data is logged in the external SPI flash memory. The file used is called <i>flight.txt</i>.
@@ -327,7 +331,30 @@ This shows that the flight computer has created a web portal and is waiting for 
 
     * - Open AiThinker serial tool and dump the data into a text file as outlined in the steps above
  *
- * @section step31 Integration and Testing Procedures
+
+ *@section step30 Avionics Integration and Power-Up procedure
+ This section describes how the avionics is integrated into the rocket and how it is powered up.
+
+* ***Integration procedure***
+@note In development
+
+* ***Power Up procedure***
+
+Once the flight computer is inserted into the body tube, the RBF pin must be inserted into the pre-allocated
+RBF hole on the body tube.
+
+These next steps describe the sequence of events and observations made after the RBF pin is removed.
+- Pull out the RBF pin
+- The flight computer beeps once and goes through its boot-up sequence. If debugging this via the serial terminal,
+you should see a bunch of messages showing messages from the flight computer. If not seeing any messages, ensure the DEBUGGING and
+DEBUG_TO_TERMINAL in defs.h are set to 1.
+- The green LED lights up and starts blinking to indicate the flight computer is in SAFE MODE.
+- The flight computer creates an access point to allow for WIFI configuration. (see WIFI configuration section to see how to connect the flight computer to the network)
+- Once the WIFI is connected successfully, the base station should start receiving the telemetry packet from the flight computer.
+- If a telemetry packet is received from the base station, then the flight computer avionics is a GO!
+
+
+ * @section step31 Testing Procedures
  * To perform testing and integration of the flight computer, follow the steps below:
 
  * @subsection step15 Hardware setup

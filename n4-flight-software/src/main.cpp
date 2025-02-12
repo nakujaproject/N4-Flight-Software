@@ -635,6 +635,7 @@ void flightStateCallback(void* pvParameters) {
                     drogueChuteDeploy();
                 }
 
+
                 break;
 
             // DROGUE_DESCENT

@@ -14,13 +14,14 @@ var searchData=
   ['and_20flight_20modes_11',['SAFE and FLIGHT modes',['../index.html#step7',1,'']]],
   ['and_20kalman_20filtering_12',['Flight Data Collection and Kalman Filtering',['../index.html#step23',1,'']]],
   ['and_20peripherals_13',['Hardware, pin assignment and peripherals',['../index.html#step13',1,'']]],
-  ['and_20testing_20procedures_14',['Integration and Testing Procedures',['../index.html#step31',1,'']]],
+  ['and_20power_20up_20procedure_14',['Avionics Integration and Power-Up procedure',['../index.html#step30',1,'']]],
   ['apogee_15',['apogee',['../namespaceapogee.html',1,'']]],
   ['apogee_20detection_16',['Apogee detection',['../index.html#step25',1,'']]],
   ['apogee_5fdetection_5fthreshold_17',['APOGEE_DETECTION_THRESHOLD',['../defs_8h.html#aa60a3d5d5dbbe3a81b5e4ed6b8d9f8f8',1,'defs.h']]],
   ['assignment_18',['Flight computer pin assignment',['../md_n4-flight-software_2src_2pin__assignment.html',1,'']]],
   ['assignment_20and_20peripherals_19',['Hardware, pin assignment and peripherals',['../index.html#step13',1,'']]],
-  ['ax_20',['ax',['../struct_acceleration___data.html#a0ac3f80a6aaf6bb4b39cc5b6298bf48d',1,'Acceleration_Data']]],
-  ['ay_21',['ay',['../struct_acceleration___data.html#af18da59fae25e84ce665ebe427d0d43b',1,'Acceleration_Data']]],
-  ['az_22',['az',['../struct_acceleration___data.html#a358fef1b09bfe48d8927bc16ab557a59',1,'Acceleration_Data']]]
+  ['avionics_20integration_20and_20power_20up_20procedure_20',['Avionics Integration and Power-Up procedure',['../index.html#step30',1,'']]],
+  ['ax_21',['ax',['../struct_acceleration___data.html#a0ac3f80a6aaf6bb4b39cc5b6298bf48d',1,'Acceleration_Data']]],
+  ['ay_22',['ay',['../struct_acceleration___data.html#af18da59fae25e84ce665ebe427d0d43b',1,'Acceleration_Data']]],
+  ['az_23',['az',['../struct_acceleration___data.html#a358fef1b09bfe48d8927bc16ab557a59',1,'Acceleration_Data']]]
 ];
