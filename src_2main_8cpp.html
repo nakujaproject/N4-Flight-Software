@@ -202,9 +202,15 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>blocking_buzz</b> (ui
 <tr class="memitem:a9cf7e4c8024aa7624fe5c67a2f370aa9" id="r_a9cf7e4c8024aa7624fe5c67a2f370aa9"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9cf7e4c8024aa7624fe5c67a2f370aa9">altimeter_get_pressure</a> ()</td></tr>
 <tr class="memdesc:a9cf7e4c8024aa7624fe5c67a2f370aa9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the raw pressure from the altimeter.  <br /></td></tr>
 <tr class="separator:a9cf7e4c8024aa7624fe5c67a2f370aa9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adcada09d9a4fa64bed7b0175e180b25e" id="r_adcada09d9a4fa64bed7b0175e180b25e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adcada09d9a4fa64bed7b0175e180b25e">mqtt_command_processor</a> (char *topic, char *command)</td></tr>
-<tr class="memdesc:adcada09d9a4fa64bed7b0175e180b25e"><td class="mdescLeft">&#160;</td><td class="mdescRight">process commands sent from the base station  <br /></td></tr>
-<tr class="separator:adcada09d9a4fa64bed7b0175e180b25e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8f8ce86c72ef32a58022e6bba898099" id="r_ac8f8ce86c72ef32a58022e6bba898099"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac8f8ce86c72ef32a58022e6bba898099">mqtt_command_processor</a> (const char *topic, const char *command)</td></tr>
+<tr class="memdesc:ac8f8ce86c72ef32a58022e6bba898099"><td class="mdescLeft">&#160;</td><td class="mdescRight">process commands sent from the base station  <br /></td></tr>
+<tr class="separator:ac8f8ce86c72ef32a58022e6bba898099"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a829cca417a09222f99d12dad885856ac" id="r_a829cca417a09222f99d12dad885856ac"><td class="memItemLeft" align="right" valign="top"><a id="a829cca417a09222f99d12dad885856ac" name="a829cca417a09222f99d12dad885856ac"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>arm_pyros</b> ()</td></tr>
+<tr class="separator:a829cca417a09222f99d12dad885856ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace89f5610f509f15ab70fabea110ba55" id="r_ace89f5610f509f15ab70fabea110ba55"><td class="memItemLeft" align="right" valign="top"><a id="ace89f5610f509f15ab70fabea110ba55" name="ace89f5610f509f15ab70fabea110ba55"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>disarm_pyros</b> ()</td></tr>
+<tr class="separator:ace89f5610f509f15ab70fabea110ba55"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada0b37a0896347ee2b4c96efef4e75e7" id="r_ada0b37a0896347ee2b4c96efef4e75e7"><td class="memItemLeft" align="right" valign="top"><a id="ada0b37a0896347ee2b4c96efef4e75e7" name="ada0b37a0896347ee2b4c96efef4e75e7"></a>
 HardwareSerial&#160;</td><td class="memItemRight" valign="bottom"><b>gpsSerial</b> (2)</td></tr>
 <tr class="separator:ada0b37a0896347ee2b4c96efef4e75e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -266,6 +272,9 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>initSD</b> ()</td>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_Reconnect</b> ()</td></tr>
 <tr class="memdesc:a5a48a88cefb37379fe58c0f58d0c274f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Try reconnecting to MQTT if connection is lost. <br /></td></tr>
 <tr class="separator:a5a48a88cefb37379fe58c0f58d0c274f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8de549f7646db3c99dd3572a4411d2dc" id="r_a8de549f7646db3c99dd3572a4411d2dc"><td class="memItemLeft" align="right" valign="top"><a id="a8de549f7646db3c99dd3572a4411d2dc" name="a8de549f7646db3c99dd3572a4411d2dc"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>mqtt_Callback</b> (char *topic, byte *payload, unsigned int length)</td></tr>
+<tr class="separator:a8de549f7646db3c99dd3572a4411d2dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a582e3dadcae4266158f0516e7c264bb6" id="r_a582e3dadcae4266158f0516e7c264bb6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a582e3dadcae4266158f0516e7c264bb6">MQTTInit</a> (const char *broker_IP, int broker_port)</td></tr>
 <tr class="memdesc:a582e3dadcae4266158f0516e7c264bb6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize MQTT.  <br /></td></tr>
 <tr class="separator:a582e3dadcae4266158f0516e7c264bb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -744,8 +753,8 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalman_filte
   
 </div>
 </div>
-<a id="adcada09d9a4fa64bed7b0175e180b25e" name="adcada09d9a4fa64bed7b0175e180b25e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adcada09d9a4fa64bed7b0175e180b25e">&#9670;&#160;</a></span>mqtt_command_processor()</h2>
+<a id="ac8f8ce86c72ef32a58022e6bba898099" name="ac8f8ce86c72ef32a58022e6bba898099"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac8f8ce86c72ef32a58022e6bba898099">&#9670;&#160;</a></span>mqtt_command_processor()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -753,12 +762,12 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalman_filte
         <tr>
           <td class="memname">void mqtt_command_processor </td>
           <td>(</td>
-          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>topic</em></span>, </td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>topic</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">char *</td>          <td class="paramname"><span class="paramname"><em>command</em></span>&#160;)</td>
+          <td class="paramtype">const char *</td>          <td class="paramname"><span class="paramname"><em>command</em></span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -766,7 +775,7 @@ QueueHandle_t&#160;</td><td class="memItemRight" valign="bottom"><b>kalman_filte
 <p>process commands sent from the base station </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">command</td><td></td></tr>
+    <tr><td class="paramname">command</td><td>ARM DISARM RESET </td></tr>
   </table>
   </dd>
 </dl>

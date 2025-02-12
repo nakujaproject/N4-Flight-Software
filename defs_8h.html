@@ -128,7 +128,7 @@ Macros</h2></td></tr>
 <tr class="separator:a7180786c98af534f76855fef6f1b97ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a872bad07d105729fd8b94cd1a497fa0e" id="r_a872bad07d105729fd8b94cd1a497fa0e"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a872bad07d105729fd8b94cd1a497fa0e">LOG_TO_MEMORY</a>&#160;&#160;&#160;0</td></tr>
 <tr class="separator:a872bad07d105729fd8b94cd1a497fa0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7f1cb94f830f83d6fd3138bd26891920" id="r_a7f1cb94f830f83d6fd3138bd26891920"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7f1cb94f830f83d6fd3138bd26891920">DEBUG_TO_TERMINAL</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memitem:a7f1cb94f830f83d6fd3138bd26891920" id="r_a7f1cb94f830f83d6fd3138bd26891920"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7f1cb94f830f83d6fd3138bd26891920">DEBUG_TO_TERMINAL</a>&#160;&#160;&#160;0</td></tr>
 <tr class="separator:a7f1cb94f830f83d6fd3138bd26891920"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1614f028c1fef258edfb81fb963609cb" id="r_a1614f028c1fef258edfb81fb963609cb"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1614f028c1fef258edfb81fb963609cb">debug</a>(x)</td></tr>
 <tr class="separator:a1614f028c1fef258edfb81fb963609cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -164,6 +164,9 @@ Macros</h2></td></tr>
 <tr class="memitem:a04d57a6c18b2d5e81f31093e58ed0c62" id="r_a04d57a6c18b2d5e81f31093e58ed0c62"><td class="memItemLeft" align="right" valign="top"><a id="a04d57a6c18b2d5e81f31093e58ed0c62" name="a04d57a6c18b2d5e81f31093e58ed0c62"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>SD_CS_PIN</b>&#160;&#160;&#160;26</td></tr>
 <tr class="separator:a04d57a6c18b2d5e81f31093e58ed0c62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1cdc316dbe8bc04344ac5e1ba1f1338e" id="r_a1cdc316dbe8bc04344ac5e1ba1f1338e"><td class="memItemLeft" align="right" valign="top"><a id="a1cdc316dbe8bc04344ac5e1ba1f1338e" name="a1cdc316dbe8bc04344ac5e1ba1f1338e"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>REMOTE_SWITCH</b>&#160;&#160;&#160;27</td></tr>
+<tr class="separator:a1cdc316dbe8bc04344ac5e1ba1f1338e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9e9afb21f28231689fd0c72416e0c6de" id="r_a9e9afb21f28231689fd0c72416e0c6de"><td class="memItemLeft" align="right" valign="top"><a id="a9e9afb21f28231689fd0c72416e0c6de" name="a9e9afb21f28231689fd0c72416e0c6de"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>SETUP_DELAY</b>&#160;&#160;&#160;300</td></tr>
 <tr class="separator:a9e9afb21f28231689fd0c72416e0c6de"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -237,7 +240,7 @@ Macros</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
 <tr class="memitem:ae92f35665caef645543492a92ca9fcfd" id="r_ae92f35665caef645543492a92ca9fcfd"><td class="memItemLeft" align="right" valign="top"><a id="ae92f35665caef645543492a92ca9fcfd" name="ae92f35665caef645543492a92ca9fcfd"></a>
-const char&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_SERVER</b> [30] = &quot;192.168.1.113&quot;</td></tr>
+const char&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_SERVER</b> [30] = &quot;192.168.0.106&quot;</td></tr>
 <tr class="separator:ae92f35665caef645543492a92ca9fcfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a031a69f460048644ff19dac601562b68" id="r_a031a69f460048644ff19dac601562b68"><td class="memItemLeft" align="right" valign="top"><a id="a031a69f460048644ff19dac601562b68" name="a031a69f460048644ff19dac601562b68"></a>
 const char&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_TELEMETRY_TOPIC</b> [30] = &quot;n4/flight-computer-1&quot;</td></tr>
@@ -349,7 +352,7 @@ const char&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_ARMING_TOP
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define DEBUG_TO_TERMINAL&#160;&#160;&#160;1</td>
+          <td class="memname">#define DEBUG_TO_TERMINAL&#160;&#160;&#160;0</td>
         </tr>
       </table>
 </div><div class="memdoc">
