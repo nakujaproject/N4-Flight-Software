@@ -12,11 +12,11 @@
 /*!< note: u can use wifi and xbee at the same time, so both of these handles can be set */
 /*!< at the same time */
 #define MQTT 0                                 /*!< set this to 1 if using MQTT for telemetry transfer */
-#define XBEE 1                                 /*!< set to 1 if using XBEE for telemetry transfer */
+#define XBEE 0                                 /*!< set to 1 if using XBEE for telemetry transfer */
 
 #define BAUDRATE        115200
-#define GPS_BAUD_RATE 9600                     /*!< baud rate for the GPS module. Change accordingly */
-#define XBEE_BAUD_RATE 9600                    /*!< baud rate for the XBEE HP module. Change accordingly */
+#define GPS_BAUD_RATE   9600                     /*!< baud rate for the GPS module. Change accordingly */
+#define XBEE_BAUD_RATE  9600                    /*!< baud rate for the XBEE HP module. Change accordingly */
 
 /* debug parameters for use during testing - set to 0 for production */
 #define DEBUGGING 1                           /*!< allow debugging to terminal. Set to 0 pre flight to disable serial terminal printing and improve speed  */
@@ -77,7 +77,7 @@
 /* MQTT constants */
 //const char MQTT_SERVER[30] = "192.168.1.101";
 // const char MQTT_SERVER[30] = "broker.emqx.io";
-const char MQTT_SERVER[30] = "192.168.0.106";
+const char MQTT_SERVER[30] = "192.168.0.105";
 const char MQTT_TELEMETRY_TOPIC[30] = "n4/flight-computer-1";             /* make this topic unique to every rocket */
 const char MQTT_ARMING_TOPIC[30] = "n4/commands";             /* make this topic unique to every rocket */
 #define MQTT_PORT 1883                              /*!< MQTT broker port */

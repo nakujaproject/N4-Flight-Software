@@ -106,6 +106,8 @@ unsigned long current_non_block_time = 0;
 unsigned long last_non_block_time = 0;
 bool buzz_state = 0;
 
+uint8_t mqtt_connect_flag;
+
 /* hardware init check - to pinpoint any hardware failure during setup */
 #define BMP_CHECK_BIT           0
 #define IMU_CHECK_BIT           1   
@@ -195,8 +197,6 @@ void checkRunTestToggle() {
  */
 void mqtt_command_processor(const char* topic, const char* command)
 {
-    debugln("processing command");
-
     // check topic
     if(topic == "n4/commands")
     {
@@ -205,14 +205,16 @@ void mqtt_command_processor(const char* topic, const char* command)
           arm_pyros();
           operation_mode = 1;
           non_blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE); // IGNORE ARMING PROCEDURE
+          debugln("ARM PYRO"); // TODO:log to syslogger
 
       }  else if(command == "DISARM") {
           disarm_pyros();
           operation_mode = 0;
           non_blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
+          debugln("ARM PYRO"); // TODO:log to syslogger
       } else if(command == "RESET"){
           // reset ESP via software
-
+          debugln("RESET"); // TODO:log to syslogger
       }
     }
 
@@ -484,17 +486,16 @@ void readAltimeterTask(void* pvParameters) {
     telemetry_type_t alt_data_lcl;
 
     while(1) {
+
         double a, P;
         P = altimeter_get_pressure();
         a = altimeter.altitude(P, baseline);
 
-        /* TODO: ignore negative values */
         /* send to altimeter global packet */
         altimeter_packet.temperature = altimeter_temperature;
         altimeter_packet.pressure = P;
         altimeter_packet.rel_altitude = a;
     }
-
 }
 
 /*!****************************************************************************
@@ -523,6 +524,8 @@ void readGPSTask(void* pvParameters){
             if(gps.altitude.isValid()) {
                 g_altitude = gps.altitude.meters();
             }
+        } else {
+            vTaskDelay(10/portTICK_PERIOD_MS);
         }
 
         gps_packet.latitude = latitude;
@@ -554,7 +557,6 @@ void kalmanFilterTask(void* pvParameters) {
     while (1) {
         vTaskDelay(CONSUME_TASK_DELAY/portTICK_PERIOD_MS);
     }
-
 }
 
 /*!****************************************************************************
@@ -574,11 +576,11 @@ void checkFlightState(void* pvParameters) {
             // debug("altitude value:"); debugln(flight_data.alt_data.altitude);
             if(flight_data.alt_data.rel_altitude < LAUNCH_DETECTION_THRESHOLD) {
                 current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;
-                debugln("PREFLIGHT");
+                //debugln("PREFLIGHT");
                 delay(STATE_CHANGE_DELAY);
             } else if(LAUNCH_DETECTION_THRESHOLD < flight_data.alt_data.rel_altitude < (LAUNCH_DETECTION_THRESHOLD+LAUNCH_DETECTION_ALTITUDE_WINDOW) ) {
                 current_state = ARMED_FLIGHT_STATE::POWERED_FLIGHT;
-                debugln("POWERED");
+                //debugln("POWERED");
                 delay(STATE_CHANGE_DELAY);
             } 
 
@@ -597,43 +599,41 @@ void checkFlightState(void* pvParameters) {
 
                     current_state = ARMED_FLIGHT_STATE::APOGEE;
                     delay(STATE_CHANGE_DELAY);
-                    debugln("APOGEE");
+                    //debugln("APOGEE");
                     delay(STATE_CHANGE_DELAY);
                     current_state = ARMED_FLIGHT_STATE::DROGUE_DEPLOY;
-                    debugln("DROGUE");
+                    //debugln("DROGUE");
                     delay(STATE_CHANGE_DELAY);
                     current_state =  ARMED_FLIGHT_STATE::DROGUE_DESCENT;
-                    debugln("DROGUE_DESCENT");
+                    //debugln("DROGUE_DESCENT");
                     delay(STATE_CHANGE_DELAY);
                     apogee_flag = 1;
                 }
             }
 
         } else if(apogee_flag == 1) {
-
             if(LAUNCH_DETECTION_THRESHOLD <= flight_data.alt_data.rel_altitude <= apogee_val) {
                 if(main_eject_flag == 0) {
                     current_state = ARMED_FLIGHT_STATE::MAIN_DEPLOY;
-                    debugln("MAIN");
+                    //debugln("MAIN");
                     delay(STATE_CHANGE_DELAY);
                     main_eject_flag = 1;
                 } else if (main_eject_flag == 1) { // todo: confirm check_done_flag
                     current_state = ARMED_FLIGHT_STATE::MAIN_DESCENT;
-                    debugln("MAIN_DESC");
+                    //debugln("MAIN_DESC");
                     delay(STATE_CHANGE_DELAY);
                 }
             }
 
             if(flight_data.alt_data.rel_altitude < LAUNCH_DETECTION_THRESHOLD) {
                 current_state = ARMED_FLIGHT_STATE::POST_FLIGHT_GROUND;
-                debugln("POST_FLIGHT");
+                //debugln("POST_FLIGHT");
             }
         }
 
         flight_data.state = current_state;
 
-    } // end while 
-
+    }
 }
 
 /*!****************************************************************************
@@ -877,37 +877,37 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
  * @brief Try reconnecting to MQTT if connection is lost
  *
  */
-void MQTT_Reconnect() {
-     if(!client.connected()){
-         debugln("[..]Attempting MQTT connection..."); // TODO: SYS LOGGER
-         String client_id = "[+]Flight-computer-1 client: ";
-         client_id += String(random(0XFFFF), HEX);
+void MQTT_Reconnect(void* pvParameters) {
+    while(1) {
+        if(!client.connected()) {
+            debugln("[..]Attempting MQTT connection..."); // TODO: SYS LOGGER
+            String client_id = "[+]Flight-computer-1 client: ";
+            client_id += String(random(0XFFFF), HEX);
 
-         if(client.connect(client_id.c_str())){
-             debugln("[+]MQTT reconnected");
-             client.subscribe("n4/commands"); // TODO: USE DEFINE here
-         } else {
-             debug("failed, rc=");
-             debugln(client.state());
-             delay(20);
-         }
-
+            if (client.connect(client_id.c_str())) {
+                debugln("[+]MQTT reconnected");
+                client.subscribe("n4/commands"); // TODO: USE DEFINE here
+                mqtt_connect_flag = 1;
+            } else {
+                mqtt_connect_flag = 0;
+                debug("failed, rc=");
+                debugln(client.state());
+                vTaskDelay(10/portTICK_PERIOD_MS);
+            }
+        }
     }
+
 }
 
 // This function is called whenever an MQTT message is received
 void mqtt_Callback(char* topic, byte* payload, unsigned int length) {
-    String message = ""; // Initialize an empty string to store the received message
+    String message = "";
     for (unsigned int i = 0; i < length; i++) {
-        message += (char)payload[i]; // Convert the received payload to a string
+        message += (char)payload[i];
     }
-
-    // convert to char*
     const char* command = message.c_str();
     mqtt_command_processor(topic, command);
 }
-
-
 
 /*!****************************************************************************
  * @brief Initialize MQTT
@@ -918,6 +918,7 @@ void MQTTInit(const char* broker_IP, int broker_port) {
     debugln("[+]Initializing MQTT\n");
     client.setServer(broker_IP, broker_port);
     client.setCallback(mqtt_Callback);
+    debugln("MQTT callback hooked!");
     delay(1000);
     debugln("[+]MQTT init OK");
 }
@@ -998,8 +999,8 @@ void xCreateAllTasks() {
         debugln("Creating all tasks");
         //vTaskDelay(200/portTICK_PERIOD_MS);
 
-        /* TASK 1: READ ACCELERATION DATA */
-        BaseType_t gr = xTaskCreatePinnedToCore(readAccelerationTask, "readAccelerometer", STACK_SIZE*4, NULL, 2, &readAccelerationTaskHandle, 1);
+        /* READ ACCELERATION DATA */
+        BaseType_t gr = xTaskCreatePinnedToCore(readAccelerationTask, "readAccelerometer", STACK_SIZE*2, NULL, 2, &readAccelerationTaskHandle, 1);
         if(gr == pdPASS) {
             debugln("[+]Read acceleration task created OK.");
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Read acceleration task created OK.\r\n");
@@ -1008,18 +1009,8 @@ void xCreateAllTasks() {
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Read acceleration task creation failed\r\n");
         }
 
-        /* TASK 2: READ ALTIMETER DATA */
-        BaseType_t ra = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*4,NULL,2, &readAltimeterTaskHandle, 1);
-        if(ra == pdPASS) {
-            debugln("[+]readAltimeterTask created OK.");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]readAltimeterTask created OK.\r\n");
-        } else {
-            debugln("[-]Failed to create readAltimeterTask");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create readAltimeterTask\r\n");
-        }
-
         /* TASK 3: READ GPS DATA */
-        BaseType_t rg = xTaskCreatePinnedToCore(readGPSTask, "readGPS", STACK_SIZE*4, NULL, 2, &readGPSTaskHandle, 1);
+        BaseType_t rg = xTaskCreatePinnedToCore(readGPSTask, "readGPS", STACK_SIZE*2, NULL, 2, &readGPSTaskHandle, 1);
         if(rg == pdPASS) {
             debugln("[+]Read GPS task created OK.");
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Read GPS task created OK.\r\n");
@@ -1028,20 +1019,19 @@ void xCreateAllTasks() {
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create GPS task\r\n");
         }
 
-        /* TASK 5: CHECK FLIGHT STATE TASK */
-        // BaseType_t cf = xTaskCreatePinnedToCore(checkFlightState,"checkFlightState",STACK_SIZE*4,NULL, 2, &checkFlightStateTaskHandle, 1);
+        /* CHECK FLIGHT STATE TASK */
+         BaseType_t cf = xTaskCreatePinnedToCore(checkFlightState,"checkFlightState",STACK_SIZE*2,NULL, 2, &checkFlightStateTaskHandle, 1);
 
-        // if(cf == pdPASS) {
-        //     debugln("[+]checkFlightState task created OK.");
-        //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]checkFlightState task created OK.\r\n");
-        // } else {
-        //     debugln("[-]Failed to create checkFlightState task");
-        //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create checkFlightState task\r\n");
-        // }
+         if(cf == pdPASS) {
+             debugln("[+]checkFlightState task created OK.");
+             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]checkFlightState task created OK.\r\n");
+         } else {
+             debugln("[-]Failed to create checkFlightState task");
+             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create checkFlightState task\r\n");
+         }
 
-        /* TASK 6: FLIGHT STATE CALLBACK TASK */
-        BaseType_t fs = xTaskCreatePinnedToCore(flightStateCallback, "flightStateCallback", STACK_SIZE*4, NULL, 2, &flightStateCallbackTaskHandle, 1);
-
+        /* FLIGHT STATE CALLBACK TASK */
+        BaseType_t fs = xTaskCreatePinnedToCore(flightStateCallback, "flightStateCallback", STACK_SIZE*2, NULL, 2, &flightStateCallbackTaskHandle, 1);
         if(fs == pdPASS) {
             debugln("[+]flightStateCallback task created OK.");
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]flightStateCallback task created OK.\r\n");
@@ -1051,12 +1041,12 @@ void xCreateAllTasks() {
         }
 
         #if MQTT
-            /* TASK 8: TRANSMIT TELEMETRY DATA */
-            BaseType_t th = xTaskCreatePinnedToCore(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*4, NULL, 2, &MQTT_TransmitTelemetryTaskHandle, 1);
+            /* TRANSMIT TELEMETRY DATA */
+            BaseType_t th = xTaskCreatePinnedToCore(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*2, NULL, 2, &MQTT_TransmitTelemetryTaskHandle, 1);
 
             if(th == pdPASS){
                 debugln("[+]MQTT transmit task created OK");
-                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]kalman_filter_queue_handle creation OK.\r\n");
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]MQTT transmit task created OK\r\n");
                 
             } else {
                 debugln("[-]MQTT transmit task failed to create");
@@ -1065,7 +1055,7 @@ void xCreateAllTasks() {
 
         #endif
 
-        BaseType_t kf = xTaskCreatePinnedToCore(kalmanFilterTask, "kalman filter", STACK_SIZE*4, NULL, 2, &kalmanFilterTaskHandle, 1);
+        BaseType_t kf = xTaskCreatePinnedToCore(kalmanFilterTask, "kalman filter", STACK_SIZE*2, NULL, 2, &kalmanFilterTaskHandle, 1);
 
         if(kf == pdPASS) {
             debugln("[+]kalmanFilter task created OK.");
@@ -1102,7 +1092,8 @@ void xCreateAllTasks() {
             }
         #endif // LOG_TO_MEMORY
 
-        if(xTaskCreatePinnedToCore(xOperationModeIndicateTask,"xOperationModeIndicateTask",STACK_SIZE*4,NULL,2,&opModeIndicateTaskHandle,1) != pdPASS){
+        if(xTaskCreatePinnedToCore(xOperationModeIndicateTask,"xOperationModeIndicateTask",STACK_SIZE*2,NULL,2,&opModeIndicateTaskHandle,1) != pdPASS){
+
             debugln("[-]xOperationModeIndicateTask task failed to create");
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]xOperationModeIndicateTask task failed to create\r\n");
         }else{
@@ -1110,10 +1101,33 @@ void xCreateAllTasks() {
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]xOperationModeIndicateTask task created OK.\r\n");
         }
 
+        /* READ ALTIMETER DATA */
+        BaseType_t ra = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*2,NULL,2, &readAltimeterTaskHandle, 1);
+        if(ra == pdPASS) {
+            debugln("[+]readAltimeterTask created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]readAltimeterTask created OK.\r\n");
+        } else {
+            debugln("[-]Failed to create readAltimeterTask");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create readAltimeterTask\r\n");
+        }
+
+        /* RECONNECT MQTT */
+        BaseType_t ra = xTaskCreatePinnedToCore(MQTT_Reconnect,"reconnectMQTT",STACK_SIZE*2,NULL,2, NULL, 1);
+        if(ra == pdPASS) {
+            debugln("[+]reconnectMQTT created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]reconnectMQTT created OK.\r\n");
+        } else {
+            debugln("[-]Failed to create reconnectMQTT");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create reconnectMQTT\r\n");
+        }
+
+
         debugln();
         debugln(F("=============================================="));
         debugln(F("========== FINISHED CREATING TASKS ==========="));
         debugln(F("==============================================\n"));
+
+        // resume all tasks after creation
 
         // delete this task
         vTaskDelete(NULL);
@@ -1301,11 +1315,12 @@ void setup() {
     *
     */
 
-    xCreateAllTasks();
+    if(mqtt_connect_flag) {
+        xCreateAllTasks();
+    }
 
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==FINISHED CREATING TASKS==\r\n");
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "\nEND OF INITIALIZATION\r\n");
-
 
     /* buzz to indicate start of setup */
     blocking_buzz(BUZZ_INTERVALS::SETUP_INIT);
@@ -1318,10 +1333,9 @@ void setup() {
  *******************************************************************************/
 void loop() {
     /* enable MQTT transmit loop */
-     MQTT_Reconnect();
-     client.loop();
-
-    /* listen for mqtt commands */
-    mqtt_command_processor("n4/commands", "");
+    if (!client.connected()) {
+        MQTT_Reconnect();
+    }
+    client.loop();
 
 } /* End of main loop*/
