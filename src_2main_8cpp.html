@@ -268,10 +268,10 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>initSD</b> ()</td>
 <tr class="memitem:a623ea109418725f80cfc705f49fd7a55" id="r_a623ea109418725f80cfc705f49fd7a55"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a623ea109418725f80cfc705f49fd7a55">MQTT_TransmitTelemetry</a> (void *pvParameters)</td></tr>
 <tr class="memdesc:a623ea109418725f80cfc705f49fd7a55"><td class="mdescLeft">&#160;</td><td class="mdescRight">send flight data to ground  <br /></td></tr>
 <tr class="separator:a623ea109418725f80cfc705f49fd7a55"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5a48a88cefb37379fe58c0f58d0c274f" id="r_a5a48a88cefb37379fe58c0f58d0c274f"><td class="memItemLeft" align="right" valign="top"><a id="a5a48a88cefb37379fe58c0f58d0c274f" name="a5a48a88cefb37379fe58c0f58d0c274f"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_Reconnect</b> ()</td></tr>
-<tr class="memdesc:a5a48a88cefb37379fe58c0f58d0c274f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Try reconnecting to MQTT if connection is lost. <br /></td></tr>
-<tr class="separator:a5a48a88cefb37379fe58c0f58d0c274f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e2a1df7cd48d187bff6438702063856" id="r_a7e2a1df7cd48d187bff6438702063856"><td class="memItemLeft" align="right" valign="top"><a id="a7e2a1df7cd48d187bff6438702063856" name="a7e2a1df7cd48d187bff6438702063856"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>MQTT_Reconnect</b> (void *pvParameters)</td></tr>
+<tr class="memdesc:a7e2a1df7cd48d187bff6438702063856"><td class="mdescLeft">&#160;</td><td class="mdescRight">Try reconnecting to MQTT if connection is lost. <br /></td></tr>
+<tr class="separator:a7e2a1df7cd48d187bff6438702063856"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8de549f7646db3c99dd3572a4411d2dc" id="r_a8de549f7646db3c99dd3572a4411d2dc"><td class="memItemLeft" align="right" valign="top"><a id="a8de549f7646db3c99dd3572a4411d2dc" name="a8de549f7646db3c99dd3572a4411d2dc"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>mqtt_Callback</b> (char *topic, byte *payload, unsigned int length)</td></tr>
 <tr class="separator:a8de549f7646db3c99dd3572a4411d2dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -332,6 +332,9 @@ unsigned long&#160;</td><td class="memItemRight" valign="bottom"><b>last_non_blo
 <tr class="memitem:ac56b22c7a0786926590a39e435fd2c53" id="r_ac56b22c7a0786926590a39e435fd2c53"><td class="memItemLeft" align="right" valign="top"><a id="ac56b22c7a0786926590a39e435fd2c53" name="ac56b22c7a0786926590a39e435fd2c53"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>buzz_state</b> = 0</td></tr>
 <tr class="separator:ac56b22c7a0786926590a39e435fd2c53"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac9539d60739ebec07264137ab5e642b0" id="r_ac9539d60739ebec07264137ab5e642b0"><td class="memItemLeft" align="right" valign="top"><a id="ac9539d60739ebec07264137ab5e642b0" name="ac9539d60739ebec07264137ab5e642b0"></a>
+uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>mqtt_connect_flag</b></td></tr>
+<tr class="separator:ac9539d60739ebec07264137ab5e642b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5fa0d939030a4ab773be75554017c4aa" id="r_a5fa0d939030a4ab773be75554017c4aa"><td class="memItemLeft" align="right" valign="top"><a id="a5fa0d939030a4ab773be75554017c4aa" name="a5fa0d939030a4ab773be75554017c4aa"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>SUBSYSTEM_INIT_MASK</b> = 0b00000000</td></tr>
 <tr class="separator:a5fa0d939030a4ab773be75554017c4aa"><td class="memSeparator" colspan="2">&#160;</td></tr>

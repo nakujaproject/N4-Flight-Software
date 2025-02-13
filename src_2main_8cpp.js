@@ -23,7 +23,7 @@ var src_2main_8cpp =
     [ "loop", "src_2main_8cpp.html#afe461d27b9c48d5921c00d521181f12f", null ],
     [ "mainChuteDeploy", "src_2main_8cpp.html#a9074d493ccf55d0cfa3acd2d173f665a", null ],
     [ "mqtt_command_processor", "src_2main_8cpp.html#ac8f8ce86c72ef32a58022e6bba898099", null ],
-    [ "MQTT_Reconnect", "src_2main_8cpp.html#a5a48a88cefb37379fe58c0f58d0c274f", null ],
+    [ "MQTT_Reconnect", "src_2main_8cpp.html#a7e2a1df7cd48d187bff6438702063856", null ],
     [ "MQTT_TransmitTelemetry", "src_2main_8cpp.html#a623ea109418725f80cfc705f49fd7a55", null ],
     [ "MQTTInit", "src_2main_8cpp.html#a582e3dadcae4266158f0516e7c264bb6", null ],
     [ "non_blocking_buzz", "src_2main_8cpp.html#a30f4f18cd44f30af314ac53e31f4b1dd", null ],
