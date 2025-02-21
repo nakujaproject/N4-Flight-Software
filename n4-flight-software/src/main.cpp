@@ -137,7 +137,7 @@ uint8_t remote_switch = 27;
 
 /* Flight data logging */
 uint8_t flash_led_pin = 32;                  /*!< LED pin connected to indicate flash memory formatting  */
-char filename[] = "flight.txt";             /*!< data log filename - Filename must be less than 20 chars, including the file extension */
+char filename[] = "flight_data.txt";         /*!< data log filename - Filename must be less than 20 chars, including the file extension */
 uint32_t FILE_SIZE_512K = 524288L;          /*!< 512KB */
 uint32_t FILE_SIZE_1M  = 1048576L;          /*!< 1MB */
 uint32_t FILE_SIZE_4M  = 4194304L;          /*!< 4MB */
@@ -877,14 +877,11 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
  * @brief Try reconnecting to MQTT if connection is lost
  *
  */
-void MQTT_Reconnect(void* pvParameters) {
-    while(1) {
+void MQTT_Reconnect() {
+    // while(1) {
         if(!client.connected()) {
             debugln("[..]Attempting MQTT connection..."); // TODO: SYS LOGGER
-            String client_id = "[+]Flight-computer-1 client: ";
-            client_id += String(random(0XFFFF), HEX);
-
-            if (client.connect(client_id.c_str())) {
+            if (client.connect("FC")) {
                 debugln("[+]MQTT reconnected");
                 client.subscribe("n4/commands"); // TODO: USE DEFINE here
                 mqtt_connect_flag = 1;
@@ -892,11 +889,10 @@ void MQTT_Reconnect(void* pvParameters) {
                 mqtt_connect_flag = 0;
                 debug("failed, rc=");
                 debugln(client.state());
-                vTaskDelay(10/portTICK_PERIOD_MS);
+                vTaskDelay(1000/portTICK_PERIOD_MS);
             }
         }
-    }
-
+    // }
 }
 
 // This function is called whenever an MQTT message is received
@@ -1112,14 +1108,14 @@ void xCreateAllTasks() {
         }
 
         /* RECONNECT MQTT */
-        BaseType_t ra = xTaskCreatePinnedToCore(MQTT_Reconnect,"reconnectMQTT",STACK_SIZE*2,NULL,2, NULL, 1);
-        if(ra == pdPASS) {
-            debugln("[+]reconnectMQTT created OK.");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]reconnectMQTT created OK.\r\n");
-        } else {
-            debugln("[-]Failed to create reconnectMQTT");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create reconnectMQTT\r\n");
-        }
+        // BaseType_t rp = xTaskCreatePinnedToCore(MQTT_Reconnect,"reconnectMQTT",STACK_SIZE*2,NULL,2, NULL, 1);
+        // if(rp == pdPASS) {
+        //     debugln("[+]reconnectMQTT created OK.");
+        //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]reconnectMQTT created OK.\r\n");
+        // } else {
+        //     debugln("[-]Failed to create reconnectMQTT");
+        //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create reconnectMQTT\r\n");
+        // }
 
 
         debugln();
@@ -1169,7 +1165,7 @@ void setup() {
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==CREATING DYNAMIC WIFI==\r\n");
 
     // create and wait for dynamic WIFI connection
-    initDynamicWIFI(); // TODO - uncomment on live testing and production
+    // initDynamicWIFI(); // TODO - uncomment on live testing and production
 
     debugln();
     debugln(F("=============================================="));
@@ -1185,7 +1181,7 @@ void setup() {
     debug("Flash memory init state:"); debugln(flash_init_state);
 
     /* initialize mqtt */
-    MQTTInit(MQTT_SERVER, MQTT_PORT);
+    //MQTTInit(MQTT_SERVER, MQTT_PORT);
 
     /* update the sub-systems init state table */
     // check if BMP init OK
@@ -1315,9 +1311,9 @@ void setup() {
     *
     */
 
-    if(mqtt_connect_flag) {
-        xCreateAllTasks();
-    }
+
+    xCreateAllTasks();
+
 
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==FINISHED CREATING TASKS==\r\n");
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "\nEND OF INITIALIZATION\r\n");
@@ -1333,9 +1329,9 @@ void setup() {
  *******************************************************************************/
 void loop() {
     /* enable MQTT transmit loop */
-    if (!client.connected()) {
-        MQTT_Reconnect();
-    }
+   if (!client.connected()) {
+       MQTT_Reconnect();
+   }
     client.loop();
 
 } /* End of main loop*/

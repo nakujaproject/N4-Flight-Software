@@ -24,7 +24,7 @@ class DataLogger {
         char _filename[20];          /*!< filename of the log file */
         SerialFlashFile _file;
         uint32_t _file_size;            /*!< how large do you want the file */
-        uint8_t  _flash_delay = 100;    /*!< 100ms delay gives a frequency of 20Hz */
+        uint8_t _flash_delay = 100;    /*!< 100ms delay gives a frequency of 20Hz */
         uint8_t _file_pointer = 0;      /*!< pointer to the start of the file- to be used when reading the file */
 
 

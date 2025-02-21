@@ -75,9 +75,7 @@
 #define CONSUME_TASK_DELAY    10
 
 /* MQTT constants */
-//const char MQTT_SERVER[30] = "192.168.1.101";
-// const char MQTT_SERVER[30] = "broker.emqx.io";
-const char MQTT_SERVER[30] = "192.168.0.105";
+const char MQTT_SERVER[30] = "192.168.1.125";
 const char MQTT_TELEMETRY_TOPIC[30] = "n4/flight-computer-1";             /* make this topic unique to every rocket */
 const char MQTT_ARMING_TOPIC[30] = "n4/commands";             /* make this topic unique to every rocket */
 #define MQTT_PORT 1883                              /*!< MQTT broker port */

@@ -78,66 +78,60 @@ bool DataLogger::loggerInit() {
 
     if (!SerialFlash.begin(this->_cs_pin)) {
         return false;
+
     } else {
-        this->loggerEquals();
-        this->loggerInfo();
+        // this->loggerEquals();
+        // this->loggerInfo();
 
-        // init flash LED
-        //pinMode(this->_led_pin, OUTPUT);
-        //digitalWrite(this->_led_pin, HIGH);
+        // // return a list of files currently in the memory
+        // if(!SerialFlash.exists("dummy.txt")) {
+        //     Serial.println(F("Flash doesn't appear to hold a file system - may need erasing first.")); // TODO: Log to system logger
 
-        // return a list of files currently in the memory
-        if(!SerialFlash.exists("dummy.txt")) {
-            Serial.println(F("Flash doesn't appear to hold a file system - may need erasing first.")); // TODO: Log to system logger
+        //     // format the memory
+        //     this->loggerFormat();
 
-            // format the memory
-            this->loggerFormat();
+        // } else {
+        //     Serial.println(F("File system found"));
+        //     Serial.println(F("Files currently in flash:")); // TODO: LOG TO SYSTEM LOGGER
+        //     SerialFlash.opendir();
 
-        } else {
-            Serial.println(F("File system found"));
-            Serial.println(F("Files currently in flash:")); // TODO: LOG TO SYSTEM LOGGER
-            SerialFlash.opendir();
-
-            // list all files in memory
-            while (1) {
-                uint32_t filesize;
-                if (SerialFlash.readdir(filename, sizeof(filename), filesize)) {
-                    Serial.print(filename);
-                    Serial.print(F("  "));
-                    Serial.print(filesize);
-                    Serial.print(F(" bytes"));
-                    Serial.println();
-                }
-                else {
-                    break; 
-                }
-            }
+        //     // list all files in memory
+        //     while (1) {
+        //         uint32_t filesize;
+        //         if (SerialFlash.readdir(filename, sizeof(filename), filesize)) {
+        //             Serial.print(filename);
+        //             Serial.print(F("  "));
+        //             Serial.print(filesize);
+        //             Serial.print(F(" bytes"));
+        //             Serial.println();
+        //         }
+        //         else {
+        //             break; 
+        //         }
+        //     }
 
             if(SerialFlash.exists(this->_filename)) {
                 // erase file contents 
-                Serial.println("flight.txt file found. Erasing file contents");
+                Serial.println("flight_data.txt file found. Erasing file contents");
                 SerialFlashFile flight_file;
                 flight_file = SerialFlash.open(this->_filename);
                 flight_file.erase();
                 Serial.println("Done erasing file contents");
             } else {
-                Serial.println("flight.txt file does not exist. Creating file");
-                uint8_t file_create_status = SerialFlash.create(this->_filename, this->_file_size);\
-
-                // create logging file with the provided filename - use flight.txt
+                Serial.println("flightk_data.txt file does not exist. Creating file...");
+                uint8_t file_create_status = SerialFlash.createErasable(this->_filename, this->_file_size);
                 if (!file_create_status) {
                     Serial.println(F("Failed to create file"));
-                    return false;
                 } else {
-                    // open the created file 
-                    Serial.println(F("Created flight.txt file. Ready for data logging!"));
+                    Serial.println(F("Created flight_data.txt file. Ready for data logging!"));
                     this->_file = SerialFlash.open(this->_filename);
                 }
+
             }
-            
-        }
+
+        // }
         
-        this->loggerEquals(); 
+        // this->loggerEquals(); 
 
         return true;
     }
