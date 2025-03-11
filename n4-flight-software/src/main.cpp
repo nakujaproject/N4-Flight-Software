@@ -31,6 +31,9 @@
 #include "wifi-config.h"    // handle wifi connection
 #include "kalman_filter.h"  // handle kalman filter functions
 #include "ring_buffer.h"    // for apogee detection
+#include<esp_wifi.h>
+#include "esp_system.h"
+#include "esp_mac.h"
 
 /* non-task function prototypes definition */
 void initDynamicWIFI();
@@ -68,6 +71,8 @@ HardwareSerial gpsSerial(2); // PIN 16 AND 17
 TinyGPSPlus gps;
 char gps_buffer[20];
 gps_type_t gps_packet;
+char raw_bcn_buffer[110];
+char custom_beacon_frame[256]; // todo: for beacon frame
 
 /* system logger */
 SystemLogger SYSTEM_LOGGER;
@@ -399,6 +404,97 @@ QueueHandle_t log_to_mem_queue_handle;
 QueueHandle_t check_state_queue_handle;
 QueueHandle_t debug_to_term_queue_handle;
 QueueHandle_t kalman_filter_queue_handle;
+QueueHandle_t beacon_queue_handle;
+
+
+//============= Beacon frames ===============
+uint8_t activate_beacon_frames = 1;
+void send_beacon(void* pvParameters) {
+    telemetry_type_t data;
+
+    while (1) {
+        if(xQueueReceive(beacon_queue_handle, &data, 0) == pdPASS) {
+            // debugln("Received beacon data");  // todo: log
+        } else {
+            // debugln("Field to receive beacon frame"); // todo: log
+        }
+
+        debug("RECV_ALT: ");
+        debugln(data.alt_data.rel_altitude);
+
+        // Buffer for the MAC address
+        uint8_t mac_address[6];
+        // Get the MAC address of the device
+        esp_read_mac(mac_address, ESP_MAC_WIFI_SOFTAP); // Use the SoftAP MAC address
+
+        // Construct a raw beacon frame
+        uint8_t raw_beacon_frame[100] = {
+                // MAC Header (24 bytes)
+                0x80, 0x00,                 // Frame Control: Beacon frame
+                0x00, 0x00,                 // Duration
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // Destination (Broadcast)
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Placeholder for Source MAC (to be set dynamically)
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Placeholder for BSSID (to be set dynamically)
+                0x00, 0x00,                 // Sequence number
+
+                // Fixed Parameters (12 bytes)
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Timestamp (8 bytes, zeroed for simplicity)
+                0x64, 0x00,                                     // Beacon Interval (2 bytes, 1 TUs)
+                0x01, 0x04,                                     // Capability Information (example: 0x0401)
+
+                // Tagged Parameters (Payload)
+                0x00, 0x04,                 // SSID Parameter Set (4 bytes following for SSID)
+                'N', 'a', 'k', 'u', 'j', 'a',        //
+                0x01, 0x08,                 // Supported rates (Example: 1, 2, 5.5, 11 Mbps)
+                0x82, 0x84, 0x8b, 0x96,
+                0x03, 0x01, 0x02,           // DS Parameter Set (Channel set to 2)
+
+                // Vendor-Specific IE (Custom Message)
+                0xDD,                       // Element ID (Vendor-Specific IE)
+                0xFF,                       // Length (256 bytes)
+                'C', 'u', 's', 't', 'o', 'm', ' ', 'M', 'e', 's', 's', 'a', 'g', 'e'
+        };
+
+    // Custom message to include in the beacon frame
+    //  const char custom_message[] = "Enock Sagit";
+    // Calculate the size of the updated beacon frame
+    size_t new_frame_size = sizeof(raw_beacon_frame) + 2 + sizeof(data);//increase the size of the new beacon frame
+    //uint8_t* custom_beacon_frame = (uint8_t *)malloc(new_frame_size);
+
+    // Copy the original beacon frame into the new buffer
+    memcpy(custom_beacon_frame, raw_beacon_frame, sizeof(raw_beacon_frame));
+
+    // Append the custom message as an Information Element (IE)
+    custom_beacon_frame[sizeof(raw_beacon_frame)] = 0xdd; // Vendor-specific IE ID
+    Serial.printf("size of beacon frame:%d",sizeof(raw_beacon_frame));
+
+    custom_beacon_frame[sizeof(raw_beacon_frame) + 1] = sizeof(data); // Length of the custom message
+
+    memcpy(custom_beacon_frame + sizeof(raw_beacon_frame) + 2, &data, sizeof(data));
+
+    // amos= (Data*)(custom_beacon_frame + sizeof(raw_beacon_frame) + 2);
+    memcpy(custom_beacon_frame + 10, mac_address, 6); // SouSerial.printf("\nAfter: ");
+    //  Serial.printf("\nAfter:%.3f,%.3f ",amos->altitude,amos->temperature);
+    memcpy(custom_beacon_frame + 16, mac_address, 6); // BSSID
+
+//    // Transmit the raw beacon frame
+//    esp_wifi_80211_tx(WIFI_IF_AP, custom_beacon_frame, new_frame_size, true);
+
+    // Print debug information
+    Serial.println("Beacon frame sent with the following MAC address:");
+    for (int i = 0; i < 6; i++) {
+        Serial.printf("%02X", mac_address[i]);
+        if (i < 5) Serial.print(":");
+    }
+    Serial.println();
+
+//    Serial.println("Custom message included in beacon frame:");
+//    // Serial.printf("%.6f,%.3f",data.altitude,data.latitude);
+
+    }
+}
+
+//============= Beacon frames ===============
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////// ACCELERATION AND ROCKET ATTITUDE DETERMINATION /////////////////
@@ -414,7 +510,6 @@ QueueHandle_t kalman_filter_queue_handle;
  *******************************************************************************/
 void readAccelerationTask(void* pvParameter) {
     telemetry_type_t acc_data_lcl;
-
 
     while(1) {
         acc_data_lcl.operation_mode = operation_mode; // TODO: move these to check state function
@@ -495,6 +590,11 @@ void readAltimeterTask(void* pvParameters) {
         altimeter_packet.temperature = altimeter_temperature;
         altimeter_packet.pressure = P;
         altimeter_packet.rel_altitude = a;
+
+        /* append to local packet */
+        alt_data_lcl.alt_data.rel_altitude = altimeter_packet.rel_altitude;
+
+        xQueueSend(beacon_queue_handle, &alt_data_lcl, 0);
     }
 }
 
@@ -799,6 +899,7 @@ void logToMemory(void* pvParameter) {
 
 }
 
+
 /*!****************************************************************************
  * @brief send flight data to ground
  * @param pvParameter - A value that is passed as the parameter to the created task.
@@ -861,11 +962,11 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
         );
 
         /* Send to MQTT topic  */
-        // if(client.publish(MQTT_TOPIC, telemetry_packet_buffer) ) {
-        //     debugln("[+]Data sent");
-        // } else {
-        //     debugln("[-]Data not sent");
-        // }
+         if(client.publish(MQTT_TELEMETRY_TOPIC, telemetry_packet_buffer) ) {
+             debugln("[+]Data sent");
+         } else {
+             debugln("[-]Data not sent");
+         }
 
         client.publish(MQTT_TELEMETRY_TOPIC, telemetry_packet_buffer);
     }
@@ -877,7 +978,7 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
  * @brief Try reconnecting to MQTT if connection is lost
  *
  */
-void MQTT_Reconnect(void* pvParameters) {
+void MQTT_Reconnect() {
     while(1) {
         if(!client.connected()) {
             debugln("[..]Attempting MQTT connection..."); // TODO: SYS LOGGER
@@ -1111,28 +1212,23 @@ void xCreateAllTasks() {
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create readAltimeterTask\r\n");
         }
 
-        /* RECONNECT MQTT */
-        BaseType_t ra = xTaskCreatePinnedToCore(MQTT_Reconnect,"reconnectMQTT",STACK_SIZE*2,NULL,2, NULL, 1);
-        if(ra == pdPASS) {
-            debugln("[+]reconnectMQTT created OK.");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]reconnectMQTT created OK.\r\n");
-        } else {
-            debugln("[-]Failed to create reconnectMQTT");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create reconnectMQTT\r\n");
-        }
-
+        #if BEACON_FRAME_ACTIVATE
+            BaseType_t y = xTaskCreatePinnedToCore(send_beacon,"sendBeacon",STACK_SIZE*2,NULL,2, NULL, 1);
+            if(y == pdPASS) {
+                debugln("[+]beacon frame created OK.");
+                //SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]reconnectMQTT created OK.\r\n");
+            } else {
+                debugln("[-]beacon frame to create reconnectMQTT");
+                //SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create reconnectMQTT\r\n");
+            }
+        #endif
 
         debugln();
         debugln(F("=============================================="));
         debugln(F("========== FINISHED CREATING TASKS ==========="));
         debugln(F("==============================================\n"));
 
-        // resume all tasks after creation
-
-        // delete this task
-        vTaskDelete(NULL);
-    
-    
+        vTaskDelete(NULL); /* we do not need this task anymore */
 }
 
 /*!****************************************************************************
@@ -1169,7 +1265,19 @@ void setup() {
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==CREATING DYNAMIC WIFI==\r\n");
 
     // create and wait for dynamic WIFI connection
-    initDynamicWIFI(); // TODO - uncomment on live testing and production
+#if MQTT
+    initDynamicWIFI();
+#endif
+
+#if BEACON_FRAME_ACTIVATE
+    WiFi.disconnect(true, true);
+    // reset_wifi_configuration();
+    // clear_wifi_credentials();
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    esp_wifi_init(&cfg);
+    esp_wifi_set_mode(WIFI_MODE_AP);
+    esp_wifi_start();
+#endif
 
     debugln();
     debugln(F("=============================================="));
@@ -1185,7 +1293,7 @@ void setup() {
     debug("Flash memory init state:"); debugln(flash_init_state);
 
     /* initialize mqtt */
-    MQTTInit(MQTT_SERVER, MQTT_PORT);
+    MQTTInit(MQTT_SERVER, MQTT_PORT); // TODO: wrap under DEFINE
 
     /* update the sub-systems init state table */
     // check if BMP init OK
@@ -1252,6 +1360,7 @@ void setup() {
     check_state_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
     debug_to_term_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
     kalman_filter_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
+    beacon_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
 
     if(telemetry_data_queue_handle == NULL) {
         debugln("[-]telemetry_data_queue_handle creation failed");
@@ -1315,9 +1424,7 @@ void setup() {
     *
     */
 
-    if(mqtt_connect_flag) {
-        xCreateAllTasks();
-    }
+    xCreateAllTasks();
 
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==FINISHED CREATING TASKS==\r\n");
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "\nEND OF INITIALIZATION\r\n");
@@ -1337,5 +1444,8 @@ void loop() {
         MQTT_Reconnect();
     }
     client.loop();
+
+    // beacon frames test
+    //beacon_frame_transmit(telemetry_packet);
 
 } /* End of main loop*/
