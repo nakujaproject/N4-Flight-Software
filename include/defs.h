@@ -20,8 +20,8 @@
 
 /* debug parameters for use during testing - set to 0 for production */
 #define DEBUGGING 1                           /*!< allow debugging to terminal. Set to 0 pre flight to disable serial terminal printing and improve speed  */
-#define LOG_TO_MEMORY 0                      /*!< allow data logging to memory. Set to 1 to log data to external flash memory. Must be set during flight */
-#define DEBUG_TO_TERMINAL 1                 /*!< allow create task that prints data to terminal. Set to 0 before flight  */
+#define LOG_TO_MEMORY 1                      /*!< allow data logging to memory. Set to 1 to log data to external flash memory. Must be set during flight */
+#define DEBUG_TO_TERMINAL 1                 /*!< allow create task that print data to terminal. Set to 0 before flight  */
 
 #if DEBUGGING
     #define debug(x) Serial.print(x)
@@ -49,6 +49,16 @@
 #define SET_RUN_MODE_PIN     13      /*!< Pin to set the flight computer to RUN mode */
 #define SD_CS_PIN           26
 #define REMOTE_SWITCH       27
+#define DROGUE_PIN           12     /*!< Pin to fire the drogue chute ejection charge */
+#define MAIN_CHUTE_EJECT_PIN 25     /*!< Pin to fire the main chute ejection charge */
+
+// Ejection timing (milliseconds)
+#define PYRO_CHARGE_TIME             5000   /*!< Time to keep drogue ejection pin HIGH (ms) */
+#define MAIN_DESCENT_PYRO_CHARGE_TIME 5000  /*!< Time to keep main ejection pin HIGH (ms) */
+
+// Ejection flags (set to 1 when deployed)
+extern volatile uint8_t DROGUE_DEPLOY_FLAG;        /*!< Set to 1 when drogue is deployed */
+extern volatile uint8_t MAIN_CHUTE_EJECT_FLAG;     /*!< Set to 1 when main chute is deployed */
 
 /* timing constant */
 #define SETUP_DELAY 300
@@ -75,10 +85,9 @@
 #define CONSUME_TASK_DELAY    10
 
 /* MQTT constants */
-const char MQTT_SERVER[30] = "65.108.85.88";
+const char MQTT_SERVER[30] = "192.168.69.159";
 const char MQTT_TELEMETRY_TOPIC[30] = "n4/flight-computer-1";             /* make this topic unique to every rocket */
 const char MQTT_ARMING_TOPIC[30] = "n4/commands";             /* make this topic unique to every rocket */
-
 
 
 #define MQTT_PORT 1883                              /*!< MQTT broker port */

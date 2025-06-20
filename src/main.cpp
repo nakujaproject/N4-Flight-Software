@@ -44,10 +44,21 @@ double altimeter_get_pressure();
 void mqtt_command_processor(const char*, const char*);
 void arm_pyros();
 void disarm_pyros();
+void chutesInit();   
+
 
 void arm_pyros() {
     digitalWrite(REMOTE_SWITCH, HIGH);
     // todo: confirm arming
+}
+
+void chutesInit() {
+    pinMode(DROGUE_PIN, OUTPUT);
+    pinMode(MAIN_CHUTE_EJECT_PIN, OUTPUT);
+    pinMode(REMOTE_SWITCH, OUTPUT); // remote switch to arm pyros
+    digitalWrite(DROGUE_PIN, LOW); // set drogue pin LOW
+    digitalWrite(MAIN_CHUTE_EJECT_PIN, LOW); // set main chute pin LOW
+    digitalWrite(REMOTE_SWITCH, LOW); // set remote switch LOW
 }
 
 /**
@@ -162,7 +173,8 @@ float oldest_val;
 uint8_t apogee_flag =0; // to signal that we have detected apogee
 static int apogee_val = 0; // apogee altitude aproximmation
 uint8_t main_eject_flag = 0;
-
+volatile uint8_t DROGUE_DEPLOY_FLAG = 0;
+volatile uint8_t MAIN_CHUTE_EJECT_FLAG = 0;
 /**
 * @brief create dynamic WIFI
 */
@@ -203,6 +215,7 @@ void mqtt_command_processor(const char* topic, const char* command)
       if(command == "ARM")
       {
           arm_pyros();
+          chutesInit(); // initialize chutes
           operation_mode = 1;
           non_blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE); // IGNORE ARMING PROCEDURE
           debugln("ARM PYRO"); // TODO:log to syslogger
@@ -211,7 +224,7 @@ void mqtt_command_processor(const char* topic, const char* command)
           disarm_pyros();
           operation_mode = 0;
           non_blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
-          debugln("ARM PYRO"); // TODO:log to syslogger
+          debugln("DISARM PYRO"); // TODO:log to syslogger
       } else if(command == "RESET"){
           // reset ESP via software
           debugln("RESET"); // TODO:log to syslogger
@@ -276,6 +289,8 @@ void LED_init() {
     pinMode(GREEN_LED_PIN, OUTPUT);
     pinMode(RED_LED_PIN, OUTPUT);
 }
+
+
 
 /**
 * @brief initialize SPIFFS for event logging during flight
@@ -948,7 +963,7 @@ void xOperationModeIndicateTask(void* pvParameters) {
  * Default no. of seconds to remain HIGH is 5 
  * 
  *******************************************************************************/
-void drogueChuteDeploy() {
+//void drogueChuteDeploy() {
 
     // // check for drogue chute deploy conditions 
 
@@ -965,6 +980,27 @@ void drogueChuteDeploy() {
     //     debugln("DROGUE CHUTE DEPLOYED");
     // }
 
+//}
+
+void drogueChuteDeploy() {
+    static bool firing = false;
+    static unsigned long fireStart = 0;
+
+    if (!firing) {
+        // Start firing
+        digitalWrite(DROGUE_PIN, HIGH);
+        fireStart = millis();
+        firing = true;
+        debugln("DROGUE CHUTE EJECTION STARTED");
+    }
+
+    // Keep pin HIGH for the required time, then turn off
+    if (firing && (millis() - fireStart >= PYRO_CHARGE_TIME)) {
+        digitalWrite(DROGUE_PIN, LOW);
+        DROGUE_DEPLOY_FLAG = 1;
+        firing = false;
+        debugln("DROGUE CHUTE DEPLOYED");
+    }
 }
 
 /*!****************************************************************************
@@ -974,7 +1010,7 @@ void drogueChuteDeploy() {
  * Default no. of seconds to remain HIGH is 5
  * 
  *******************************************************************************/
-void mainChuteDeploy() {
+//void mainChuteDeploy() {
     // // check for drogue chute deploy conditions 
 
     // //if the drogue deploy pin is HIGH, there is an error
@@ -989,7 +1025,27 @@ void mainChuteDeploy() {
     //     MAIN_CHUTE_EJECT_FLAG = 1;
     //     debugln("MAIN CHUTE DEPLOYED");
     // }
+//}
+
+void mainChuteDeploy() {
+    static bool firing = false;
+    static unsigned long fireStart = 0;
+
+    if (!firing) {
+        digitalWrite(MAIN_CHUTE_EJECT_PIN, HIGH);
+        fireStart = millis();
+        firing = true;
+        debugln("MAIN CHUTE EJECTION STARTED");
+    }
+
+    if (firing && (millis() - fireStart >= MAIN_DESCENT_PYRO_CHARGE_TIME)) {
+        digitalWrite(MAIN_CHUTE_EJECT_PIN, LOW);
+        MAIN_CHUTE_EJECT_FLAG = 1;
+        firing = false;
+        debugln("MAIN CHUTE DEPLOYED");
+    }
 }
+
 
 void xCreateAllTasks() {
         debugln("Creating all tasks");
@@ -1126,7 +1182,7 @@ void xCreateAllTasks() {
         // resume all tasks after creation
 
         // delete this task
-        vTaskDelete(NULL);
+        // vTaskDelete(NULL);
     
     
 }

@@ -49,7 +49,7 @@ uint8_t WIFIConfig::WifiConnect() {
     WiFiManager wm;
 
     // Uncomment only for debugging or clearing corrupted WiFi
-    // wm.resetSettings(); 
+    //wm.resetSettings(); 
 
     Serial.println("[WiFiConfig] Starting WiFiManager...");
 
