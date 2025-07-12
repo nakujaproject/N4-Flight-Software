@@ -146,6 +146,11 @@ uint8_t main_pyro = 12;
 uint8_t flash_cs_pin = 5;                   /*!< External flash memory chip select pin */
 uint8_t remote_switch = 27;
 
+//chute deployment variables
+volatile uint8_t drogue_pin_state = 0; 
+volatile uint8_t main_chute_pin_state = 0;
+
+
 /* Flight data logging */
 uint8_t flash_led_pin = 32;                  /*!< LED pin connected to indicate flash memory formatting  */
 char filename[] = "flight_data.txt";         /*!< data log filename - Filename must be less than 20 chars, including the file extension */
@@ -436,6 +441,8 @@ void readAccelerationTask(void* pvParameter) {
         acc_data_lcl.record_number++;
         acc_data_lcl.state = current_state;
         acc_data_lcl.alt_data.rel_altitude = altimeter_packet.rel_altitude;
+        acc_data_lcl.drogue_pin_state = drogue_pin_state;
+        acc_data_lcl.main_chute_pin_state = main_chute_pin_state;
 
         // read acceleration
         acc_data_lcl.acc_data.ax = imu.readXAcceleration();
@@ -497,54 +504,51 @@ double altimeter_get_pressure()
 // /*!****************************************************************************
 //  * @brief Read atm pressure data from the barometric sensor onboard
 //  *******************************************************************************/
-// void readAltimeterTask(void* pvParameters) {
-//     telemetry_type_t alt_data_lcl;
-
-//     while(1) {
-
-//         double a, P;
-//         P = altimeter_get_pressure();
-//         a = altimeter.altitude(P, baseline);
-
-//         /* send to altimeter global packet */
-//         altimeter_packet.temperature = altimeter_temperature;
-//         altimeter_packet.pressure = P;
-//         altimeter_packet.rel_altitude = a;
-//     }
-// }
-
-
 void readAltimeterTask(void* pvParameters) {
     telemetry_type_t alt_data_lcl;
 
-    static double a = 0; // simulated altitude
-    static double P = 101325; // simulated pressure (not used, but you can simulate if needed)
-    static int phase = 0; // 0: ascent, 1: apogee, 2: descent
-    static int count = 0;
-
     while(1) {
-        // Simulate ascent for 100 iterations, apogee for 20, then descent
-        if (phase == 0) { // ascent
-            a += 10; // increase altitude by 10m per cycle
-            if (++count > 100) { phase = 1; count = 0; }
-        } else if (phase == 1) { // apogee (hold)
-            // hold altitude
-            if (++count > 20) { phase = 2; count = 0; }
-        } else if (phase == 2) { // descent
-            a -= 10; // decrease altitude by 10m per cycle
-            if (a < 0) a = 0;
-        }
 
-        // Simulate pressure if you want (optional)
-        P = 101325 * exp(-a / 8434.5); // crude barometric formula
+        double a, P;
+        P = altimeter_get_pressure();
+        a = altimeter.altitude(P, baseline);
 
+        /* send to altimeter global packet */
         altimeter_packet.temperature = altimeter_temperature;
         altimeter_packet.pressure = P;
         altimeter_packet.rel_altitude = a;
-
-        vTaskDelay(100 / portTICK_PERIOD_MS); // adjust for simulation speed
     }
 }
+
+// //Uncomment me to simulate altimeter data
+// void readAltimeterTask(void* pvParameters) {
+//     telemetry_type_t alt_data_lcl;
+//     static double a = 0; // simulated altitude
+//     static double P = 101325;
+//     static int phase = 0; // 0: ascent, 1: apogee, 2: descent
+//     static int count = 0;
+
+//     while(1) {
+//         // Ascent: 1000m over 60s (600 cycles at 100ms, +1.67m per cycle)
+//         if (phase == 0) {
+//             a += 1.67;
+//             if (++count >= 600) { phase = 1; count = 0; }
+//         } else if (phase == 1) { // Apogee hold: 20s (200 cycles)
+//             if (++count >= 200) { phase = 2; count = 0; }
+//         } else if (phase == 2) { // Descent: 1000m over 60s
+//             a -= 1.67;
+//             if (a < 0) a = 0;
+//         }
+
+//         P = 101325 * exp(-a / 8434.5);
+//         altimeter_packet.temperature = altimeter_temperature;
+//         altimeter_packet.pressure = P;
+//         altimeter_packet.rel_altitude = a;
+
+//         vTaskDelay(100 / portTICK_PERIOD_MS);
+//     }
+// }
+
 
 
 // /*!****************************************************************************
@@ -554,64 +558,62 @@ void readAltimeterTask(void* pvParameters) {
 //  * so it is not valid to pass the address of a stack variable.
 //  * 
 //  *******************************************************************************/
-// void readGPSTask(void* pvParameters){
-//     float latitude, longitude, g_altitude;
-
-//     gps_type_t gps_data_lcl;
-
-//     while(1){
-//         if(gpsSerial.available() > 0) {
-//             gps.encode(gpsSerial.read());
-
-//             /* get GPS coordinates */
-//             if(gps.location.isValid()) {
-//                 latitude = gps.location.lat();
-//                 longitude = gps.location.lng();
-//             } 
-
-//             /* get GPS altitude */
-//             if(gps.altitude.isValid()) {
-//                 g_altitude = gps.altitude.meters();
-//             }
-//         } else {
-//             vTaskDelay(10/portTICK_PERIOD_MS);
-//         }
-
-//         gps_packet.latitude = latitude;
-//         gps_packet.longitude = longitude;
-//         gps_packet.gps_altitude = g_altitude;
-//     }
-// }
 void readGPSTask(void* pvParameters){
-    static float sim_gps_altitude = 0;
-    static int phase = 0; // 0: ascent, 1: apogee, 2: descent
-    static int count = 0;
-    float g_altitude = 0;
+    float latitude, longitude, g_altitude;
+
+    gps_type_t gps_data_lcl;
 
     while(1){
-        // Simulate ascent for 100 iterations, apogee for 20, then descent
-        if (phase == 0) { // ascent
-            sim_gps_altitude += 10;
-            if (++count > 100) { phase = 1; count = 0; }
-        } else if (phase == 1) { // apogee (hold)
-            if (++count > 20) { phase = 2; count = 0; }
-        } else if (phase == 2) { // descent
-            sim_gps_altitude -= 10;
-            if (sim_gps_altitude < 0) sim_gps_altitude = 0;
+        if(gpsSerial.available() > 0) {
+            gps.encode(gpsSerial.read());
+
+            /* get GPS coordinates */
+            if(gps.location.isValid()) {
+                latitude = gps.location.lat();
+                longitude = gps.location.lng();
+            } 
+
+            /* get GPS altitude */
+            if(gps.altitude.isValid()) {
+                g_altitude = gps.altitude.meters();
+            }
+        } else {
+            vTaskDelay(10/portTICK_PERIOD_MS);
         }
 
-        gps_packet.latitude = -1.2833;   // Simulated latitude
-        gps_packet.longitude = 36.8167;  // Simulated longitude
-        gps_packet.gps_altitude = sim_gps_altitude;
-       // gps_packet.gps_altitude = 0;
-        //Serial.print("GPS altitude: ");
-        //Serial.println(gps_packet.gps_altitude, 6);
-
-
-        vTaskDelay(100 / portTICK_PERIOD_MS); // adjust for simulation speed
+        gps_packet.latitude = latitude;
+        gps_packet.longitude = longitude;
+        gps_packet.gps_altitude = g_altitude;
     }
 }
 
+//uncomment me to simulate gps data
+
+
+// void readGPSTask(void* pvParameters){
+    
+//     static float sim_gps_altitude = 0;
+//     static int phase = 0;
+//     static int count = 0;
+
+//     while(1){
+//         if (phase == 0) {
+//             sim_gps_altitude += 1.67;
+//             if (++count >= 600) { phase = 1; count = 0; }
+//         } else if (phase == 1) {
+//             if (++count >= 200) { phase = 2; count = 0; }
+//         } else if (phase == 2) {
+//             sim_gps_altitude -= 1.67;
+//             if (sim_gps_altitude < 0) sim_gps_altitude = 0;
+//         }
+
+//         gps_packet.latitude = -1.2833;
+//         gps_packet.longitude = 36.8167;
+//         gps_packet.gps_altitude = sim_gps_altitude;
+
+//         vTaskDelay(100 / portTICK_PERIOD_MS);
+//     }
+// }
 
 /**
  * @brief Kalman filter estimated value calculation
@@ -727,59 +729,67 @@ void checkFlightState(void* pvParameters) {
         if (!apogee_flag) {
             if (alt < LAUNCH_DETECTION_THRESHOLD) {
                 current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;
-            } else if (
-                alt >= LAUNCH_DETECTION_THRESHOLD &&
-                alt < (LAUNCH_DETECTION_THRESHOLD + LAUNCH_DETECTION_ALTITUDE_WINDOW)
-            ) {
+            } else if (alt >= LAUNCH_DETECTION_THRESHOLD &&
+                       alt < (LAUNCH_DETECTION_THRESHOLD + LAUNCH_DETECTION_ALTITUDE_WINDOW)) {
                 current_state = ARMED_FLIGHT_STATE::POWERED_FLIGHT;
-            } else if (
-                alt >= (LAUNCH_DETECTION_THRESHOLD + LAUNCH_DETECTION_ALTITUDE_WINDOW)
-            ) {
+            } else if (alt >= (LAUNCH_DETECTION_THRESHOLD + LAUNCH_DETECTION_ALTITUDE_WINDOW)) {
                 current_state = ARMED_FLIGHT_STATE::COASTING;
             }
 
-            // Apogee detection
-            ring_buffer_put(&altitude_ring_buffer, alt);
-            if (ring_buffer_full(&altitude_ring_buffer)) {
-                oldest_val = ring_buffer_get(&altitude_ring_buffer);
-            }
-            if ((oldest_val - alt) >= APOGEE_DETECTION_THRESHOLD && apogee_flag == 0) {
-                apogee_val = ((oldest_val - alt) / 2) + oldest_val;
-                current_state = ARMED_FLIGHT_STATE::APOGEE;
-                apogee_flag = 1;
-            }
+            // Apogee detection (altitude starts to decrease)
+ring_buffer_put(&altitude_ring_buffer, alt);
+if (ring_buffer_full(&altitude_ring_buffer)) {
+    oldest_val = ring_buffer_get(&altitude_ring_buffer);
+    debug("Current alt: "); debug(alt);
+    debug(" | Oldest alt: "); debug(oldest_val);
+    debug(" | Diff: "); debugln(oldest_val - alt);
+}
+if ((oldest_val - alt) >= APOGEE_DETECTION_THRESHOLD && apogee_flag == 0) {
+    apogee_val = oldest_val;
+    current_state = ARMED_FLIGHT_STATE::APOGEE;
+    apogee_flag = 1;
+    debugln("APOGEE DETECTED!");
+}
         }
         // --- Post-apogee states ---
         else {
-            if (current_state == ARMED_FLIGHT_STATE::APOGEE) {
-                current_state = ARMED_FLIGHT_STATE::DROGUE_DEPLOY;
-            } else if (current_state == ARMED_FLIGHT_STATE::DROGUE_DEPLOY) {
-                current_state = ARMED_FLIGHT_STATE::DROGUE_DESCENT;
-            }
-
-            // Main chute logic
-            if (
-                alt <= apogee_val &&
-                alt > MAIN_EJECTION_HEIGHT
-            ) {
-                // Still in drogue descent
-                current_state = ARMED_FLIGHT_STATE::DROGUE_DESCENT;
-            } else if (
-                alt <= MAIN_EJECTION_HEIGHT &&
-                main_eject_flag == 0
-            ) {
-                current_state = ARMED_FLIGHT_STATE::MAIN_DEPLOY;
-                main_eject_flag = 1;
-            } else if (
-                alt <= MAIN_EJECTION_HEIGHT &&
-                main_eject_flag == 1
-            ) {
-                current_state = ARMED_FLIGHT_STATE::MAIN_DESCENT;
-            }
-
-            // Landed
-            if (alt < LAUNCH_DETECTION_THRESHOLD) {
-                current_state = ARMED_FLIGHT_STATE::POST_FLIGHT_GROUND;
+            switch (current_state) {
+                case ARMED_FLIGHT_STATE::APOGEE:
+                    current_state = ARMED_FLIGHT_STATE::DROGUE_DEPLOY;
+                    break;
+                case ARMED_FLIGHT_STATE::DROGUE_DEPLOY:
+                    // Wait for deploy flag
+                    if (DROGUE_DEPLOY_FLAG) {
+                        current_state = ARMED_FLIGHT_STATE::DROGUE_DESCENT;
+                        DROGUE_DEPLOY_FLAG = 0; // Reset for safety
+                    }
+                    break;
+                case ARMED_FLIGHT_STATE::DROGUE_DESCENT:
+                    // Wait for main deploy altitude
+                    if (alt <= MAIN_EJECTION_HEIGHT && main_eject_flag == 0) {
+                        current_state = ARMED_FLIGHT_STATE::MAIN_DEPLOY;
+                        main_eject_flag = 1;
+                    }
+                    break;
+                case ARMED_FLIGHT_STATE::MAIN_DEPLOY:
+                    // Wait for main deploy flag
+                    if (MAIN_CHUTE_EJECT_FLAG) {
+                        current_state = ARMED_FLIGHT_STATE::MAIN_DESCENT;
+                        MAIN_CHUTE_EJECT_FLAG = 0; // Reset for safety
+                    }
+                    break;
+                case ARMED_FLIGHT_STATE::MAIN_DESCENT:
+                    // Wait for landing
+                    if (alt < LAUNCH_DETECTION_THRESHOLD) {
+                        current_state = ARMED_FLIGHT_STATE::POST_FLIGHT_GROUND;
+                    }
+                    break;
+                default:
+                    // If landed, stay in POST_FLIGHT_GROUND
+                    if (alt < LAUNCH_DETECTION_THRESHOLD) {
+                        current_state = ARMED_FLIGHT_STATE::POST_FLIGHT_GROUND;
+                    }
+                    break;
             }
         }
 
@@ -790,11 +800,27 @@ void checkFlightState(void* pvParameters) {
             last_state = current_state;
         }
 
-        // Optionally update state in the local telemetry struct
         flight_data.state = current_state;
-
-
         vTaskDelay(STATE_CHANGE_DELAY / portTICK_PERIOD_MS);
+    }
+}
+
+/*!****************************************************************************
+ * @brief monitor the chute pins to see if they are deployed
+ * @param pvParameters - A value that is passed as the paramater to the created task
+ * If pvParameters is set to the address of a variable then the variable must still exist when the created task executes - 
+ * so it is not valid to pass the address of a stack variable. 
+ * This task reads the state of the drogue and main chute pins every 50ms
+ * If the pin is HIGH, it means the chute has been deployed
+ *******************************************************************************/
+
+
+
+void monitorChutePinsTask(void* pvParameters) {
+    while (1) {
+        drogue_pin_state = digitalRead(DROGUE_PIN);
+        main_chute_pin_state = digitalRead(MAIN_CHUTE_EJECT_PIN);
+        vTaskDelay(50 / portTICK_PERIOD_MS);
     }
 }
 
@@ -909,7 +935,7 @@ void debugToTerminalTask(void* pvParameters){
          *
          */
         sprintf(telemetry_packet_buffer,
-                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.2f,%.2f,%.2f,%.2f\n",
+                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.2f,%.2f,%.2f,%.2f,%d,%d\n",
 
                 telemetry_received_packet.record_number,
                 telemetry_received_packet.operation_mode,
@@ -927,7 +953,9 @@ void debugToTerminalTask(void* pvParameters){
                 gps_packet.gps_altitude,
                 altimeter_packet.pressure,
                 altimeter_packet.temperature,
-                altimeter_packet.rel_altitude
+                altimeter_packet.rel_altitude,
+                telemetry_received_packet.drogue_pin_state,
+                telemetry_received_packet.main_chute_pin_state
               );
         
         debugln(telemetry_packet_buffer);
@@ -1003,7 +1031,7 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
          * relative_altitude
          */
         sprintf(telemetry_packet_buffer,
-                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.2f,%.2f,%.2f,%.2f\n",
+                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.2f,%.2f,%.2f,%.2f,%d,%d\n",
 
                 telemetry_received_packet.record_number,
                 telemetry_received_packet.operation_mode,
@@ -1021,14 +1049,16 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
                 gps_packet.gps_altitude,
                 altimeter_packet.pressure,
                 altimeter_packet.temperature,
-                altimeter_packet.rel_altitude
-        );
+                altimeter_packet.rel_altitude,
+                telemetry_received_packet.drogue_pin_state,
+                telemetry_received_packet.main_chute_pin_state
+);
 
         /* Send to MQTT topic  */
          if(client.publish(MQTT_TELEMETRY_TOPIC, telemetry_packet_buffer) ) {
-             //debugln("[+]Data sent");
+             debugln("[+]Data sent");
          } else {
-             //debugln("[-]Data not sent");
+             debugln("[-]Data not sent");
          }
 
         client.publish(MQTT_TELEMETRY_TOPIC, telemetry_packet_buffer);
@@ -1240,10 +1270,18 @@ void xCreateAllTasks() {
             debugln("[-]Failed to create flightStateCallback task");
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create flightStateCallback task\r\n");
         }
+        /* MONITOR CHUTE PINS TASK */
+        BaseType_t mp = xTaskCreatePinnedToCore(monitorChutePinsTask, "monitorChutePins", STACK_SIZE, NULL, 2, NULL, 1);
+        if(mp == pdPASS) {
+                debugln("[+]monitorChutePinsTask created OK.");
+        } else {
+               debugln("[-]Failed to create monitorChutePinsTask");
+        } 
+
 
         #if MQTT
             /* TRANSMIT TELEMETRY DATA */
-            BaseType_t th = xTaskCreatePinnedToCore(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*2, NULL, 2, &MQTT_TransmitTelemetryTaskHandle, 1);
+            BaseType_t th = xTaskCreatePinnedToCore(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*4, NULL, 2, &MQTT_TransmitTelemetryTaskHandle, 1);
 
             if(th == pdPASS){
                 debugln("[+]MQTT transmit task created OK");
