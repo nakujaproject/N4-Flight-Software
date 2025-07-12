@@ -20,7 +20,7 @@
 
 /* debug parameters for use during testing - set to 0 for production */
 #define DEBUGGING 1                           /*!< allow debugging to terminal. Set to 0 pre flight to disable serial terminal printing and improve speed  */
-#define LOG_TO_MEMORY 1                      /*!< allow data logging to memory. Set to 1 to log data to external flash memory. Must be set during flight */
+#define LOG_TO_MEMORY 0                      /*!< allow data logging to memory. Set to 1 to log data to external flash memory. Must be set during flight */
 #define DEBUG_TO_TERMINAL 1                 /*!< allow create task that print data to terminal. Set to 0 before flight  */
 
 #if DEBUGGING
@@ -68,9 +68,9 @@ extern volatile uint8_t MAIN_CHUTE_EJECT_FLAG;     /*!< Set to 1 when main chute
 #define ALTITUDE 1525.0 // altitude of iPIC building, JKUAT, Juja. TODO: Change to launch site altitude
 #define LAUNCH_DETECTION_THRESHOLD 10         /*!< altitude in meters, above which we register that we have launched  */
 #define LAUNCH_DETECTION_ALTITUDE_WINDOW 20  /*!< Window in meters where we register a launch */
-#define APOGEE_DETECTION_THRESHOLD 5         /*!< value in meters for detecting apogee */
-#define MAIN_EJECTION_HEIGHT 1000            /*!< height to eject the main chute  */
-#define DROGUE_EJECTION_HEIGHT  5             /*!< height to eject the drogue chute - ideally it should be at apogee  */
+#define APOGEE_DETECTION_THRESHOLD 3         /*!< value in meters for detecting apogee */
+#define MAIN_EJECTION_HEIGHT 500            /*!< height to eject the main chute  */
+#define DROGUE_EJECTION_HEIGHT  1000             /*!< height to eject the drogue chute - ideally it should be at apogee  */
 #define SEA_LEVEL_PRESSURE 101325            /*!< sea level pressure to be used for altitude calculations */
 #define BASE_ALTITUDE 1417                   /*!< this value is the altitude at rocket launch site - adjust accordingly */
 
@@ -85,7 +85,7 @@ extern volatile uint8_t MAIN_CHUTE_EJECT_FLAG;     /*!< Set to 1 when main chute
 #define CONSUME_TASK_DELAY    10
 
 /* MQTT constants */
-const char MQTT_SERVER[30] = "192.168.69.159";
+const char MQTT_SERVER[30] = "192.168.100.231";
 const char MQTT_TELEMETRY_TOPIC[30] = "n4/flight-computer-1";             /* make this topic unique to every rocket */
 const char MQTT_ARMING_TOPIC[30] = "n4/commands";             /* make this topic unique to every rocket */
 
