@@ -31,6 +31,7 @@
 #include "wifi-config.h"    // handle wifi connection
 #include "kalman_filter.h"  // handle kalman filter functions
 #include "ring_buffer.h"    // for apogee detection
+#include "espnow_beacon_transmitter.h"
 
 /* non-task function prototypes definition */
 void initDynamicWIFI();
@@ -41,10 +42,23 @@ void checkRunTestToggle();
 void non_blocking_buzz(uint16_t interval);
 void blocking_buzz(uint16_t interval);
 double altimeter_get_pressure();
-void mqtt_command_processor(const char*, const char*);
+#ifdef MQTT
+ void mqtt_command_processor(const char*, const char*);
+#endif // MQTT
 void arm_pyros();
 void disarm_pyros();
 void chutesInit();   
+
+
+bool use_beacon_mode = !MQTT; // Use beacons if MQTT is not enabled
+
+// Add these near your other MAC address definitions
+const uint8_t ROCKET_MAC[] = {0x10, 0x06, 0x1C, 0xA6, 0x18, 0x20};
+const uint8_t BASE_MAC[] = {0xf4, 0x65, 0x0b, 0x48, 0x5c, 0xf8}; // This ESP MAC
+
+// Create transmitter instance
+ESPNowBeaconTransmitter transmitter(ROCKET_MAC, BASE_MAC);
+
 
 
 void arm_pyros() {
@@ -184,8 +198,8 @@ volatile uint8_t MAIN_CHUTE_EJECT_FLAG = 0;
 * @brief create dynamic WIFI
 */
 void initDynamicWIFI() {
-    uint8_t wifi_connection_result = wifi_config.WifiConnect();
-    if(wifi_connection_result) {
+    uint8_t wifi_result = wifi_config.WifiConnect(use_beacon_mode, ROCKET_MAC);
+    if(wifi_result) {
         debugln("Wifi config OK!");
         SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Wifi config OK!\r\n");
     } else {
@@ -212,31 +226,76 @@ void checkRunTestToggle() {
  * DISARM
  * RESET
  */
-void mqtt_command_processor(const char* topic, const char* command)
-{
-    // check topic
-    if(strcmp(topic, "n4/commands") == 0)
-    {
-       if(strcmp(command, "ARM") == 0)
-      {
-          arm_pyros();
-          chutesInit(); // initialize chutes
-          operation_mode = 1;
-          blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE); // IGNORE ARMING PROCEDURE
-          debugln("ARM PYRO"); // TODO:log to syslogger
+void espnowCommandTask(void* pvParameters) {
+    ESPNowBeaconTransmitter::CommandPacket cmd;
+    
+    while (true) {
+        if (transmitter.getNextCommand(&cmd)) {
+            String command((char*)cmd.command, cmd.length);
+            command.trim();
 
-      }  else if(strcmp(command,"DISARM") == 0) {
-          disarm_pyros();
-          operation_mode = 0;
-          blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
-          debugln("DISARM PYRO"); // TODO:log to syslogger
-      } else if(strcmp(command, "RESET") == 0) {
-          // reset ESP via software
-          debugln("RESET"); // TODO:log to syslogger
-      }
+            if (command == "ARM") {
+                arm_pyros();
+                transmitter.setArmed(true);
+                operation_mode = OPERATION_MODE::ARMED_MODE;
+                blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
+                Serial.println("🚀 ARMED via ESP-NOW");
+            } 
+            else if (command == "DISARM") {
+                disarm_pyros();
+                transmitter.setArmed(false);
+                operation_mode = OPERATION_MODE::SAFE_MODE;
+                blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
+                Serial.println("🛑 DISARMED via ESP-NOW");
+            }
+            else if (command == "RESET") {
+                ESP.restart();
+            }
+        }
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
-
 }
+
+
+
+
+#if MQTT
+void mqtt_command_processor(const char* topic, const char* payload) {
+    if(strcmp(topic, "commands/arm") == 0) {
+        arm_pyros();
+        chutesInit();
+        operation_mode = OPERATION_MODE::ARMED_MODE;
+        blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
+        debugln("🚀 ARMED via MQTT!");
+        
+        // Log to system
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, 
+                               system_log_file, "System ARMED via MQTT\r\n");
+    } 
+    else if(strcmp(topic, "commands/disarm") == 0) {
+        disarm_pyros();
+        operation_mode = OPERATION_MODE::SAFE_MODE;
+        blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
+        debugln("🛑 DISARMED via MQTT");
+        
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO,
+                               system_log_file, "System DISARMED via MQTT\r\n");
+    } 
+    else if(strcmp(topic, "commands/reset") == 0) {
+        debugln("🔄 RESET command received");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO,
+                               system_log_file, "RESET command received via MQTT\r\n");
+        ESP.restart();
+    }
+}
+#endif // MQTT
+
+
+
+
+
+
+
 
 /**
  * Task creation handles
@@ -462,6 +521,16 @@ void readAccelerationTask(void* pvParameter) {
         xQueueSend(check_state_queue_handle, &acc_data_lcl, 0);
         xQueueSend(debug_to_term_queue_handle, &acc_data_lcl, 0);
 
+        // Send via beacon if armed, regardless of MQTT setting
+       // if(transmitter.isArmed()) {
+            transmitter.sendBeacon(&acc_data_lcl, sizeof(acc_data_lcl));
+       // }
+        
+        #if MQTT
+            // Still send via MQTT if enabled
+            xQueueSend(telemetry_data_queue_handle, &acc_data_lcl, 0);
+        #endif
+        
         vTaskDelay(CONSUME_TASK_DELAY/ portTICK_PERIOD_MS);
     }
 
@@ -498,7 +567,7 @@ double altimeter_get_pressure()
             } else debugln("error starting pressure");
         } else debugln("error getting temperature");
     } else debugln("error starting pressure measurement");
-
+ return P;  
 }
 
 // /*!****************************************************************************
@@ -740,9 +809,9 @@ void checkFlightState(void* pvParameters) {
 ring_buffer_put(&altitude_ring_buffer, alt);
 if (ring_buffer_full(&altitude_ring_buffer)) {
     oldest_val = ring_buffer_get(&altitude_ring_buffer);
-    debug("Current alt: "); debug(alt);
-    debug(" | Oldest alt: "); debug(oldest_val);
-    debug(" | Diff: "); debugln(oldest_val - alt);
+    // debug("Current alt: "); debug(alt);
+    // debug(" | Oldest alt: "); debug(oldest_val);
+    // debug(" | Diff: "); debugln(oldest_val - alt);
 }
 if ((oldest_val - alt) >= APOGEE_DETECTION_THRESHOLD && apogee_flag == 0) {
     apogee_val = oldest_val;
@@ -1054,17 +1123,21 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
                 telemetry_received_packet.main_chute_pin_state
 );
 
-        /* Send to MQTT topic  */
-         if(client.publish(MQTT_TELEMETRY_TOPIC, telemetry_packet_buffer) ) {
-             debugln("[+]Data sent");
-         } else {
-             debugln("[-]Data not sent");
-         }
+        #if MQTT
+            // MQTT transmission
+            if(client.publish(MQTT_TELEMETRY_TOPIC, telemetry_packet_buffer)) {
+                debugln("[+]MQTT Data sent");
+            }
+        #else
+            // Beacon transmission (only when armed)
+            //if(transmitter.isArmed()) {
+                transmitter.sendBeacon(&telemetry_received_packet, sizeof(telemetry_received_packet));
+                debugln("[+]Beacon sent");
+           // }
+        #endif
 
-        client.publish(MQTT_TELEMETRY_TOPIC, telemetry_packet_buffer);
+        vTaskDelay(CONSUME_TASK_DELAY/ portTICK_PERIOD_MS);
     }
-
-    vTaskDelay(CONSUME_TASK_DELAY/ portTICK_PERIOD_MS);
 }
 
 /*!
@@ -1096,7 +1169,9 @@ void mqtt_Callback(char* topic, byte* payload, unsigned int length) {
         message += (char)payload[i];
     }
     const char* command = message.c_str();
-    mqtt_command_processor(topic, command);
+    #if MQTT
+     mqtt_command_processor(topic, command);
+    #endif
 }
 
 /*!****************************************************************************
@@ -1279,20 +1354,20 @@ void xCreateAllTasks() {
         } 
 
 
-        #if MQTT
-            /* TRANSMIT TELEMETRY DATA */
-            BaseType_t th = xTaskCreatePinnedToCore(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*4, NULL, 2, &MQTT_TransmitTelemetryTaskHandle, 1);
+        
+        /* TRANSMIT TELEMETRY DATA */
+        BaseType_t th = xTaskCreatePinnedToCore(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*4, NULL, 2, &MQTT_TransmitTelemetryTaskHandle, 1);
 
-            if(th == pdPASS){
+        if(th == pdPASS){
                 debugln("[+]MQTT transmit task created OK");
                 SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]MQTT transmit task created OK\r\n");
                 
-            } else {
+        } else {
                 debugln("[-]MQTT transmit task failed to create");
                 SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]MQTT transmit task failed to create\r\n");
-            }
+        }
 
-        #endif
+        
 
         BaseType_t kf = xTaskCreatePinnedToCore(kalmanFilterTask, "kalman filter", STACK_SIZE*2, NULL, 2, &kalmanFilterTaskHandle, 1);
 
@@ -1389,6 +1464,8 @@ void setup() {
     digitalWrite(RED_LED_PIN, LOW);
     buzzerInit();
 
+    // Sync operation mode with transmitter state
+    operation_mode = transmitter.isArmed() ? OPERATION_MODE::ARMED_MODE : OPERATION_MODE::SAFE_MODE;
     /* buzz to indicate start of setup */
     blocking_buzz(BUZZ_INTERVALS::SETUP_INIT);
 
@@ -1406,19 +1483,38 @@ void setup() {
     debugln(F("========= CREATING DYNAMIC WIFI ==========="));
     debugln(F("=============================================="));
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==CREATING DYNAMIC WIFI==\r\n");
+    initDynamicWIFI(); // TODO - uncomment on live testing and production
+
+    #if MQTT
 
     // create and wait for dynamic WIFI connection
-    initDynamicWIFI(); // TODO - uncomment on live testing and production
     MQTTInit(MQTT_SERVER, MQTT_PORT);
     MQTT_Reconnect();  
     debugln("[+]Dynamic WIFI created OK.");
+
+
+
+    #endif // MQTT
+
 
     debugln();
     debugln(F("=============================================="));
     debugln(F("========= INITIALIZING PERIPHERALS ==========="));
     debugln(F("=============================================="));
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==Initializing peripherals==\r\n");
-
+    // Initialize transmitter (after WiFi but before sensors)
+    transmitter.begin();
+    // After transmitter.begin();
+    xTaskCreatePinnedToCore(
+        espnowCommandTask,
+        "ESPNowCmd",
+        4096,
+        NULL,
+        2,
+        NULL,
+        1
+    );
+    
     uint8_t bmp_init_state = BMPInit();
     uint8_t imu_init_state = imu.init();
     uint8_t gps_init_state = GPSInit();
@@ -1574,10 +1670,25 @@ void setup() {
  * @brief Main loop
  *******************************************************************************/
 void loop() {
+   #if MQTT 
     /* enable MQTT transmit loop */
    if (!client.connected()) {
        MQTT_Reconnect();
    }
     client.loop();
+  #endif // MQTT
 
+    /* check if the transmitter is armed */
+    operation_mode = transmitter.isArmed() ? OPERATION_MODE::ARMED_MODE : OPERATION_MODE::SAFE_MODE;
+
+    // /* check if the flight computer is armed */
+    // if(operation_mode == OPERATION_MODE::ARMED_MODE) {
+    //     digitalWrite(GREEN_LED_PIN, LOW);
+    //     digitalWrite(RED_LED_PIN, HIGH);
+    // } else {
+    //     digitalWrite(GREEN_LED_PIN, HIGH);
+    //     digitalWrite(RED_LED_PIN, LOW);
+    // }
+
+    /* check if the flight computer is in test mode */
 } /* End of main loop*/

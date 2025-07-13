@@ -8,6 +8,16 @@
 
 #include <Arduino.h>
 
+#define MAX_COMMAND_LENGTH 20
+#define MAX_BEACON_SIZE 256
+
+struct CommandPacket {
+    uint32_t timestamp;
+    uint8_t length;
+    uint8_t command[MAX_COMMAND_LENGTH];
+};
+
+
 /**
  * A structure to represent acceleration data
  */

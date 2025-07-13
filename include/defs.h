@@ -11,9 +11,10 @@
 /*!< To select the telemetry transfer method used */
 /*!< note: u can use wifi and xbee at the same time, so both of these handles can be set */
 /*!< at the same time */
-#define MQTT 1                                 /*!< set this to 1 if using MQTT for telemetry transfer */
+#define MQTT 0                                 /*!< set this to 1 if using MQTT for telemetry transfer. Set to 0 if you want to use beacons*/
 #define XBEE 0                                 /*!< set to 1 if using XBEE for telemetry transfer */
 
+extern bool use_beacon_mode;
 #define BAUDRATE        115200
 #define GPS_BAUD_RATE   9600                     /*!< baud rate for the GPS module. Change accordingly */
 #define XBEE_BAUD_RATE  9600                    /*!< baud rate for the XBEE HP module. Change accordingly */
