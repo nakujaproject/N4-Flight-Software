@@ -42,12 +42,11 @@ void checkRunTestToggle();
 void non_blocking_buzz(uint16_t interval);
 void blocking_buzz(uint16_t interval);
 double altimeter_get_pressure();
-#ifdef MQTT
- void mqtt_command_processor(const char*, const char*);
-#endif // MQTT
+void mqtt_command_processor(const char*, const char*);
 void arm_pyros();
 void disarm_pyros();
 void chutesInit();   
+void espnowCommandTask(void* pvParameters);
 
 
 bool use_beacon_mode = !MQTT; // Use beacons if MQTT is not enabled
@@ -141,7 +140,6 @@ uint8_t mqtt_connect_flag;
 #define SD_CHECK_BIT            4
 #define SPIFFS_CHECK_BIT        5
 #define TEST_HARDWARE_CHECK_BIT 6
-
 uint8_t SUBSYSTEM_INIT_MASK = 0b00000000;
 
 /**
@@ -228,8 +226,9 @@ void checkRunTestToggle() {
  */
 void espnowCommandTask(void* pvParameters) {
     ESPNowBeaconTransmitter::CommandPacket cmd;
-    
-    while (true) {
+    transmitter.setArmed(true); // Temporary until ARM command is handled
+
+    while (1) {
         if (transmitter.getNextCommand(&cmd)) {
             String command((char*)cmd.command, cmd.length);
             command.trim();
@@ -247,19 +246,20 @@ void espnowCommandTask(void* pvParameters) {
                 operation_mode = OPERATION_MODE::SAFE_MODE;
                 blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
                 Serial.println("🛑 DISARMED via ESP-NOW");
-            }
+            } 
             else if (command == "RESET") {
+                Serial.println("🔁 Resetting via ESP-NOW");
                 ESP.restart();
             }
         }
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
 
 
 
-#if MQTT
 void mqtt_command_processor(const char* topic, const char* payload) {
     if(strcmp(topic, "commands/arm") == 0) {
         arm_pyros();
@@ -288,7 +288,6 @@ void mqtt_command_processor(const char* topic, const char* payload) {
         ESP.restart();
     }
 }
-#endif // MQTT
 
 
 
@@ -311,6 +310,7 @@ void mqtt_command_processor(const char* topic, const char* payload) {
  TaskHandle_t debugToTerminalTaskHandle;
  TaskHandle_t logToMemoryTaskHandle;
  TaskHandle_t opModeIndicateTaskHandle;
+ TaskHandle_t espnowCommandTaskHandle;
 
 /**
  * ///////////////////////// DATA TYPES /////////////////////////
@@ -522,14 +522,14 @@ void readAccelerationTask(void* pvParameter) {
         xQueueSend(debug_to_term_queue_handle, &acc_data_lcl, 0);
 
         // Send via beacon if armed, regardless of MQTT setting
-       // if(transmitter.isArmed()) {
+       if(transmitter.isArmed()) {
             transmitter.sendBeacon(&acc_data_lcl, sizeof(acc_data_lcl));
-       // }
+         }
         
-        #if MQTT
+        if (MQTT){
             // Still send via MQTT if enabled
             xQueueSend(telemetry_data_queue_handle, &acc_data_lcl, 0);
-        #endif
+        }
         
         vTaskDelay(CONSUME_TASK_DELAY/ portTICK_PERIOD_MS);
     }
@@ -1123,18 +1123,18 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
                 telemetry_received_packet.main_chute_pin_state
 );
 
-        #if MQTT
+        if (MQTT){
             // MQTT transmission
             if(client.publish(MQTT_TELEMETRY_TOPIC, telemetry_packet_buffer)) {
                 debugln("[+]MQTT Data sent");
             }
-        #else
+        else
             // Beacon transmission (only when armed)
-            //if(transmitter.isArmed()) {
-                transmitter.sendBeacon(&telemetry_received_packet, sizeof(telemetry_received_packet));
+           if(transmitter.isArmed()) {
+                transmitter.sendBeacon(&telemetry_packet_buffer, sizeof(telemetry_packet_buffer));
                 debugln("[+]Beacon sent");
-           // }
-        #endif
+           }
+        }
 
         vTaskDelay(CONSUME_TASK_DELAY/ portTICK_PERIOD_MS);
     }
@@ -1169,9 +1169,7 @@ void mqtt_Callback(char* topic, byte* payload, unsigned int length) {
         message += (char)payload[i];
     }
     const char* command = message.c_str();
-    #if MQTT
-     mqtt_command_processor(topic, command);
-    #endif
+    mqtt_command_processor(topic, command);
 }
 
 /*!****************************************************************************
@@ -1306,7 +1304,7 @@ void xCreateAllTasks() {
         //vTaskDelay(200/portTICK_PERIOD_MS);
 
         /* READ ACCELERATION DATA */
-        BaseType_t gr = xTaskCreatePinnedToCore(readAccelerationTask, "readAccelerometer", STACK_SIZE*2, NULL, 2, &readAccelerationTaskHandle, 1);
+        BaseType_t gr = xTaskCreatePinnedToCore(readAccelerationTask, "readAccelerometer", STACK_SIZE*4, NULL, 2, &readAccelerationTaskHandle, 1);
         if(gr == pdPASS) {
             debugln("[+]Read acceleration task created OK.");
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Read acceleration task created OK.\r\n");
@@ -1425,6 +1423,27 @@ void xCreateAllTasks() {
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create readAltimeterTask\r\n");
         }
 
+
+BaseType_t ec = xTaskCreatePinnedToCore(
+    espnowCommandTask,
+    "ESPNowCmd",
+    STACK_SIZE * 2,
+    NULL,
+    2,
+    &espnowCommandTaskHandle,
+    1
+);
+
+if (ec == pdPASS) {
+    debugln("[+]ESPNowCmd task created OK.");
+    SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]ESPNowCmd task created OK.\r\n");
+} else {
+    debugln("[-]ESPNowCmd task failed to create");
+    SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]ESPNowCmd task failed to create\r\n");
+}
+
+
+
         /* RECONNECT MQTT */
         // BaseType_t rp = xTaskCreatePinnedToCore(MQTT_Reconnect,"reconnectMQTT",STACK_SIZE*2,NULL,2, NULL, 1);
         // if(rp == pdPASS) {
@@ -1465,7 +1484,7 @@ void setup() {
     buzzerInit();
 
     // Sync operation mode with transmitter state
-    operation_mode = transmitter.isArmed() ? OPERATION_MODE::ARMED_MODE : OPERATION_MODE::SAFE_MODE;
+    operation_mode = (transmitter.isArmed()) ? OPERATION_MODE::ARMED_MODE : OPERATION_MODE::SAFE_MODE;
     /* buzz to indicate start of setup */
     blocking_buzz(BUZZ_INTERVALS::SETUP_INIT);
 
@@ -1670,16 +1689,16 @@ void setup() {
  * @brief Main loop
  *******************************************************************************/
 void loop() {
-   #if MQTT 
+   if (MQTT){
     /* enable MQTT transmit loop */
    if (!client.connected()) {
        MQTT_Reconnect();
    }
     client.loop();
-  #endif // MQTT
+  }
 
     /* check if the transmitter is armed */
-    operation_mode = transmitter.isArmed() ? OPERATION_MODE::ARMED_MODE : OPERATION_MODE::SAFE_MODE;
+    operation_mode = (transmitter.isArmed()) ? OPERATION_MODE::ARMED_MODE : OPERATION_MODE::SAFE_MODE;
 
     // /* check if the flight computer is armed */
     // if(operation_mode == OPERATION_MODE::ARMED_MODE) {
