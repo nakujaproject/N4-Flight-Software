@@ -226,7 +226,7 @@ void checkRunTestToggle() {
  */
 void espnowCommandTask(void* pvParameters) {
     ESPNowBeaconTransmitter::CommandPacket cmd;
-    transmitter.setArmed(true); // Temporary until ARM command is handled
+    //transmitter.setArmed(true); // Temporary until ARM command is handled
 
     while (1) {
         if (transmitter.getNextCommand(&cmd)) {
