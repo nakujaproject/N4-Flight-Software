@@ -1524,16 +1524,6 @@ void setup() {
     // Initialize transmitter (after WiFi but before sensors)
     transmitter.begin();
     // After transmitter.begin();
-    xTaskCreatePinnedToCore(
-        espnowCommandTask,
-        "ESPNowCmd",
-        4096,
-        NULL,
-        2,
-        NULL,
-        1
-    );
-    
     uint8_t bmp_init_state = BMPInit();
     uint8_t imu_init_state = imu.init();
     uint8_t gps_init_state = GPSInit();

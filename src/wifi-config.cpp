@@ -4,11 +4,10 @@ uint8_t WIFIConfig::WifiConnect(bool enable_ap_mode, const uint8_t* rocket_mac) 
     if (enable_ap_mode) {
         // Configure AP + STA mode for beacon transmission
         Serial.println("[WiFiConfig] Set mode: WIFI_AP_STA");
-        WiFi.mode(WIFI_AP_STA);                        // 1. Set mode
-        delay(100);                                    // 2. Give hardware time
-        esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE); // 3. Set channel
-
+        WiFi.mode(WIFI_AP_STA);                                // 1. Set mode
         esp_wifi_set_mac(WIFI_IF_AP, rocket_mac);
+        esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);        // 3. Set channel
+
         // No WiFiManager — skip real WiFi connection
         return 1;
     } else {
