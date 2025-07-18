@@ -52,7 +52,10 @@ void espnowCommandTask(void* pvParameters);
 bool use_beacon_mode = !MQTT; // Use beacons if MQTT is not enabled
 
 // Add these near your other MAC address definitions
-const uint8_t ROCKET_MAC[] = {0x10, 0x06, 0x1C, 0xA6, 0x18, 0x20};
+const uint8_t ROCKET_MAC[] = {0x08, 0xd1, 0xf9, 0x15, 0x9c, 0x40};
+//MAC: 08:d1:f9:15:9c:40
+
+
 const uint8_t BASE_MAC[] = {0xf4, 0x65, 0x0b, 0x48, 0x5c, 0xf8}; // This ESP MAC
 
 // Create transmitter instance
