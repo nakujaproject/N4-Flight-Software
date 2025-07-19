@@ -33,6 +33,18 @@
 #include "ring_buffer.h"    // for apogee detection
 #include "espnow_beacon_transmitter.h"
 
+/**
+ * flight states
+ * these states are to be used for flight
+**/
+enum OPERATION_MODE {
+    SAFE_MODE = 0, /* Pyro-charges are disarmed  */
+    ARMED_MODE      /* Pyro charges are armed and ready to deploy on apogee --see docs for more-- */
+};
+
+/* state machine variables*/
+uint8_t operation_mode = 0;                                         /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
+
 /* non-task function prototypes definition */
 void initDynamicWIFI();
 void drogueChuteDeploy();
@@ -85,7 +97,6 @@ void disarm_pyros() {
 }
 
 /* state machine variables*/
-uint8_t operation_mode = 0;                                         /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
 uint8_t current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;	    /*!< The starting state - we start at PRE_FLIGHT_GROUND state */
 
 uint8_t STATE_BIT_MASK = 0;
@@ -101,15 +112,6 @@ SystemLogger SYSTEM_LOGGER;
 const char* system_log_file = "/event_log.txt";
 LOG_LEVEL level = INFO;
 const char* rocket_ID = "FC1";             /*!< Unique ID of the rocket. Change to the needed rocket name before uploading */
-
-/**
- * flight states
- * these states are to be used for flight
-**/
-enum OPERATION_MODE {
-    SAFE_MODE = 0, /* Pyro-charges are disarmed  */
-    ARMED_MODE      /* Pyro charges are armed and ready to deploy on apogee --see docs for more-- */
-};
 
 /* set initial mode as safe mode
  * flag to indicate if we are in test or flight mode - This will
@@ -229,7 +231,6 @@ void checkRunTestToggle() {
  */
 void espnowCommandTask(void* pvParameters) {
     ESPNowBeaconTransmitter::CommandPacket cmd;
-    //transmitter.setArmed(true); // Temporary until ARM command is handled
 
     while (1) {
         if (transmitter.getNextCommand(&cmd)) {
@@ -238,21 +239,35 @@ void espnowCommandTask(void* pvParameters) {
 
             if (command == "ARM") {
                 arm_pyros();
+                chutesInit();
                 transmitter.setArmed(true);
                 operation_mode = OPERATION_MODE::ARMED_MODE;
                 blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
-                Serial.println("🚀 ARMED via ESP-NOW");
+                debugln("🚀 ARMED via ESP-NOW");
+                
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO,
+                                       system_log_file, "System ARMED via ESP-NOW\r\n");
             } 
             else if (command == "DISARM") {
                 disarm_pyros();
                 transmitter.setArmed(false);
                 operation_mode = OPERATION_MODE::SAFE_MODE;
                 blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
-                Serial.println("🛑 DISARMED via ESP-NOW");
+                debugln("🛑 DISARMED via ESP-NOW");
+                
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO,
+                                       system_log_file, "System DISARMED via ESP-NOW\r\n");
             } 
             else if (command == "RESET") {
-                Serial.println("🔁 Resetting via ESP-NOW");
+                debugln("🔄 RESET command received via ESP-NOW");
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO,
+                                       system_log_file, "RESET command received via ESP-NOW\r\n");
                 ESP.restart();
+            }
+            else {
+                debugln("🔍 Unknown ESP-NOW command: " + command);
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING,
+                                       system_log_file, ("Unknown ESP-NOW command: " + command + "\r\n").c_str());
             }
         }
 
@@ -264,31 +279,43 @@ void espnowCommandTask(void* pvParameters) {
 
 
 void mqtt_command_processor(const char* topic, const char* payload) {
-    if(strcmp(topic, "commands/arm") == 0) {
-        arm_pyros();
-        chutesInit();
-        operation_mode = OPERATION_MODE::ARMED_MODE;
-        blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
-        debugln("🚀 ARMED via MQTT!");
+    // Check if the topic is the commands topic (n4/commands)
+    if(strcmp(topic, "n4/commands") == 0) {
         
-        // Log to system
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, 
-                               system_log_file, "System ARMED via MQTT\r\n");
-    } 
-    else if(strcmp(topic, "commands/disarm") == 0) {
-        disarm_pyros();
-        operation_mode = OPERATION_MODE::SAFE_MODE;
-        blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
-        debugln("🛑 DISARMED via MQTT");
-        
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO,
-                               system_log_file, "System DISARMED via MQTT\r\n");
-    } 
-    else if(strcmp(topic, "commands/reset") == 0) {
-        debugln("🔄 RESET command received");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO,
-                               system_log_file, "RESET command received via MQTT\r\n");
-        ESP.restart();
+        // Check the payload content for the actual command
+        if(strcmp(payload, "ARM") == 0) {
+            arm_pyros();
+            chutesInit();
+            transmitter.setArmed(true);  // Sync with ESP-NOW transmitter state
+            operation_mode = OPERATION_MODE::ARMED_MODE;
+            blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
+            debugln("🚀 ARMED via MQTT!");
+            
+            // Log to system
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, 
+                                   system_log_file, "System ARMED via MQTT\r\n");
+        } 
+        else if(strcmp(payload, "DISARM") == 0) {
+            disarm_pyros();
+            transmitter.setArmed(false);  // Sync with ESP-NOW transmitter state
+            operation_mode = OPERATION_MODE::SAFE_MODE;
+            blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
+            debugln("🛑 DISARMED via MQTT");
+            
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO,
+                                   system_log_file, "System DISARMED via MQTT\r\n");
+        } 
+        else if(strcmp(payload, "RESET") == 0) {
+            debugln("🔄 RESET command received via MQTT");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO,
+                                   system_log_file, "RESET command received via MQTT\r\n");
+            ESP.restart();
+        }
+        else {
+            debugln("🔍 Unknown MQTT command: " + String(payload));
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING,
+                                   system_log_file, ("Unknown MQTT command: " + String(payload) + "\r\n").c_str());
+        }
     }
 }
 
@@ -497,9 +524,8 @@ QueueHandle_t kalman_filter_queue_handle;
 void readAccelerationTask(void* pvParameter) {
     telemetry_type_t acc_data_lcl;
 
-
     while(1) {
-        acc_data_lcl.operation_mode = operation_mode; // TODO: move these to check state function
+        acc_data_lcl.operation_mode = operation_mode;
         acc_data_lcl.record_number++;
         acc_data_lcl.state = current_state;
         acc_data_lcl.alt_data.rel_altitude = altimeter_packet.rel_altitude;
@@ -519,18 +545,14 @@ void readAccelerationTask(void* pvParameter) {
         // get pitch and roll
         acc_data_lcl.acc_data.pitch = imu.getPitch();
         acc_data_lcl.acc_data.roll = imu.getRoll();
-        xQueueSend(telemetry_data_queue_handle, &acc_data_lcl, 0);
+        
+        // Send to queues for other tasks
         xQueueSend(log_to_mem_queue_handle, &acc_data_lcl, 0);
         xQueueSend(check_state_queue_handle, &acc_data_lcl, 0);
         xQueueSend(debug_to_term_queue_handle, &acc_data_lcl, 0);
 
-        // Send via beacon if armed, regardless of MQTT setting
-       if(transmitter.isArmed()) {
-            transmitter.sendBeacon(&acc_data_lcl, sizeof(acc_data_lcl));
-         }
-        
-        if (MQTT){
-            // Still send via MQTT if enabled
+        // MQTT transmission (if enabled)
+        if (MQTT) {
             xQueueSend(telemetry_data_queue_handle, &acc_data_lcl, 0);
         }
         
@@ -553,7 +575,7 @@ double altimeter_get_pressure()
     status = altimeter.startTemperature();
     if(status != 0)
     {
-        delay(status);
+        vTaskDelay(pdMS_TO_TICKS(status));  // ✅ NON-BLOCKING DELAY
         status = altimeter.getTemperature(T);
         altimeter_temperature = T;
         if(status != 0)
@@ -561,7 +583,7 @@ double altimeter_get_pressure()
             status = altimeter.startPressure(3);
             if(status != 0)
             {
-                delay(status);
+                vTaskDelay(pdMS_TO_TICKS(status));  // ✅ NON-BLOCKING DELAY
                 status = altimeter.getPressure(P, T);
                 if(status != 0)
                 {
@@ -589,6 +611,9 @@ void readAltimeterTask(void* pvParameters) {
         altimeter_packet.temperature = altimeter_temperature;
         altimeter_packet.pressure = P;
         altimeter_packet.rel_altitude = a;
+        
+        /* ✅ CRITICAL FIX: Add task delay to yield control and prevent watchdog timeout */
+        vTaskDelay(CONSUME_TASK_DELAY / portTICK_PERIOD_MS);
     }
 }
 
@@ -1030,6 +1055,11 @@ void debugToTerminalTask(void* pvParameters){
                 telemetry_received_packet.main_chute_pin_state
               );
         
+        // SINGLE BEACON TRANSMISSION POINT - send CSV string when armed
+        if(transmitter.isArmed()) {
+            transmitter.sendBeacon(telemetry_packet_buffer, strlen(telemetry_packet_buffer));
+        }
+        
         debugln(telemetry_packet_buffer);
         vTaskDelay(CONSUME_TASK_DELAY / portTICK_PERIOD_MS);
     }
@@ -1065,46 +1095,20 @@ void logToMemory(void* pvParameter) {
 
 /*!****************************************************************************
  * @brief send flight data to ground
- * @param pvParameter - A value that is passed as the parameter to the created task.
+ * @param pvParameter - A value that is passed as a the parameter to the created task.
  * If pvParameter is set to the address of a variable then the variable must still exist when the created task executes -
  * so it is not valid to pass the address of a stack variable.
  *
  *******************************************************************************/
 void MQTT_TransmitTelemetry(void* pvParameters) {
-    // variable to store the received packet to transmit
     telemetry_type_t telemetry_received_packet;
 
     while(1) {
-
-        // receive from telemetry queue
         xQueueReceive(telemetry_data_queue_handle, &telemetry_received_packet, portMAX_DELAY);
 
-        /**
-         * PACKAGE TELEMETRY PACKET
-         */
-
-        /**
-         * record number
-         * operation_mode
-         * state
-         * ax
-         * ay
-         * az
-         * pitch
-         * roll
-         * gx
-         * gy
-         * gz
-         * latitude
-         * longitude
-         * gps_altitude
-         * pressure
-         * temperature
-         * relative_altitude
-         */
+        // Create CSV string for MQTT only
         sprintf(telemetry_packet_buffer,
                 "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.2f,%.2f,%.2f,%.2f,%d,%d\n",
-
                 telemetry_received_packet.record_number,
                 telemetry_received_packet.operation_mode,
                 telemetry_received_packet.state,
@@ -1123,20 +1127,13 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
                 altimeter_packet.temperature,
                 altimeter_packet.rel_altitude,
                 telemetry_received_packet.drogue_pin_state,
-                telemetry_received_packet.main_chute_pin_state
-);
+                telemetry_received_packet.main_chute_pin_state);
 
-        if (MQTT){
-            // MQTT transmission
+        // ONLY MQTT transmission - no beacon here
+        if (MQTT) {
             if(client.publish(MQTT_TELEMETRY_TOPIC, telemetry_packet_buffer)) {
                 debugln("[+]MQTT Data sent");
             }
-        else
-            // Beacon transmission (only when armed)
-           if(transmitter.isArmed()) {
-                transmitter.sendBeacon(&telemetry_packet_buffer, sizeof(telemetry_packet_buffer));
-                debugln("[+]Beacon sent");
-           }
         }
 
         vTaskDelay(CONSUME_TASK_DELAY/ portTICK_PERIOD_MS);
@@ -1682,25 +1679,22 @@ void setup() {
  * @brief Main loop
  *******************************************************************************/
 void loop() {
-   if (MQTT){
-    /* enable MQTT transmit loop */
-   if (!client.connected()) {
-       MQTT_Reconnect();
-   }
-    client.loop();
-  }
+    if (MQTT) {
+        /* enable MQTT transmit loop */
+        if (!client.connected()) {
+            MQTT_Reconnect();
+        }
+        client.loop();
+    }
 
     /* check if the transmitter is armed */
-    operation_mode = (transmitter.isArmed()) ? OPERATION_MODE::ARMED_MODE : OPERATION_MODE::SAFE_MODE;
+    // Remove this line as it was overriding operation_mode set by ARM/DISARM commands
+    // operation_mode = (transmitter.isArmed()) ? OPERATION_MODE::ARMED_MODE : OPERATION_MODE::SAFE_MODE;
 
-    // /* check if the flight computer is armed */
-    // if(operation_mode == OPERATION_MODE::ARMED_MODE) {
-    //     digitalWrite(GREEN_LED_PIN, LOW);
-    //     digitalWrite(RED_LED_PIN, HIGH);
-    // } else {
-    //     digitalWrite(GREEN_LED_PIN, HIGH);
-    //     digitalWrite(RED_LED_PIN, LOW);
-    // }
-
-    /* check if the flight computer is in test mode */
-} /* End of main loop*/
+    /* LED indication is handled by xOperationModeIndicateTask - no need to duplicate here */
+    
+    /* Add a small delay to prevent watchdog timeout */
+    delay(10);
+    
+/* End of main loop*/
+}
