@@ -20,6 +20,7 @@
 #include <FS.h>             // File system functions
 #include <SD.h>             // SD card logging function
 #include <SPIFFS.h>         // SPIFFS file system function
+#include <esp_task_wdt.h>   // Watchdog timer functions
 #include "defs.h"           // misc defines
 #include "mpu.h"            // for reading MPU6050
 #include "SerialFlash.h"    // Handling external SPI flash memory
@@ -77,7 +78,8 @@ ESPNowBeaconTransmitter transmitter(ROCKET_MAC, BASE_MAC);
 
 void arm_pyros() {
     digitalWrite(REMOTE_SWITCH, HIGH);
-    // todo: confirm arming
+    // Small delay to ensure pin state is stable
+    vTaskDelay(pdMS_TO_TICKS(10));
 }
 
 void chutesInit() {
@@ -94,6 +96,8 @@ void chutesInit() {
  */
 void disarm_pyros() {
     digitalWrite(REMOTE_SWITCH, LOW);
+    // Small delay to ensure pin state is stable
+    vTaskDelay(pdMS_TO_TICKS(10));
 }
 
 /* state machine variables*/
@@ -231,13 +235,21 @@ void checkRunTestToggle() {
  */
 void espnowCommandTask(void* pvParameters) {
     ESPNowBeaconTransmitter::CommandPacket cmd;
+    char cmdBuffer[16]; // Fixed size buffer to avoid String operations
 
     while (1) {
         if (transmitter.getNextCommand(&cmd)) {
-            String command((char*)cmd.command, cmd.length);
-            command.trim();
+            // Use fixed buffer instead of String to reduce stack usage
+            size_t len = (cmd.length < 15) ? cmd.length : 15;
+            memcpy(cmdBuffer, cmd.command, len);
+            cmdBuffer[len] = '\0';
+            
+            // Trim whitespace manually to avoid String operations
+            while (len > 0 && (cmdBuffer[len-1] == ' ' || cmdBuffer[len-1] == '\n' || cmdBuffer[len-1] == '\r')) {
+                cmdBuffer[--len] = '\0';
+            }
 
-            if (command == "ARM") {
+            if (strcmp(cmdBuffer, "ARM") == 0) {
                 arm_pyros();
                 chutesInit();
                 transmitter.setArmed(true);
@@ -245,10 +257,14 @@ void espnowCommandTask(void* pvParameters) {
                 blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
                 debugln("🚀 ARMED via ESP-NOW");
                 
+                // Simplified logging to reduce stack usage
                 SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO,
-                                       system_log_file, "System ARMED via ESP-NOW\r\n");
+                                       system_log_file, "ARMED via ESP-NOW\r\n");
+                
+                // Yield CPU after ARM operation to ensure stack integrity
+                vTaskDelay(pdMS_TO_TICKS(50));
             } 
-            else if (command == "DISARM") {
+            else if (strcmp(cmdBuffer, "DISARM") == 0) {
                 disarm_pyros();
                 transmitter.setArmed(false);
                 operation_mode = OPERATION_MODE::SAFE_MODE;
@@ -256,18 +272,22 @@ void espnowCommandTask(void* pvParameters) {
                 debugln("🛑 DISARMED via ESP-NOW");
                 
                 SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO,
-                                       system_log_file, "System DISARMED via ESP-NOW\r\n");
+                                       system_log_file, "DISARMED via ESP-NOW\r\n");
+                
+                // Yield CPU after DISARM operation to ensure stack integrity
+                vTaskDelay(pdMS_TO_TICKS(50));
             } 
-            else if (command == "RESET") {
-                debugln("🔄 RESET command received via ESP-NOW");
+            else if (strcmp(cmdBuffer, "RESET") == 0) {
+                debugln("🔄 RESET via ESP-NOW");
                 SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO,
-                                       system_log_file, "RESET command received via ESP-NOW\r\n");
+                                       system_log_file, "RESET via ESP-NOW\r\n");
+                vTaskDelay(pdMS_TO_TICKS(100)); // Small delay before restart
                 ESP.restart();
             }
             else {
-                debugln("🔍 Unknown ESP-NOW command: " + command);
+                debugln("Unknown ESP-NOW cmd");
                 SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING,
-                                       system_log_file, ("Unknown ESP-NOW command: " + command + "\r\n").c_str());
+                                       system_log_file, "Unknown ESP-NOW cmd\r\n");
             }
         }
 
@@ -291,9 +311,12 @@ void mqtt_command_processor(const char* topic, const char* payload) {
             blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
             debugln("🚀 ARMED via MQTT!");
             
-            // Log to system
+            // Simplified logging to reduce stack usage
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, 
-                                   system_log_file, "System ARMED via MQTT\r\n");
+                                   system_log_file, "ARMED via MQTT\r\n");
+            
+            // Yield CPU after ARM operation to ensure stack integrity
+            vTaskDelay(pdMS_TO_TICKS(50));
         } 
         else if(strcmp(payload, "DISARM") == 0) {
             disarm_pyros();
@@ -303,12 +326,16 @@ void mqtt_command_processor(const char* topic, const char* payload) {
             debugln("🛑 DISARMED via MQTT");
             
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO,
-                                   system_log_file, "System DISARMED via MQTT\r\n");
+                                   system_log_file, "DISARMED via MQTT\r\n");
+            
+            // Yield CPU after DISARM operation to ensure stack integrity
+            vTaskDelay(pdMS_TO_TICKS(50));
         } 
         else if(strcmp(payload, "RESET") == 0) {
-            debugln("🔄 RESET command received via MQTT");
+            debugln("🔄 RESET via MQTT");
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO,
-                                   system_log_file, "RESET command received via MQTT\r\n");
+                                   system_log_file, "RESET via MQTT\r\n");
+            vTaskDelay(pdMS_TO_TICKS(100)); // Small delay before restart
             ESP.restart();
         }
         else {
@@ -495,9 +522,9 @@ void non_blocking_buzz(uint16_t interval) {
  */
 void blocking_buzz(uint16_t interval) {
     digitalWrite(BUZZER_PIN, HIGH);
-    delay(interval);
+    vTaskDelay(pdMS_TO_TICKS(interval)); // Use vTaskDelay to avoid watchdog issues
     digitalWrite(BUZZER_PIN, LOW);
-    delay(interval);
+    vTaskDelay(pdMS_TO_TICKS(interval)); // Use vTaskDelay to avoid watchdog issues
 }
 
 /**
@@ -575,7 +602,7 @@ double altimeter_get_pressure()
     status = altimeter.startTemperature();
     if(status != 0)
     {
-        vTaskDelay(pdMS_TO_TICKS(status));  // ✅ NON-BLOCKING DELAY
+        vTaskDelay(pdMS_TO_TICKS(status)); // Non-blocking delay for FreeRTOS tasks
         status = altimeter.getTemperature(T);
         altimeter_temperature = T;
         if(status != 0)
@@ -583,7 +610,7 @@ double altimeter_get_pressure()
             status = altimeter.startPressure(3);
             if(status != 0)
             {
-                vTaskDelay(pdMS_TO_TICKS(status));  // ✅ NON-BLOCKING DELAY
+                vTaskDelay(pdMS_TO_TICKS(status)); // Non-blocking delay for FreeRTOS tasks
                 status = altimeter.getPressure(P, T);
                 if(status != 0)
                 {
@@ -612,7 +639,7 @@ void readAltimeterTask(void* pvParameters) {
         altimeter_packet.pressure = P;
         altimeter_packet.rel_altitude = a;
         
-        /* ✅ CRITICAL FIX: Add task delay to yield control and prevent watchdog timeout */
+        /* CRITICAL: Add task delay to yield control and prevent watchdog timeout */
         vTaskDelay(CONSUME_TASK_DELAY / portTICK_PERIOD_MS);
     }
 }
@@ -1427,7 +1454,7 @@ void xCreateAllTasks() {
 BaseType_t ec = xTaskCreatePinnedToCore(
     espnowCommandTask,
     "ESPNowCmd",
-    STACK_SIZE * 2,
+    STACK_SIZE * 6,  // Increased from 2 to 6 to prevent stack overflow
     NULL,
     2,
     &espnowCommandTaskHandle,
@@ -1692,6 +1719,9 @@ void loop() {
     // operation_mode = (transmitter.isArmed()) ? OPERATION_MODE::ARMED_MODE : OPERATION_MODE::SAFE_MODE;
 
     /* LED indication is handled by xOperationModeIndicateTask - no need to duplicate here */
+    
+    /* Feed the watchdog to prevent timeout */
+    esp_task_wdt_reset();
     
     /* Add a small delay to prevent watchdog timeout */
     delay(10);

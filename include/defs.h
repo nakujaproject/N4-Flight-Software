@@ -76,14 +76,14 @@ extern volatile uint8_t MAIN_CHUTE_EJECT_FLAG;     /*!< Set to 1 when main chute
 #define BASE_ALTITUDE 1417                   /*!< this value is the altitude at rocket launch site - adjust accordingly */
 
 /*!<  tasks constants */
-#define STACK_SIZE 1024                     /*!< task stack size in words */
+#define STACK_SIZE 2048                     /*!< task stack size in words - increased from 1024 to prevent stack overflows */
 #define ALTIMETER_QUEUE_LENGTH 10           /*!< length of the altimeter queue */
 #define GYROSCOPE_QUEUE_LENGTH 10           /*!< length of the gyroscope queue */
 #define GPS_QUEUE_LENGTH 24                 /*!< length of the gps queue */
 #define TELEMETRY_DATA_QUEUE_LENGTH  10     /*!< length of the telemetry data queue */
 #define FILTERED_DATA_QUEUE_LENGTH 10       /*!< length of the filtered data queue */
 #define FLIGHT_STATES_QUEUE_LENGTH 1        /*!< length of the flight states queue */
-#define CONSUME_TASK_DELAY    10
+#define CONSUME_TASK_DELAY    100           /*!< Task delay in ms - increased to prevent watchdog timeouts */
 
 /* MQTT constants */
 const char MQTT_SERVER[30] = "192.168.100.231";
