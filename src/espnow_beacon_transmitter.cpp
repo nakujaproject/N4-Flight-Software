@@ -1,4 +1,5 @@
 #include "espnow_beacon_transmitter.h"
+#include "defs.h"  // Include defs.h to access TEST flag
 
 ESPNowBeaconTransmitter* ESPNowBeaconTransmitter::instance = nullptr;
 
@@ -58,7 +59,8 @@ bool ESPNowBeaconTransmitter::getNextCommand(CommandPacket* packet) {
 }
 
 bool ESPNowBeaconTransmitter::sendBeacon(const void* telemetry_data, size_t telemetry_size) {
-    if (!armed || !telemetry_data || telemetry_size == 0) return false;
+    // Only send beacon if armed OR if in test mode (similar to MQTT logic)
+    if ((!armed && !TEST) || !telemetry_data || telemetry_size == 0) return false;
 
     uint8_t frame[MAX_BEACON_SIZE];
     size_t frame_size = 0;

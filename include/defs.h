@@ -11,7 +11,8 @@
 /*!< To select the telemetry transfer method used */
 /*!< note: u can use wifi and xbee at the same time, so both of these handles can be set */
 /*!< at the same time */
-#define MQTT 1                                 /*!< set this to 1 if using MQTT for telemetry transfer. Set to 0 if you want to use beacons*/
+#define MQTT 0                                 /*!< set this to 1 if using MQTT for telemetry transfer. Set to 0 if you want to use beacons*/
+#define TEST 1                                 /*!< set to 1 to enable test mode - allows data transmission even when disarmed */
 #define XBEE 0                                 /*!< set to 1 if using XBEE for telemetry transfer */
 
 extern bool use_beacon_mode;

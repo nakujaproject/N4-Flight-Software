@@ -578,9 +578,12 @@ void readAccelerationTask(void* pvParameter) {
         xQueueSend(check_state_queue_handle, &acc_data_lcl, 0);
         xQueueSend(debug_to_term_queue_handle, &acc_data_lcl, 0);
 
-        // MQTT transmission (if enabled)
+        // MQTT transmission (if enabled) - only send to queue when armed or in test mode
         if (MQTT) {
-            xQueueSend(telemetry_data_queue_handle, &acc_data_lcl, 0);
+            // Only send data to MQTT queue if armed OR if in test mode
+            if(transmitter.isArmed() || TEST) {
+                xQueueSend(telemetry_data_queue_handle, &acc_data_lcl, 0);
+            }
         }
         
         vTaskDelay(CONSUME_TASK_DELAY/ portTICK_PERIOD_MS);
@@ -1156,10 +1159,15 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
                 telemetry_received_packet.drogue_pin_state,
                 telemetry_received_packet.main_chute_pin_state);
 
-        // ONLY MQTT transmission - no beacon here
+        // MQTT transmission - only send when armed (or in test mode)
         if (MQTT) {
-            if(client.publish(MQTT_TELEMETRY_TOPIC, telemetry_packet_buffer)) {
-                debugln("[+]MQTT Data sent");
+            // Only send data if armed OR if in test mode
+            if(transmitter.isArmed() || TEST) {
+                if(client.publish(MQTT_TELEMETRY_TOPIC, telemetry_packet_buffer)) {
+                    debugln("[+]MQTT Data sent");
+                }
+            } else {
+                debugln("[i]MQTT Data not sent - rocket not armed (set TEST=1 to override)");
             }
         }
 
