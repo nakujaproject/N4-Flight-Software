@@ -3,9 +3,15 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-#include <WiFiManager.h>git 
+#include <WiFiManager.h>
+#include <Preferences.h>
 
 class WIFIConfig {
+private:
+    Preferences preferences;
+    char basestation_ip[16] = "192.168.100.248";  // Default IP
+    char mqtt_port[6] = "1883";                    // Default port
+    
 public:
     /**
      * @brief Connects to WiFi in either MQTT or Beacon mode.
@@ -15,6 +21,28 @@ public:
      * @return uint8_t 1 = success, 0 = failure
      */
     uint8_t WifiConnect(bool enable_ap_mode, const uint8_t* rocket_mac);
+    
+    /**
+     * @brief Get the configured base station IP address
+     * @return const char* IP address string
+     */
+    const char* getBaseStationIP();
+    
+    /**
+     * @brief Get the configured MQTT port
+     * @return int MQTT port number
+     */
+    int getMQTTPort();
+    
+    /**
+     * @brief Save IP configuration to persistent storage
+     */
+    void saveConfig();
+    
+    /**
+     * @brief Load IP configuration from persistent storage
+     */
+    void loadConfig();
 };
 
 #endif

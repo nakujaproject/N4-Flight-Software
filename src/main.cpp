@@ -45,6 +45,7 @@ enum OPERATION_MODE {
 
 /* state machine variables*/
 uint8_t operation_mode = 0;                                         /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
+bool is_system_armed = false;                                       /*!< Global armed state for both MQTT and beacon modes */
 
 /* non-task function prototypes definition */
 void initDynamicWIFI();
@@ -252,7 +253,10 @@ void espnowCommandTask(void* pvParameters) {
             if (strcmp(cmdBuffer, "ARM") == 0) {
                 arm_pyros();
                 chutesInit();
-                transmitter.setArmed(true);
+                if (use_beacon_mode) {
+                    transmitter.setArmed(true);
+                }
+                is_system_armed = true;  // Set global armed state
                 operation_mode = OPERATION_MODE::ARMED_MODE;
                 blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
                 debugln("🚀 ARMED via ESP-NOW");
@@ -266,7 +270,10 @@ void espnowCommandTask(void* pvParameters) {
             } 
             else if (strcmp(cmdBuffer, "DISARM") == 0) {
                 disarm_pyros();
-                transmitter.setArmed(false);
+                if (use_beacon_mode) {
+                    transmitter.setArmed(false);
+                }
+                is_system_armed = false;  // Set global armed state
                 operation_mode = OPERATION_MODE::SAFE_MODE;
                 blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
                 debugln("🛑 DISARMED via ESP-NOW");
@@ -306,7 +313,10 @@ void mqtt_command_processor(const char* topic, const char* payload) {
         if(strcmp(payload, "ARM") == 0) {
             arm_pyros();
             chutesInit();
-            transmitter.setArmed(true);  // Sync with ESP-NOW transmitter state
+            if (use_beacon_mode) {
+                transmitter.setArmed(true);  // Only sync with ESP-NOW transmitter in beacon mode
+            }
+            is_system_armed = true;  // Set global armed state
             operation_mode = OPERATION_MODE::ARMED_MODE;
             blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
             debugln("🚀 ARMED via MQTT!");
@@ -320,7 +330,10 @@ void mqtt_command_processor(const char* topic, const char* payload) {
         } 
         else if(strcmp(payload, "DISARM") == 0) {
             disarm_pyros();
-            transmitter.setArmed(false);  // Sync with ESP-NOW transmitter state
+            if (use_beacon_mode) {
+                transmitter.setArmed(false);  // Only sync with ESP-NOW transmitter in beacon mode
+            }
+            is_system_armed = false;  // Set global armed state
             operation_mode = OPERATION_MODE::SAFE_MODE;
             blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
             debugln("🛑 DISARMED via MQTT");
@@ -581,7 +594,7 @@ void readAccelerationTask(void* pvParameter) {
         // MQTT transmission (if enabled) - only send to queue when armed or in test mode
         if (MQTT) {
             // Only send data to MQTT queue if armed OR if in test mode
-            if(transmitter.isArmed() || TEST) {
+            if(is_system_armed || TEST) {
                 xQueueSend(telemetry_data_queue_handle, &acc_data_lcl, 0);
             }
         }
@@ -1085,8 +1098,8 @@ void debugToTerminalTask(void* pvParameters){
                 telemetry_received_packet.main_chute_pin_state
               );
         
-        // SINGLE BEACON TRANSMISSION POINT - send CSV string when armed
-        if(transmitter.isArmed()) {
+        // BEACON TRANSMISSION POINT - only send when in beacon mode and armed (or test mode)
+        if (use_beacon_mode && (is_system_armed || TEST)) {
             transmitter.sendBeacon(telemetry_packet_buffer, strlen(telemetry_packet_buffer));
         }
         
@@ -1162,7 +1175,7 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
         // MQTT transmission - only send when armed (or in test mode)
         if (MQTT) {
             // Only send data if armed OR if in test mode
-            if(transmitter.isArmed() || TEST) {
+            if(is_system_armed || TEST) {
                 if(client.publish(MQTT_TELEMETRY_TOPIC, telemetry_packet_buffer)) {
                     debugln("[+]MQTT Data sent");
                 }
@@ -1458,26 +1471,29 @@ void xCreateAllTasks() {
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create readAltimeterTask\r\n");
         }
 
+    // Create ESP-NOW command task only in beacon mode to avoid WiFi interface conflicts
+    if (use_beacon_mode) {
+        BaseType_t ec = xTaskCreatePinnedToCore(
+            espnowCommandTask,
+            "ESPNowCmd",
+            STACK_SIZE * 6,  // Increased from 2 to 6 to prevent stack overflow
+            NULL,
+            2,
+            &espnowCommandTaskHandle,
+            1
+        );
 
-BaseType_t ec = xTaskCreatePinnedToCore(
-    espnowCommandTask,
-    "ESPNowCmd",
-    STACK_SIZE * 6,  // Increased from 2 to 6 to prevent stack overflow
-    NULL,
-    2,
-    &espnowCommandTaskHandle,
-    1
-);
-
-if (ec == pdPASS) {
-    debugln("[+]ESPNowCmd task created OK.");
-    SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]ESPNowCmd task created OK.\r\n");
-} else {
-    debugln("[-]ESPNowCmd task failed to create");
-    SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]ESPNowCmd task failed to create\r\n");
-}
-
-
+        if (ec == pdPASS) {
+            debugln("[+]ESPNowCmd task created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]ESPNowCmd task created OK.\r\n");
+        } else {
+            debugln("[-]Failed to create ESPNowCmd task");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create ESPNowCmd task\r\n");
+        }
+    } else {
+        debugln("[i]ESPNowCmd task skipped - using MQTT mode");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[i]ESPNowCmd task skipped - MQTT mode\r\n");
+    }
 
         /* RECONNECT MQTT */
         // BaseType_t rp = xTaskCreatePinnedToCore(MQTT_Reconnect,"reconnectMQTT",STACK_SIZE*2,NULL,2, NULL, 1);
@@ -1518,8 +1534,8 @@ void setup() {
     digitalWrite(RED_LED_PIN, LOW);
     buzzerInit();
 
-    // Sync operation mode with transmitter state
-    operation_mode = (transmitter.isArmed()) ? OPERATION_MODE::ARMED_MODE : OPERATION_MODE::SAFE_MODE;
+    // Initialize operation mode to SAFE_MODE by default
+    operation_mode = OPERATION_MODE::SAFE_MODE;
     /* buzz to indicate start of setup */
     blocking_buzz(BUZZ_INTERVALS::SETUP_INIT);
 
@@ -1542,7 +1558,7 @@ void setup() {
     #if MQTT
 
     // create and wait for dynamic WIFI connection
-    MQTTInit(MQTT_SERVER, MQTT_PORT);
+    MQTTInit(wifi_config.getBaseStationIP(), wifi_config.getMQTTPort());
     MQTT_Reconnect();  
     debugln("[+]Dynamic WIFI created OK.");
 
@@ -1556,9 +1572,17 @@ void setup() {
     debugln(F("========= INITIALIZING PERIPHERALS ==========="));
     debugln(F("=============================================="));
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==Initializing peripherals==\r\n");
-    // Initialize transmitter (after WiFi but before sensors)
-    transmitter.begin();
-    // After transmitter.begin();
+    
+    // Initialize transmitter only in beacon mode to avoid WiFi interface conflicts
+    if (use_beacon_mode) {
+        transmitter.begin();
+        debugln("[+] ESP-NOW transmitter initialized for beacon mode");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "ESP-NOW transmitter initialized\r\n");
+    } else {
+        debugln("[i] ESP-NOW transmitter skipped - using MQTT mode");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "ESP-NOW transmitter skipped - MQTT mode\r\n");
+    }
+    
     uint8_t bmp_init_state = BMPInit();
     uint8_t imu_init_state = imu.init();
     uint8_t gps_init_state = GPSInit();

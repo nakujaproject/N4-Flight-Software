@@ -11,7 +11,7 @@
 /*!< To select the telemetry transfer method used */
 /*!< note: u can use wifi and xbee at the same time, so both of these handles can be set */
 /*!< at the same time */
-#define MQTT 0                                 /*!< set this to 1 if using MQTT for telemetry transfer. Set to 0 if you want to use beacons*/
+#define MQTT 1                                 /*!< set this to 1 if using MQTT for telemetry transfer. Set to 0 if you want to use beacons*/
 #define TEST 1                                 /*!< set to 1 to enable test mode - allows data transmission even when disarmed */
 #define XBEE 0                                 /*!< set to 1 if using XBEE for telemetry transfer */
 
@@ -87,12 +87,14 @@ extern volatile uint8_t MAIN_CHUTE_EJECT_FLAG;     /*!< Set to 1 when main chute
 #define CONSUME_TASK_DELAY    100           /*!< Task delay in ms - increased to prevent watchdog timeouts */
 
 /* MQTT constants */
-const char MQTT_SERVER[30] = "192.168.100.248";
+// MQTT server IP and port are now configured dynamically via WiFiManager
+// Default values: IP="192.168.100.248", Port=1883
+// Use wifi_config.getBaseStationIP() and wifi_config.getMQTTPort() to access current values
 const char MQTT_TELEMETRY_TOPIC[30] = "n4/flight-computer-1";             /* make this topic unique to every rocket */
 const char MQTT_ARMING_TOPIC[30] = "n4/commands";             /* make this topic unique to every rocket */
 
-
-#define MQTT_PORT 1883                              /*!< MQTT broker port */
+// Legacy defines - kept for backward compatibility but values are now dynamic
+#define MQTT_PORT 1883                              /*!< Default MQTT broker port - actual port configured via WiFiManager */
 
 // #define BROKER_IP_ADDRESS_LENGTH    20      /*!< length of broker ip address string */
 // #define MQTT_TOPIC_LENGTH           10      /*!< length of mqtt topic string */
