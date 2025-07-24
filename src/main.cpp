@@ -70,7 +70,7 @@ const uint8_t ROCKET_MAC[] = {0x08, 0xd1, 0xf9, 0x15, 0x9c, 0x40};
 //MAC: 08:d1:f9:15:9c:40
 
 
-const uint8_t BASE_MAC[] = {0xf4, 0x65, 0x0b, 0x48, 0x5c, 0xf8}; // This ESP MAC
+const uint8_t BASE_MAC[] = {0x10, 0x06, 0x1c, 0xa6, 0x18, 0x20}; // This ESP MAC
 
 // Create transmitter instance
 ESPNowBeaconTransmitter transmitter(ROCKET_MAC, BASE_MAC);
@@ -172,6 +172,11 @@ uint8_t remote_switch = 27;
 volatile uint8_t drogue_pin_state = 0; 
 volatile uint8_t main_chute_pin_state = 0;
 
+// Battery monitoring variable
+volatile float battery_voltage = 0.0;
+
+// WiFi RSSI monitoring variable (for MQTT mode)
+volatile int32_t wifi_rssi = 0;
 
 /* Flight data logging */
 uint8_t flash_led_pin = 32;                  /*!< LED pin connected to indicate flash memory formatting  */
@@ -571,6 +576,12 @@ void readAccelerationTask(void* pvParameter) {
         acc_data_lcl.alt_data.rel_altitude = altimeter_packet.rel_altitude;
         acc_data_lcl.drogue_pin_state = drogue_pin_state;
         acc_data_lcl.main_chute_pin_state = main_chute_pin_state;
+        
+        // Use the global battery voltage read by monitorChutePinsTask
+        acc_data_lcl.battery_voltage = battery_voltage;
+        
+        // Use the global wifi_rssi read by monitorChutePinsTask
+        acc_data_lcl.wifi_rssi = wifi_rssi;
 
         // read acceleration
         acc_data_lcl.acc_data.ax = imu.readXAcceleration();
@@ -643,12 +654,25 @@ double altimeter_get_pressure()
 //  *******************************************************************************/
 void readAltimeterTask(void* pvParameters) {
     telemetry_type_t alt_data_lcl;
+    static double previous_altitude = 0.0;
+    static unsigned long previous_time = 0;
 
     while(1) {
 
         double a, P;
         P = altimeter_get_pressure();
         a = altimeter.altitude(P, baseline);
+        
+        // Calculate velocity (altitude change over time)
+        unsigned long current_time = millis();
+        if (previous_time > 0) {
+            double time_diff = (current_time - previous_time) / 1000.0; // Convert to seconds
+            if (time_diff > 0) {
+                altimeter_packet.velocity = (a - previous_altitude) / time_diff; // m/s
+            }
+        }
+        previous_altitude = a;
+        previous_time = current_time;
 
         /* send to altimeter global packet */
         altimeter_packet.temperature = altimeter_temperature;
@@ -960,6 +984,18 @@ void monitorChutePinsTask(void* pvParameters) {
     while (1) {
         drogue_pin_state = digitalRead(DROGUE_PIN);
         main_chute_pin_state = digitalRead(MAIN_CHUTE_EJECT_PIN);
+        
+        // Read battery voltage from pin 35 (with voltage divider)
+        battery_voltage = (analogRead(35) * 3.3 * 2.0) / 4095.0; // Adjust multiplier based on your voltage divider
+        
+        // Read WiFi RSSI when in MQTT mode, beacon RSSI handled by ESP32 base station
+        if (MQTT && WiFi.isConnected()) {
+            wifi_rssi = WiFi.RSSI();
+        } else {
+            // In beacon mode, set to 0 - base station will measure actual beacon RSSI
+            wifi_rssi = 0; // Flight computer sends 0, base station overrides with real beacon RSSI
+        }
+        
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
 }
@@ -1053,57 +1089,43 @@ void debugToTerminalTask(void* pvParameters){
         // get telemetry data
         xQueueReceive(debug_to_term_queue_handle, &telemetry_received_packet, 0);
         
-        /**
-         * record number
-         * operation_mode
-         * state
-         * ax
-         * ay
-         * az
-         * pitch
-         * roll
-         * gx
-         * gy
-         * gz
-         * latitude
-         * longitude
-         * gps_altitude
-         * pressure
-         * temperature
-         * altitude_agl
-         * velocity
-         *
-         */
+        // Create unified 23-field CSV format matching MQTT format
         sprintf(telemetry_packet_buffer,
-                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.2f,%.2f,%.2f,%.2f,%d,%d\n",
-
-                telemetry_received_packet.record_number,
-                telemetry_received_packet.operation_mode,
-                telemetry_received_packet.state,
-                telemetry_received_packet.acc_data.ax,
-                telemetry_received_packet.acc_data.ay,
-                telemetry_received_packet.acc_data.az,
-                telemetry_received_packet.acc_data.pitch,
-                telemetry_received_packet.acc_data.roll,
-                telemetry_received_packet.gyro_data.gx,
-                telemetry_received_packet.gyro_data.gy,
-                telemetry_received_packet.gyro_data.gz,
-                gps_packet.latitude,
-                gps_packet.longitude,
-                gps_packet.gps_altitude,
-                altimeter_packet.pressure,
-                altimeter_packet.temperature,
-                altimeter_packet.rel_altitude,
-                telemetry_received_packet.drogue_pin_state,
-                telemetry_received_packet.main_chute_pin_state
-              );
+                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.8f,%.8f,%.2f,%u,%.2f,%.2f,%.2f,%.2f,%d,%d,%.2f,%d\n",
+                telemetry_received_packet.record_number,    // 0
+                telemetry_received_packet.operation_mode,   // 1  
+                telemetry_received_packet.state,            // 2
+                telemetry_received_packet.acc_data.ax,      // 3
+                telemetry_received_packet.acc_data.ay,      // 4
+                telemetry_received_packet.acc_data.az,      // 5
+                telemetry_received_packet.acc_data.pitch,   // 6
+                telemetry_received_packet.acc_data.roll,    // 7
+                telemetry_received_packet.gyro_data.gx,     // 8
+                telemetry_received_packet.gyro_data.gy,     // 9
+                telemetry_received_packet.gyro_data.gz,     // 10
+                gps_packet.latitude,                        // 11
+                gps_packet.longitude,                       // 12
+                gps_packet.gps_altitude,                    // 13
+                gps_packet.time,                            // 14 - GPS time
+                altimeter_packet.pressure,                  // 15
+                altimeter_packet.temperature,               // 16
+                altimeter_packet.rel_altitude,              // 17
+                altimeter_packet.velocity,                  // 18 - velocity
+                telemetry_received_packet.drogue_pin_state, // 19
+                telemetry_received_packet.main_chute_pin_state, // 20
+                telemetry_received_packet.battery_voltage,  // 21 - battery voltage
+                telemetry_received_packet.wifi_rssi);       // 22 - RSSI from telemetry packet
         
         // BEACON TRANSMISSION POINT - only send when in beacon mode and armed (or test mode)
         if (use_beacon_mode && (is_system_armed || TEST)) {
             transmitter.sendBeacon(telemetry_packet_buffer, strlen(telemetry_packet_buffer));
+            debugln("[BEACON TX] " + String(telemetry_packet_buffer));
+        } else if (use_beacon_mode) {
+            debugln("[BEACON DEBUG] " + String(telemetry_packet_buffer));
+        } else {
+            debugln("[MQTT DEBUG] " + String(telemetry_packet_buffer));
         }
         
-        debugln(telemetry_packet_buffer);
         vTaskDelay(CONSUME_TASK_DELAY / portTICK_PERIOD_MS);
     }
 }
@@ -1149,38 +1171,44 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
     while(1) {
         xQueueReceive(telemetry_data_queue_handle, &telemetry_received_packet, portMAX_DELAY);
 
-        // Create CSV string for MQTT only
+        // Create comprehensive CSV string for MQTT transmission
         sprintf(telemetry_packet_buffer,
-                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.2f,%.2f,%.2f,%.2f,%d,%d\n",
-                telemetry_received_packet.record_number,
-                telemetry_received_packet.operation_mode,
-                telemetry_received_packet.state,
-                telemetry_received_packet.acc_data.ax,
-                telemetry_received_packet.acc_data.ay,
-                telemetry_received_packet.acc_data.az,
-                telemetry_received_packet.acc_data.pitch,
-                telemetry_received_packet.acc_data.roll,
-                telemetry_received_packet.gyro_data.gx,
-                telemetry_received_packet.gyro_data.gy,
-                telemetry_received_packet.gyro_data.gz,
-                gps_packet.latitude,
-                gps_packet.longitude,
-                gps_packet.gps_altitude,
-                altimeter_packet.pressure,
-                altimeter_packet.temperature,
-                altimeter_packet.rel_altitude,
-                telemetry_received_packet.drogue_pin_state,
-                telemetry_received_packet.main_chute_pin_state);
+                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.8f,%.8f,%.2f,%u,%.2f,%.2f,%.2f,%.2f,%d,%d,%.2f,%d\n",
+                telemetry_received_packet.record_number,    // 0
+                telemetry_received_packet.operation_mode,   // 1  
+                telemetry_received_packet.state,            // 2
+                telemetry_received_packet.acc_data.ax,      // 3
+                telemetry_received_packet.acc_data.ay,      // 4
+                telemetry_received_packet.acc_data.az,      // 5
+                telemetry_received_packet.acc_data.pitch,   // 6
+                telemetry_received_packet.acc_data.roll,    // 7
+                telemetry_received_packet.gyro_data.gx,     // 8
+                telemetry_received_packet.gyro_data.gy,     // 9
+                telemetry_received_packet.gyro_data.gz,     // 10
+                gps_packet.latitude,                        // 11
+                gps_packet.longitude,                       // 12
+                gps_packet.gps_altitude,                    // 13
+                gps_packet.time,                            // 14 - GPS time
+                altimeter_packet.pressure,                  // 15
+                altimeter_packet.temperature,               // 16
+                altimeter_packet.rel_altitude,              // 17
+                altimeter_packet.velocity,                  // 18 - velocity
+                telemetry_received_packet.drogue_pin_state, // 19
+                telemetry_received_packet.main_chute_pin_state, // 20
+                telemetry_received_packet.battery_voltage,  // 21 - battery voltage
+                telemetry_received_packet.wifi_rssi);       // 22 - RSSI from telemetry packet
 
         // MQTT transmission - only send when armed (or in test mode)
         if (MQTT) {
             // Only send data if armed OR if in test mode
             if(is_system_armed || TEST) {
                 if(client.publish(MQTT_TELEMETRY_TOPIC, telemetry_packet_buffer)) {
-                    debugln("[+]MQTT Data sent");
+                    debugln("[MQTT TX] Data sent successfully");
+                } else {
+                    debugln("[MQTT TX] Failed to send data");
                 }
             } else {
-                debugln("[i]MQTT Data not sent - rocket not armed (set TEST=1 to override)");
+                debugln("[MQTT DEBUG] Data not sent - rocket not armed (set TEST=1 to override)");
             }
         }
 

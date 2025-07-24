@@ -47,8 +47,8 @@ typedef struct Gyroscope_Data {
 typedef struct GPS_Data{
     double latitude;            /*!< latitude coordinate */
     double longitude;           /*!< longitude coordinate */
-    double gps_altitude;      /*!< altitude read by the GPS */
-    uint32_t time;                  /*!< time read by the GPS */
+    double gps_altitude;        /*!< altitude read by the GPS */
+    uint32_t time;              /*!< time read by the GPS */
 } gps_type_t;
 
 /**
@@ -56,9 +56,10 @@ typedef struct GPS_Data{
  */
 typedef struct Altimeter_Data{
     double pressure;             /*!< atmospheric pressure */
-    double rel_altitude;             /*!< current relative altitude read by the altimeter */
+    double rel_altitude;         /*!< current relative altitude read by the altimeter */
     double velocity;             /*!< velocity from the altimeter */
     double temperature;          /*!< altimeter temperature */
+    double filtered_altitude;    /*!< filtered altitude using Kalman filter */
     double AGL;                  /*!< altitude above ground level */
 } altimeter_type_t;
 
@@ -73,8 +74,10 @@ typedef struct Telemetry_Data {
     accel_type_t acc_data;      /*!< accelerometer data */
     gyro_type_t gyro_data;      /*!< gyroscope data */
     gps_type_t gps_data;        /*!< gps data */
-    uint8_t drogue_pin_state;
-    uint8_t main_chute_pin_state;
+    uint8_t drogue_pin_state;   /*!< drogue parachute deployment state */
+    uint8_t main_chute_pin_state; /*!< main parachute deployment state */
+    float battery_voltage;      /*!< battery voltage */
+    int32_t wifi_rssi;          /*!< WiFi RSSI or beacon RSSI */
 } telemetry_type_t;
 
 #endif
