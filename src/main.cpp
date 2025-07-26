@@ -1,3 +1,8 @@
+
+
+
+
+#include "communication_manager.h"
 /**
  * @file main.cpp
  * @author Edwin Mwiti
@@ -33,6 +38,7 @@
 #include "kalman_filter.h"  // handle kalman filter functions
 #include "ring_buffer.h"    // for apogee detection
 #include "espnow_beacon_transmitter.h"
+#include "communication_manager.h"  // smart communication management
 
 /**
  * flight states
@@ -46,6 +52,13 @@ enum OPERATION_MODE {
 /* state machine variables*/
 uint8_t operation_mode = 0;                                         /*!< Tells whether software is in safe or flight mode - FLIGHT_MODE=1, SAFE_MODE=0 */
 bool is_system_armed = false;                                       /*!< Global armed state for both MQTT and beacon modes */
+
+// 🔥 ISOLATED COMMUNICATION SYSTEM - Global variables for independent mode control
+bool use_mqtt_mode = true;                                          /*!< Enable MQTT transmission - starts with MQTT mode */
+bool use_beacon_mode = false;                                       /*!< Enable beacon transmission - starts disabled */
+bool auto_fallback_enabled = true;                                  /*!< Enable automatic fallback to beacon when MQTT fails */
+bool communication_mode_locked = false;                             /*!< Lock mode changes during critical flight phases */
+communication_status_t comm_status = {0};                           /*!< Communication status tracking */
 
 /* non-task function prototypes definition */
 void initDynamicWIFI();
@@ -63,14 +76,36 @@ void chutesInit();
 void espnowCommandTask(void* pvParameters);
 
 
-bool use_beacon_mode = !MQTT; // Use beacons if MQTT is not enabled
 
-// Add these near your other MAC address definitions
-const uint8_t ROCKET_MAC[] = {0x08, 0xd1, 0xf9, 0x15, 0x9c, 0x40};
-//MAC: 08:d1:f9:15:9c:40
+// MAC address definitions (now defined here for global access)
+const uint8_t ROCKET_MAC[6] = {0x08, 0xd1, 0xf9, 0x15, 0x9c, 0x40};
+const uint8_t BASE_MAC[6]   = {0xf4, 0x65, 0x0b, 0x48, 0x5c, 0xf8};
 
+// 🔥 GLOBAL COMMUNICATION MANAGER - External declaration (defined in communication_manager.cpp)
+extern CommunicationManager comm_manager;
 
-const uint8_t BASE_MAC[] = {0x10, 0x06, 0x1c, 0xa6, 0x18, 0x20}; // This ESP MAC
+// Global telemetry buffer for seamless mode switching
+static char global_telemetry_buffer[256];
+static bool telemetry_data_ready = false;
+static uint32_t last_telemetry_time = 0;
+
+// Function to update global telemetry buffer for seamless switching
+void updateGlobalTelemetryBuffer(const char* buffer) {
+    strncpy(global_telemetry_buffer, buffer, sizeof(global_telemetry_buffer) - 1);
+    global_telemetry_buffer[sizeof(global_telemetry_buffer) - 1] = '\0';
+    telemetry_data_ready = true;
+    last_telemetry_time = millis();
+}
+
+// Function to get the latest telemetry for immediate transmission during mode switch
+bool getLatestTelemetryBuffer(char* buffer, size_t buffer_size) {
+    if (telemetry_data_ready && (millis() - last_telemetry_time < 1000)) { // Data fresh within 1 second
+        strncpy(buffer, global_telemetry_buffer, buffer_size - 1);
+        buffer[buffer_size - 1] = '\0';
+        return true;
+    }
+    return false;
+}
 
 // Create transmitter instance
 ESPNowBeaconTransmitter transmitter(ROCKET_MAC, BASE_MAC);
@@ -102,7 +137,7 @@ void disarm_pyros() {
 }
 
 /* state machine variables*/
-uint8_t current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;	    /*!< The starting state - we start at PRE_FLIGHT_GROUND state */
+ARMED_FLIGHT_STATE current_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;	    /*!< The starting state - we start at PRE_FLIGHT_GROUND state */
 
 uint8_t STATE_BIT_MASK = 0;
 
@@ -241,12 +276,12 @@ void checkRunTestToggle() {
  */
 void espnowCommandTask(void* pvParameters) {
     ESPNowBeaconTransmitter::CommandPacket cmd;
-    char cmdBuffer[16]; // Fixed size buffer to avoid String operations
+    char cmdBuffer[32]; // Increased size for communication commands
 
     while (1) {
         if (transmitter.getNextCommand(&cmd)) {
             // Use fixed buffer instead of String to reduce stack usage
-            size_t len = (cmd.length < 15) ? cmd.length : 15;
+            size_t len = (cmd.length < 31) ? cmd.length : 31;
             memcpy(cmdBuffer, cmd.command, len);
             cmdBuffer[len] = '\0';
             
@@ -255,7 +290,11 @@ void espnowCommandTask(void* pvParameters) {
                 cmdBuffer[--len] = '\0';
             }
 
-            if (strcmp(cmdBuffer, "ARM") == 0) {
+            // Check for communication mode commands first
+            if (strncmp(cmdBuffer, "CMD_", 4) == 0) {
+                comm_manager.handleModeCommand(String(cmdBuffer), "ESP_NOW");
+            }
+            else if (strcmp(cmdBuffer, "ARM") == 0) {
                 arm_pyros();
                 chutesInit();
                 if (use_beacon_mode) {
@@ -297,9 +336,9 @@ void espnowCommandTask(void* pvParameters) {
                 ESP.restart();
             }
             else {
-                debugln("Unknown ESP-NOW cmd");
+                debugln("Unknown ESP-NOW cmd: " + String(cmdBuffer));
                 SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING,
-                                       system_log_file, "Unknown ESP-NOW cmd\r\n");
+                                       system_log_file, ("Unknown ESP-NOW cmd: " + String(cmdBuffer) + "\r\n").c_str());
             }
         }
 
@@ -313,6 +352,14 @@ void espnowCommandTask(void* pvParameters) {
 void mqtt_command_processor(const char* topic, const char* payload) {
     // Check if the topic is the commands topic (n4/commands)
     if(strcmp(topic, "n4/commands") == 0) {
+        
+        String command = String(payload);
+        
+        // Check for communication mode commands first
+        if(command.startsWith("CMD_")) {
+            comm_manager.handleModeCommand(command, "MQTT");
+            return;
+        }
         
         // Check the payload content for the actual command
         if(strcmp(payload, "ARM") == 0) {
@@ -604,8 +651,9 @@ void readAccelerationTask(void* pvParameter) {
 
         // MQTT transmission (if enabled) - only send to queue when armed or in test mode
         if (MQTT) {
-            // Only send data to MQTT queue if armed OR if in test mode
-            if(is_system_armed || TEST) {
+            // 🔥 ENHANCED DATA CONTINUITY - Always queue data for MQTT task when MQTT mode is active
+            if (comm_manager.isMQTTActive()) {
+                // Send to MQTT task queue for processing (arm check handled in MQTT task)
                 xQueueSend(telemetry_data_queue_handle, &acc_data_lcl, 0);
             }
         }
@@ -988,12 +1036,13 @@ void monitorChutePinsTask(void* pvParameters) {
         // Read battery voltage from pin 35 (with voltage divider)
         battery_voltage = (analogRead(35) * 3.3 * 2.0) / 4095.0; // Adjust multiplier based on your voltage divider
         
-        // Read WiFi RSSI when in MQTT mode, beacon RSSI handled by ESP32 base station
-        if (MQTT && WiFi.isConnected()) {
+        // 🔥 ISOLATED RSSI HANDLING - Separate WiFi and Beacon RSSI logic
+        if (comm_manager.isMQTTActive() && WiFi.isConnected()) {
+            // MQTT mode: Use actual WiFi RSSI from flight computer
             wifi_rssi = WiFi.RSSI();
         } else {
-            // In beacon mode, set to 0 - base station will measure actual beacon RSSI
-            wifi_rssi = 0; // Flight computer sends 0, base station overrides with real beacon RSSI
+            // Beacon mode: Send 0 - ESP32 base station will measure and override with actual beacon RSSI
+            wifi_rssi = 0; // Flight computer sends 0, base station captures real beacon signal strength
         }
         
         vTaskDelay(50 / portTICK_PERIOD_MS);
@@ -1010,8 +1059,26 @@ void monitorChutePinsTask(void* pvParameters) {
  * 
  *******************************************************************************/
 void flightStateCallback(void* pvParameters) {
+    static ARMED_FLIGHT_STATE last_state = ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND;
 
     while(1) {
+        // Check if state changed and handle communication mode locking
+        if (current_state != last_state) {
+            // Lock communication modes during active flight (powered flight through drogue descent)
+            if (current_state == ARMED_FLIGHT_STATE::POWERED_FLIGHT) {
+                comm_manager.lockCommunicationMode(true);
+                debugln("[FLIGHT STATE] Communication modes locked for flight");
+            }
+            // Unlock after main chute deployment when flight is essentially over
+            else if (current_state == ARMED_FLIGHT_STATE::MAIN_DESCENT && 
+                     last_state != ARMED_FLIGHT_STATE::MAIN_DESCENT) {
+                comm_manager.lockCommunicationMode(false);
+                debugln("[FLIGHT STATE] Communication modes unlocked after main deployment");
+            }
+            
+            last_state = current_state;
+        }
+        
         switch (current_state) {
             // PRE_FLIGHT_GROUND
             case ARMED_FLIGHT_STATE::PRE_FLIGHT_GROUND:
@@ -1116,15 +1183,27 @@ void debugToTerminalTask(void* pvParameters){
                 telemetry_received_packet.battery_voltage,  // 21 - battery voltage
                 telemetry_received_packet.wifi_rssi);       // 22 - RSSI from telemetry packet
         
-        // BEACON TRANSMISSION POINT - only send when in beacon mode and armed (or test mode)
-        if (use_beacon_mode && (is_system_armed || TEST)) {
-            transmitter.sendBeacon(telemetry_packet_buffer, strlen(telemetry_packet_buffer));
-            debugln("[BEACON TX] " + String(telemetry_packet_buffer));
-        } else if (use_beacon_mode) {
-            debugln("[BEACON DEBUG] " + String(telemetry_packet_buffer));
-        } else {
-            debugln("[MQTT DEBUG] " + String(telemetry_packet_buffer));
+        // 🔥 UPDATE GLOBAL TELEMETRY BUFFER for seamless mode switching
+        updateGlobalTelemetryBuffer(telemetry_packet_buffer);
+        
+        // Only transmit via beacon if beacon mode is active and MQTT mode is NOT
+        bool beacon_success = false;
+        if (comm_manager.isBeaconActive() && !comm_manager.isMQTTActive()) {
+            if (is_system_armed || TEST) {
+                beacon_success = transmitter.sendBeacon(telemetry_packet_buffer, strlen(telemetry_packet_buffer));
+                if (beacon_success) {
+                    debugln("[BEACON TX] " + String(telemetry_packet_buffer));
+                } else {
+                    debugln("[BEACON TX] Failed to send beacon");
+                }
+            } else {
+                debugln("[BEACON DEBUG] " + String(telemetry_packet_buffer));
+                beacon_success = true; // Not a failure, just not sending due to arm state
+            }
         }
+        
+        // Update communication manager with beacon transmission status
+        comm_manager.updateTransmissionStatus(false, beacon_success);
         
         vTaskDelay(CONSUME_TASK_DELAY / portTICK_PERIOD_MS);
     }
@@ -1198,19 +1277,34 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
                 telemetry_received_packet.battery_voltage,  // 21 - battery voltage
                 telemetry_received_packet.wifi_rssi);       // 22 - RSSI from telemetry packet
 
-        // MQTT transmission - only send when armed (or in test mode)
-        if (MQTT) {
+        // 🔥 UPDATE GLOBAL TELEMETRY BUFFER for seamless mode switching
+        updateGlobalTelemetryBuffer(telemetry_packet_buffer);
+
+        // 🔥 ISOLATED MQTT TRANSMISSION - Only transmit via MQTT when MQTT mode is active
+        bool mqtt_success = false;
+        if (comm_manager.isMQTTActive() && !comm_manager.isBeaconActive()) {
+            // Check WiFi connection status for MQTT mode
+            if (!WiFi.isConnected()) {
+                debugln("[MQTT TX] WiFi not connected - transmission failed");
+                mqtt_success = false;
+            }
             // Only send data if armed OR if in test mode
-            if(is_system_armed || TEST) {
-                if(client.publish(MQTT_TELEMETRY_TOPIC, telemetry_packet_buffer)) {
-                    debugln("[MQTT TX] Data sent successfully");
+            else if (is_system_armed || TEST) {
+                if (client.publish(MQTT_TELEMETRY_TOPIC, telemetry_packet_buffer)) {
+                    debugln("[MQTT TX] " + String(telemetry_packet_buffer));
+                    mqtt_success = true;
                 } else {
-                    debugln("[MQTT TX] Failed to send data");
+                    debugln("[MQTT TX] Failed to publish data");
+                    mqtt_success = false;
                 }
             } else {
-                debugln("[MQTT DEBUG] Data not sent - rocket not armed (set TEST=1 to override)");
+                debugln("[MQTT DEBUG] " + String(telemetry_packet_buffer));
+                mqtt_success = true; // Not a failure, just not sending due to arm state
             }
         }
+        
+        // Update communication manager with MQTT transmission status
+        comm_manager.updateTransmissionStatus(mqtt_success, false);
 
         vTaskDelay(CONSUME_TASK_DELAY/ portTICK_PERIOD_MS);
     }
@@ -1499,28 +1593,23 @@ void xCreateAllTasks() {
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create readAltimeterTask\r\n");
         }
 
-    // Create ESP-NOW command task only in beacon mode to avoid WiFi interface conflicts
-    if (use_beacon_mode) {
-        BaseType_t ec = xTaskCreatePinnedToCore(
-            espnowCommandTask,
-            "ESPNowCmd",
-            STACK_SIZE * 6,  // Increased from 2 to 6 to prevent stack overflow
-            NULL,
-            2,
-            &espnowCommandTaskHandle,
-            1
-        );
+    // Create ESP-NOW command task - will be managed by communication manager
+    BaseType_t ec = xTaskCreatePinnedToCore(
+        espnowCommandTask,
+        "ESPNowCmd",
+        STACK_SIZE * 6,  // Increased from 2 to 6 to prevent stack overflow
+        NULL,
+        2,
+        &espnowCommandTaskHandle,
+        1
+    );
 
-        if (ec == pdPASS) {
-            debugln("[+]ESPNowCmd task created OK.");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]ESPNowCmd task created OK.\r\n");
-        } else {
-            debugln("[-]Failed to create ESPNowCmd task");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create ESPNowCmd task\r\n");
-        }
+    if (ec == pdPASS) {
+        debugln("[+]ESPNowCmd task created OK.");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]ESPNowCmd task created OK.\r\n");
     } else {
-        debugln("[i]ESPNowCmd task skipped - using MQTT mode");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[i]ESPNowCmd task skipped - MQTT mode\r\n");
+        debugln("[-]Failed to create ESPNowCmd task");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create ESPNowCmd task\r\n");
     }
 
         /* RECONNECT MQTT */
@@ -1601,15 +1690,15 @@ void setup() {
     debugln(F("=============================================="));
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==Initializing peripherals==\r\n");
     
-    // Initialize transmitter only in beacon mode to avoid WiFi interface conflicts
-    if (use_beacon_mode) {
-        transmitter.begin();
-        debugln("[+] ESP-NOW transmitter initialized for beacon mode");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "ESP-NOW transmitter initialized\r\n");
-    } else {
-        debugln("[i] ESP-NOW transmitter skipped - using MQTT mode");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "ESP-NOW transmitter skipped - MQTT mode\r\n");
-    }
+    // Initialize transmitter for beacon capability (will be managed by communication manager)
+    transmitter.begin();
+    debugln("[+] ESP-NOW transmitter initialized for communication manager");
+    SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "ESP-NOW transmitter initialized for comm manager\r\n");
+    
+    // 🔥 INITIALIZE COMMUNICATION MANAGER for isolated mode control
+    comm_manager.init();
+    debugln("[+] Communication Manager initialized with isolated mode control");
+    SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Communication Manager initialized\r\n");
     
     uint8_t bmp_init_state = BMPInit();
     uint8_t imu_init_state = imu.init();
@@ -1664,6 +1753,17 @@ void setup() {
     // TODO: if toggle pin in RUN mode, set to wait for arming 
 
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "RUN MODE\r\n");
+    
+    debugln();
+    debugln(F("=============================================="));
+    debugln(F("===== INITIALIZING COMMUNICATION MANAGER ===="));
+    debugln(F("=============================================="));
+    SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==INITIALIZING COMMUNICATION MANAGER==\r\n");
+    
+    // Initialize the smart communication manager
+    comm_manager.init();
+    debugln("[+] Communication Manager initialized");
+    SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+] Communication Manager initialized\r\n");
 
     /* mode 0 resets the system log file by clearing all the current contents */
     // system_logger.logToFile(SPIFFS, 0, rocket_ID, level, system_log_file, "Game Time!"); // TODO: DEBUG
@@ -1773,6 +1873,12 @@ void loop() {
         }
         client.loop();
     }
+
+    /* Update communication manager */
+    comm_manager.update();
+    
+    /* Handle incoming commands from serial */
+    handleIncomingCommands();
 
     /* check if the transmitter is armed */
     // Remove this line as it was overriding operation_mode set by ARM/DISARM commands

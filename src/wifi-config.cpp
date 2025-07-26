@@ -59,7 +59,7 @@ uint8_t WIFIConfig::WifiConnect(bool enable_ap_mode, const uint8_t* rocket_mac) 
         WiFiManager wm;
 
         // 🔄 FACTORY RESET: Uncomment the line below to completely forget WiFi credentials
-        // wm.resetSettings(); // ⚠️ UNCOMMENT THIS LINE TO FORGET WIFI & FORCE RECONFIGURATION
+        //wm.resetSettings(); // ⚠️ UNCOMMENT THIS LINE TO FORGET WIFI & FORCE RECONFIGURATION
 
         // Create custom parameters for base station configuration (with valid defaults)
         WiFiManagerParameter custom_basestation_ip("basestation_ip", "Base Station IP Address", basestation_ip, 16);

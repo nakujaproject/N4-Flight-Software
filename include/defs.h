@@ -11,11 +11,46 @@
 /*!< To select the telemetry transfer method used */
 /*!< note: u can use wifi and xbee at the same time, so both of these handles can be set */
 /*!< at the same time */
-#define MQTT 0                                 /*!< set this to 1 if using MQTT for telemetry transfer. Set to 0 if you want to use beacons*/
-#define TEST 0                                 /*!< set to 1 to enable test mode - allows data transmission even when disarmed */
+#define MQTT 1                                 /*!< Default to MQTT mode - can be overridden dynamically */
+#define TEST 1                                 /*!< set to 1 to enable test mode - allows data transmission even when disarmed */
 #define XBEE 0                                 /*!< set to 1 if using XBEE for telemetry transfer */
 
-extern bool use_beacon_mode;
+// 🔥 DYNAMIC COMMUNICATION MODE CONTROL
+extern bool use_mqtt_mode;                     /*!< Enable MQTT transmission */
+extern bool use_beacon_mode;                   /*!< Enable beacon transmission */
+extern bool auto_fallback_enabled;             /*!< Enable automatic fallback to beacon when MQTT fails */
+extern bool communication_mode_locked;         /*!< Lock mode changes during critical flight phases */
+extern bool is_system_armed;                   /*!< Global armed state for both MQTT and beacon modes */
+
+// Communication failure detection
+#define MQTT_FAILURE_TIMEOUT 10000             /*!< 10 seconds without MQTT success = failure */
+#define MQTT_RETRY_ATTEMPTS 3                  /*!< Number of MQTT retry attempts before fallback */
+#define AUTO_FALLBACK_HYSTERESIS 30000         /*!< 30 seconds before auto-switching back to MQTT */
+
+// Command definitions for dynamic mode switching
+#define CMD_MQTT_MODE "MQTT_MODE"
+#define CMD_BEACON_MODE "BEACON_MODE"
+#define CMD_DUAL_MODE "DUAL_MODE"              /*!< Enable both MQTT and beacon simultaneously */
+#define CMD_AUTO_FALLBACK_ON "AUTO_FALLBACK_ON"
+#define CMD_AUTO_FALLBACK_OFF "AUTO_FALLBACK_OFF"
+#define CMD_GET_MODE "GET_MODE"
+#define CMD_ARM "ARM"
+#define CMD_DISARM "DISARM"
+#define CMD_RESET "RESET"
+
+// Communication status tracking structure
+typedef struct {
+    uint32_t last_mqtt_success;
+    uint32_t last_beacon_success;
+    uint32_t mqtt_failure_count;
+    uint32_t beacon_failure_count;
+    bool mqtt_connection_stable;
+    bool beacon_connection_stable;
+    const char* current_mode;
+    const char* last_command_source;
+} communication_status_t;
+
+extern communication_status_t comm_status;
 #define BAUDRATE        115200
 #define GPS_BAUD_RATE   9600                     /*!< baud rate for the GPS module. Change accordingly */
 #define XBEE_BAUD_RATE  9600                    /*!< baud rate for the XBEE HP module. Change accordingly */
@@ -75,6 +110,17 @@ extern volatile uint8_t MAIN_CHUTE_EJECT_FLAG;     /*!< Set to 1 when main chute
 #define DROGUE_EJECTION_HEIGHT  1000             /*!< height to eject the drogue chute - ideally it should be at apogee  */
 #define SEA_LEVEL_PRESSURE 101325            /*!< sea level pressure to be used for altitude calculations */
 #define BASE_ALTITUDE 1417                   /*!< this value is the altitude at rocket launch site - adjust accordingly */
+
+// MAC address declarations for global access
+#include <stdint.h>
+extern const uint8_t ROCKET_MAC[6];
+extern const uint8_t BASE_MAC[6];
+
+// Externs for communication manager to restore WiFi/MQTT
+class WIFIConfig;
+extern WIFIConfig wifi_config;
+extern void MQTTInit(const char* broker_IP, int broker_port);
+extern void MQTT_Reconnect();
 
 /*!<  tasks constants */
 #define STACK_SIZE 2048                     /*!< task stack size in words - increased from 1024 to prevent stack overflows */
