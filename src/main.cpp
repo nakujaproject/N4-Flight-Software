@@ -79,7 +79,10 @@ void espnowCommandTask(void* pvParameters);
 
 // MAC address definitions (now defined here for global access)
 const uint8_t ROCKET_MAC[6] = {0x08, 0xd1, 0xf9, 0x15, 0x9c, 0x40};
-const uint8_t BASE_MAC[6]   = {0xf4, 0x65, 0x0b, 0x48, 0x5c, 0xf8};
+//const uint8_t BASE_MAC[6]   = {0xf4, 0x65, 0x0b, 0x48, 0x5c, 0xf8};
+const uint8_t BASE_MAC[6]   = {0x10, 0x06, 0x1c, 0xa6, 0x18, 0x20};
+
+
 
 // 🔥 GLOBAL COMMUNICATION MANAGER - External declaration (defined in communication_manager.cpp)
 extern CommunicationManager comm_manager;
