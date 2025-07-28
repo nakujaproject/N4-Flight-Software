@@ -1282,7 +1282,7 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
 
         // 🔥 ISOLATED MQTT TRANSMISSION - Only transmit via MQTT when MQTT mode is active
         bool mqtt_success = false;
-        if (comm_manager.isMQTTActive() && !comm_manager.isBeaconActive()) {
+        if (comm_manager.isMQTTActive()) {
             // Check WiFi connection status for MQTT mode
             if (!WiFi.isConnected()) {
                 debugln("[MQTT TX] WiFi not connected - transmission failed");
@@ -1302,7 +1302,6 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
                 mqtt_success = true; // Not a failure, just not sending due to arm state
             }
         }
-        
         // Update communication manager with MQTT transmission status
         comm_manager.updateTransmissionStatus(mqtt_success, false);
 
