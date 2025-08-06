@@ -48,12 +48,6 @@ public:
     void setBeaconMode(String source);
     
     /**
-     * @brief Enable both MQTT and Beacon modes simultaneously
-     * @param source Source of the command
-     */
-    void setDualMode(String source);
-    
-    /**
      * @brief Report current communication mode and status
      */
     void reportCurrentMode();

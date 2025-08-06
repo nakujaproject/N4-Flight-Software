@@ -73,19 +73,6 @@ void chutesInit();
 void espnowCommandTask(void* pvParameters);
 SDLogger sdLogger(SD_CS_PIN);
 
-
-
-// // MAC address definitions (now defined here for global access)
-// const uint8_t ROCKET_MAC[6] = {0x10, 0x06, 0x1c, 0xa6, 0x11, 0xf0};
-// //const uint8_t BASE_MAC[6]   = {0xf4, 0x65, 0x0b, 0x48, 0x5c, 0xf8};
-// const uint8_t BASE_MAC[6]   = {0x10, 0x06, 0x1c, 0xa6, 0x11, 0xf0};
-// MAC address definitions (now defined here for global access)
-const uint8_t ROCKET_MAC[6] = {0x10, 0x06, 0x1c, 0xa6, 0x18, 0x20};
-//const uint8_t BASE_MAC[6]   = {0xf4, 0x65, 0x0b, 0x48, 0x5c, 0xf8};
-const uint8_t BASE_MAC[6]   = {0x10, 0x06, 0x1c, 0xa6, 0x11, 0xf0};
-
-
-
 // 🔥 GLOBAL COMMUNICATION MANAGER - External declaration (defined in communication_manager.cpp)
 extern CommunicationManager comm_manager;
 
@@ -260,13 +247,19 @@ volatile uint8_t MAIN_CHUTE_EJECT_FLAG = 0;
 * @brief create dynamic WIFI
 */
 void initDynamicWIFI() {
-    uint8_t wifi_result = wifi_config.WifiConnect(use_beacon_mode, ROCKET_MAC);
-    if(wifi_result) {
-        debugln("Wifi config OK!");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Wifi config OK!\r\n");
+    // 🔥 STRICT BEACON MODE - Only initialize WiFi if MQTT flag is enabled
+    if (MQTT) {
+        uint8_t wifi_result = wifi_config.WifiConnect(use_beacon_mode, ROCKET_MAC);
+        if(wifi_result) {
+            debugln("Wifi config OK!");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Wifi config OK!\r\n");
+        } else {
+            debugln("Wifi config failed");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Wifi config failed\r\n");
+        }
     } else {
-        debugln("Wifi config failed");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Wifi config failed\r\n");
+        debugln("MQTT disabled - WiFi not initialized (Strict Beacon Mode)");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "MQTT disabled - WiFi not initialized (Strict Beacon Mode)\r\n");
     }
 }
 

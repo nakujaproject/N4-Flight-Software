@@ -11,11 +11,13 @@
 /*!< To select the telemetry transfer method used */
 /*!< note: u can use wifi and xbee at the same time, so both of these handles can be set */
 /*!< at the same time */
-#define MQTT 1                                 /*!< Default to MQTT mode - can be overridden dynamically */
+#define MQTT 1                                 /*!< Set to 1 for normal mode (MQTT + Beacon switching), 0 for STRICT BEACON MODE (no WiFi/MQTT) */
 #define TEST 1                                /*!< set to 1 to enable test mode - allows data transmission even when disarmed */
 #define XBEE 0                               /*!< set to 1 if using XBEE for telemetry transfer */
 
-// 🔥 DYNAMIC COMMUNICATION MODE CONTROL
+// 🔥 STRICT BEACON MODE CONTROL
+// When MQTT = 0: Only beacon communication, no WiFi AP, no MQTT switching allowed
+// When MQTT = 1: Normal dynamic switching between MQTT and beacon modes
 extern bool use_mqtt_mode;                       /*!< Enable MQTT transmission */
 extern bool use_beacon_mode;                    /*!< Enable beacon transmission */
 extern bool auto_fallback_enabled;             /*!< Enable automatic fallback to beacon when MQTT fails */
@@ -30,7 +32,6 @@ extern bool is_system_armed;                 /*!< Global armed state for both MQ
 // Command definitions for dynamic mode switching
 #define CMD_MQTT_MODE "MQTT_MODE"
 #define CMD_BEACON_MODE "BEACON_MODE"
-#define CMD_DUAL_MODE "DUAL_MODE"              /*!< Enable both MQTT and beacon simultaneously */
 #define CMD_AUTO_FALLBACK_ON "AUTO_FALLBACK_ON"
 #define CMD_AUTO_FALLBACK_OFF "AUTO_FALLBACK_OFF"
 #define CMD_GET_MODE "GET_MODE"
@@ -113,9 +114,18 @@ extern volatile uint8_t MAIN_CHUTE_EJECT_FLAG;     /*!< Set to 1 when main chute
 
 // MAC address declarations for global access
 #include <stdint.h>
-extern const uint8_t ROCKET_MAC[6];
-extern const uint8_t BASE_MAC[6];
 
+// MAC address definitions (now defined here for global access)
+// Alternative MAC addresses (commented for reference):
+// const uint8_t ROCKET_MAC[6] = {0x10, 0x06, 0x1c, 0xa6, 0x11, 0xf0};
+// const uint8_t BASE_MAC[6]   = {0xf4, 0x65, 0x0b, 0x48, 0x5c, 0xf8};
+// const uint8_t BASE_MAC[6]   = {0x10, 0x06, 0x1c, 0xa6, 0x11, 0xf0};
+
+// Current active MAC addresses:
+//const uint8_t ROCKET_MAC[6] = {0x10, 0x06, 0x1c, 0xa6, 0x18, 0x20};
+//const uint8_t BASE_MAC[6]   = {0x10, 0x06, 0x1c, 0xa6, 0x11, 0xf0};
+const uint8_t ROCKET_MAC[6] = {0x10, 0x06, 0x1c, 0xa6, 0x11, 0xf0};
+const uint8_t BASE_MAC[6]   = {0x08, 0xd1, 0xf9, 0x15, 0xa2, 0x0c};
 // Externs for communication manager to restore WiFi/MQTT
 class WIFIConfig;
 extern WIFIConfig wifi_config;

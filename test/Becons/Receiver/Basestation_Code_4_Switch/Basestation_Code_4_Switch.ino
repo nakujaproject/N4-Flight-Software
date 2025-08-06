@@ -4,9 +4,12 @@
 #include <ArduinoJson.h>
 
 // Configuration
-uint8_t rocket_mac[] =  {0x10, 0x06, 0x1c, 0xa6, 0x18, 0x20}; // Rocket MAC
-uint8_t my_mac[] = {0x10, 0x06, 0x1c, 0xa6, 0x11, 0xf0}; // Base MAC
+//uint8_t rocket_mac[] =  {0x10, 0x06, 0x1c, 0xa6, 0x18, 0x20}; // Rocket MAC
+//uint8_t my_mac[] = {0x10, 0x06, 0x1c, 0xa6, 0x11, 0xf0}; // Base MAC
 //10:06:1c:a6:11:f0
+
+uint8_t rocket_mac[] = {0x10, 0x06, 0x1c, 0xa6, 0x11, 0xf0}; // Rocket MAC
+uint8_t my_mac[] = {0x08, 0xd1, 0xf9, 0x15, 0xa2, 0x0c}; // Base MAC
 
 
 //uint8_t my_mac[] = {0xf4, 0x65, 0x0b, 0x48, 0x5c, 0xf8}; // Base MAC
@@ -18,7 +21,7 @@ const uint32_t CONNECTION_TIMEOUT = 15000; // 15 seconds
 bool hasEverConnected = false;
 bool currentlyConnected = false;
 
-// Updated telemetry data structure to match flight computer's 22-field CSV
+// Updated telemetry data structure to match flight computer's 25-field CSV with Kalman filter outputs
 struct TelemetryData {
   uint32_t record_number;        // 0
   uint8_t operation_mode;        // 1
@@ -36,7 +39,9 @@ struct TelemetryData {
   uint8_t drogue_pin_state;      // 19: drogue pin state
   uint8_t main_chute_pin_state;  // 20: main chute pin state
   float battery_voltage;         // 21: battery voltage
-  // NO RSSI field - base station measures beacon RSSI separately
+  int32_t wifi_rssi;             // 22: RSSI from telemetry packet (flight computer sends 0 in beacon mode)
+  float kalman_altitude;         // 23: 2D Kalman filtered altitude
+  float kalman_vertical_velocity; // 24: 2D Kalman filtered vertical velocity
 };
 
 TelemetryData telemetry;
@@ -51,9 +56,9 @@ bool commandPending = false;
 uint32_t commandSentTime = 0;
 const uint32_t COMMAND_TIMEOUT = 5000; // 5 seconds
 
-// Function to parse 22-field CSV string (matches flight computer beacon output)
+// Function to parse 25-field CSV string (matches flight computer beacon output with Kalman filter data)
 bool parseCSV(const char* csv, TelemetryData& data) {
-  return sscanf(csv, "%lu,%hhu,%hhu,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%lu,%f,%f,%f,%f,%hhu,%hhu,%f",
+  return sscanf(csv, "%lu,%hhu,%hhu,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%lu,%f,%f,%f,%f,%hhu,%hhu,%f,%d,%f,%f",
                 &data.record_number,      // 0
                 &data.operation_mode,     // 1
                 &data.state,              // 2
@@ -69,7 +74,10 @@ bool parseCSV(const char* csv, TelemetryData& data) {
                 &data.velocity,                         // 18
                 &data.drogue_pin_state,                 // 19
                 &data.main_chute_pin_state,             // 20
-                &data.battery_voltage) == 22;           // 21 (NO RSSI)
+                &data.battery_voltage,                  // 21
+                &data.wifi_rssi,                        // 22 (flight computer sends 0 in beacon mode)
+                &data.kalman_altitude,                  // 23 - 2D Kalman filtered altitude
+                &data.kalman_vertical_velocity) == 25;  // 24 - 2D Kalman filtered vertical velocity
 }
 
 // Update connection status
@@ -119,6 +127,8 @@ void sendTelemetryJSON() {
   alt_data["temperature"] = telemetry.temperature;
   alt_data["AGL"] = telemetry.altitude_agl;
   alt_data["velocity"] = telemetry.velocity;
+  alt_data["kalman_altitude"] = telemetry.kalman_altitude;           // 2D Kalman filtered altitude
+  alt_data["kalman_vertical_velocity"] = telemetry.kalman_vertical_velocity; // 2D Kalman filtered vertical velocity
 
   JsonObject chute_state = doc.createNestedObject("chute_state");
   chute_state["pyro1_state"] = telemetry.drogue_pin_state;
@@ -177,7 +187,7 @@ void handleBeacon(const wifi_promiscuous_pkt_t* pkt) {
           lastOperationMode = telemetry.operation_mode;
         }
       } else {
-        sendLogMessage("ERROR", "Failed to parse 22-field CSV telemetry", "BaseStation");
+        sendLogMessage("ERROR", "Failed to parse 25-field CSV telemetry", "BaseStation");
       }
       break;
     }
@@ -249,12 +259,6 @@ void handleSerialCommands() {
       commandSentTime = millis();
       sendLogMessage("INFO", "Communication mode command: Switch to Beacon mode", "BaseStation");
     }
-    else if (command == "CMD_DUAL_MODE" || command == "DUAL_MODE" || command == "DUAL") {
-      lastCommand = "CMD_DUAL_MODE";
-      commandPending = true;
-      commandSentTime = millis();
-      sendLogMessage("INFO", "Communication mode command: Enable Dual mode", "BaseStation");
-    }
     else if (command == "CMD_AUTO_FALLBACK_ON" || command == "AUTO_FALLBACK_ON" || command == "AUTO_ON") {
       lastCommand = "CMD_AUTO_FALLBACK_ON";
       commandPending = true;
@@ -276,7 +280,7 @@ void handleSerialCommands() {
     else if (command == "HELP") {
       sendLogMessage("INFO", "Available commands:", "BaseStation");
       sendLogMessage("INFO", "Flight: ARM, DISARM, RESET", "BaseStation");
-      sendLogMessage("INFO", "Communication: MQTT, BEACON, DUAL, AUTO_ON, AUTO_OFF, STATUS", "BaseStation");
+      sendLogMessage("INFO", "Communication: MQTT, BEACON, AUTO_ON, AUTO_OFF, STATUS", "BaseStation");
     }
     else {
       sendLogMessage("WARNING", ("Unknown command: " + command + " (try HELP)").c_str(), "BaseStation");
@@ -310,9 +314,6 @@ void sendCommandToRocket() {
   else if (lastCommand == "CMD_BEACON_MODE") {
     result = esp_now_send(rocket_mac, (uint8_t*)"CMD_BEACON_MODE", 15);
   }
-  else if (lastCommand == "CMD_DUAL_MODE") {
-    result = esp_now_send(rocket_mac, (uint8_t*)"CMD_DUAL_MODE", 13);
-  }
   else if (lastCommand == "CMD_AUTO_FALLBACK_ON") {
     result = esp_now_send(rocket_mac, (uint8_t*)"CMD_AUTO_FALLBACK_ON", 20);
   }
@@ -337,7 +338,7 @@ void setup() {
   delay(1000);
 
   sendLogMessage("INFO", "🚀 N4 Base Station - Beacon Mode with Smart Commands", "BaseStation");
-  sendLogMessage("INFO", "📡 Supporting 22-field CSV beacon parsing", "BaseStation");
+  sendLogMessage("INFO", "📡 Supporting 25-field CSV beacon parsing with Kalman filter data", "BaseStation");
 
   WiFi.mode(WIFI_STA);
   esp_wifi_set_mac(WIFI_IF_STA, my_mac);
@@ -369,11 +370,11 @@ void setup() {
   esp_wifi_set_promiscuous_filter(&filter);
   esp_wifi_set_promiscuous_rx_cb(promiscuousRx);
 
-  sendLogMessage("INFO", "📡 22-field beacon parsing enabled", "BaseStation");
+  sendLogMessage("INFO", "📡 25-field beacon parsing enabled with Kalman filter data", "BaseStation");
   sendLogMessage("INFO", "🔧 Beacon RSSI measurement active", "BaseStation");
-  sendLogMessage("INFO", "🎯 Velocity & battery data from flight computer", "BaseStation");
+  sendLogMessage("INFO", "🎯 Velocity, battery & Kalman filter data from flight computer", "BaseStation");
   sendLogMessage("INFO", "🎛️ Smart command interface enabled", "BaseStation");
-  sendLogMessage("INFO", "Commands: ARM, DISARM, RESET, MQTT, BEACON, DUAL, AUTO_ON, AUTO_OFF, STATUS", "BaseStation");
+  sendLogMessage("INFO", "Commands: ARM, DISARM, RESET, MQTT, BEACON, AUTO_ON, AUTO_OFF, STATUS", "BaseStation");
 }
 
 void loop() {
@@ -405,6 +406,8 @@ void loop() {
       telemetry_info["battery_voltage"] = telemetry.battery_voltage;
       telemetry_info["velocity"] = telemetry.velocity;
       telemetry_info["altitude_agl"] = telemetry.altitude_agl;
+      telemetry_info["kalman_altitude"] = telemetry.kalman_altitude;
+      telemetry_info["kalman_vertical_velocity"] = telemetry.kalman_vertical_velocity;
       telemetry_info["operation_mode"] = telemetry.operation_mode;
       telemetry_info["state"] = telemetry.state;
     }
@@ -412,7 +415,8 @@ void loop() {
     statusDoc["waiting_for_commands"] = !commandPending;
     statusDoc["monitoring_active"] = true;
     statusDoc["beacon_mode_only"] = true;
-    statusDoc["csv_fields_expected"] = 22;
+    statusDoc["csv_fields_expected"] = 25;
+    statusDoc["kalman_filter_data"] = true;
     statusDoc["smart_commands_enabled"] = true;
     statusDoc["command_timeout_ms"] = COMMAND_TIMEOUT;
 
@@ -441,7 +445,7 @@ void loop() {
   }
 
   if (!hasEverConnected && millis() - lastStatusTime > 30000) {
-    sendLogMessage("INFO", "📡 Waiting for 22-field beacon transmissions...", "BaseStation");
+    sendLogMessage("INFO", "📡 Waiting for 25-field beacon transmissions with Kalman filter data...", "BaseStation");
     sendLogMessage("INFO", "Send ARM or STATUS command to establish communication", "BaseStation");
     lastStatusTime = millis();
   }
