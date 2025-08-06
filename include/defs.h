@@ -12,20 +12,20 @@
 /*!< note: u can use wifi and xbee at the same time, so both of these handles can be set */
 /*!< at the same time */
 #define MQTT 1                                 /*!< Default to MQTT mode - can be overridden dynamically */
-#define TEST 1                                 /*!< set to 1 to enable test mode - allows data transmission even when disarmed */
-#define XBEE 0                                 /*!< set to 1 if using XBEE for telemetry transfer */
+#define TEST 1                                /*!< set to 1 to enable test mode - allows data transmission even when disarmed */
+#define XBEE 0                               /*!< set to 1 if using XBEE for telemetry transfer */
 
 // 🔥 DYNAMIC COMMUNICATION MODE CONTROL
-extern bool use_mqtt_mode;                     /*!< Enable MQTT transmission */
-extern bool use_beacon_mode;                   /*!< Enable beacon transmission */
+extern bool use_mqtt_mode;                       /*!< Enable MQTT transmission */
+extern bool use_beacon_mode;                    /*!< Enable beacon transmission */
 extern bool auto_fallback_enabled;             /*!< Enable automatic fallback to beacon when MQTT fails */
-extern bool communication_mode_locked;         /*!< Lock mode changes during critical flight phases */
-extern bool is_system_armed;                   /*!< Global armed state for both MQTT and beacon modes */
+extern bool communication_mode_locked;        /*!< Lock mode changes during critical flight phases */
+extern bool is_system_armed;                 /*!< Global armed state for both MQTT and beacon modes */
 
 // Communication failure detection
-#define MQTT_FAILURE_TIMEOUT 10000             /*!< 10 seconds without MQTT success = failure */
+#define MQTT_FAILURE_TIMEOUT 10000              /*!< 10 seconds without MQTT success = failure */
 #define MQTT_RETRY_ATTEMPTS 3                  /*!< Number of MQTT retry attempts before fallback */
-#define AUTO_FALLBACK_HYSTERESIS 30000         /*!< 30 seconds before auto-switching back to MQTT */
+#define AUTO_FALLBACK_HYSTERESIS 30000        /*!< 30 seconds before auto-switching back to MQTT */
 
 // Command definitions for dynamic mode switching
 #define CMD_MQTT_MODE "MQTT_MODE"
@@ -164,4 +164,3 @@ const char MQTT_ARMING_TOPIC[30] = "n4/commands";             /* make this topic
 
 #define STATE_CHANGE_DELAY 20
 #endif // DEFS_H
-

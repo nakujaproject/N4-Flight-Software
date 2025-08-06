@@ -14,7 +14,7 @@
 #define LOGGER_H
 
 #include <Arduino.h>
-#include <SerialFlash.h>
+#include "CustomSerialFlash.h"
 #include "data_types.h"
 
 class DataLogger {

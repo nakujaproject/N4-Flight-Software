@@ -1,7 +1,3 @@
-
-
-
-
 #include "communication_manager.h"
 /**
  * @file main.cpp
@@ -28,7 +24,7 @@
 #include <esp_task_wdt.h>   // Watchdog timer functions
 #include "defs.h"           // misc defines
 #include "mpu.h"            // for reading MPU6050
-#include "SerialFlash.h"    // Handling external SPI flash memory
+#include "CustomSerialFlash.h"    // Handling external SPI flash memory
 #include "logger.h"         // system logging
 #include "data_types.h"     // definitions of data types used
 #include "states.h"         // state machine states
@@ -39,6 +35,7 @@
 #include "ring_buffer.h"    // for apogee detection
 #include "espnow_beacon_transmitter.h"
 #include "communication_manager.h"  // smart communication management
+#include "sd_logger.h" // SD- Card logging
 
 /**
  * flight states
@@ -74,13 +71,18 @@ void arm_pyros();
 void disarm_pyros();
 void chutesInit();   
 void espnowCommandTask(void* pvParameters);
+SDLogger sdLogger(SD_CS_PIN);
 
 
 
+// // MAC address definitions (now defined here for global access)
+// const uint8_t ROCKET_MAC[6] = {0x10, 0x06, 0x1c, 0xa6, 0x11, 0xf0};
+// //const uint8_t BASE_MAC[6]   = {0xf4, 0x65, 0x0b, 0x48, 0x5c, 0xf8};
+// const uint8_t BASE_MAC[6]   = {0x10, 0x06, 0x1c, 0xa6, 0x11, 0xf0};
 // MAC address definitions (now defined here for global access)
-const uint8_t ROCKET_MAC[6] = {0x08, 0xd1, 0xf9, 0x15, 0x9c, 0x40};
+const uint8_t ROCKET_MAC[6] = {0x10, 0x06, 0x1c, 0xa6, 0x18, 0x20};
 //const uint8_t BASE_MAC[6]   = {0xf4, 0x65, 0x0b, 0x48, 0x5c, 0xf8};
-const uint8_t BASE_MAC[6]   = {0x10, 0x06, 0x1c, 0xa6, 0x18, 0x20};
+const uint8_t BASE_MAC[6]   = {0x10, 0x06, 0x1c, 0xa6, 0x11, 0xf0};
 
 
 
@@ -178,6 +180,9 @@ unsigned long current_non_block_time = 0;
 unsigned long last_non_block_time = 0;
 bool buzz_state = 0;
 
+// 🔥 GLOBAL KALMAN FILTER OUTPUTS - Accessible by all tasks
+float AltitudeKalman = 0.0, VelocityVerticalKalman = 0.0;
+
 uint8_t mqtt_connect_flag;
 
 /* hardware init check - to pinpoint any hardware failure during setup */
@@ -218,7 +223,7 @@ volatile int32_t wifi_rssi = 0;
 
 /* Flight data logging */
 uint8_t flash_led_pin = 32;                  /*!< LED pin connected to indicate flash memory formatting  */
-char filename[] = "flight_data.txt";         /*!< data log filename - Filename must be less than 20 chars, including the file extension */
+char filename[] = "data_01.txt";         /*!< data log filename - Filename must be less than 20 chars, including the file extension */
 uint32_t FILE_SIZE_512K = 524288L;          /*!< 512KB */
 uint32_t FILE_SIZE_1M  = 1048576L;          /*!< 1MB */
 uint32_t FILE_SIZE_4M  = 4194304L;          /*!< 4MB */
@@ -226,16 +231,22 @@ SerialFlashFile file;                       /*!< object representing file object
 unsigned long long previous_log_time = 0;   /*!< The last time we logged data to memory */
 unsigned long long current_log_time = 0;    /*!< What is the processor time right now? */
 uint16_t log_sample_interval = 5;          /*!< After how long should we sample and log data to flash memory? */
-
+/*/For data logging to disable both 
+SD-CARD and flash memory before 
+selecting the one data has to be logged to */
+void disableAllDevices() {
+  digitalWrite(flash_cs_pin, HIGH);
+  digitalWrite(SD_CS_PIN, HIGH);
+}
 /* create flash memory log object */
-DataLogger data_logger(flash_cs_pin, RED_LED_PIN, filename, file, FILE_SIZE_4M);
+DataLogger data_logger(flash_cs_pin, RED_LED_PIN, filename, file, FILE_SIZE_512K);
 
 /* position integration variables */
 long long current_time = 0;
 long long previous_time = 0;
 
 /* To store the main telemetry packet being sent over MQTT */
-char telemetry_packet_buffer[256];
+char telemetry_packet_buffer[150];
 ring_buffer altitude_ring_buffer;
 double baseline = 0.0; // to store baseline pressure from the altimeter
 float curr_val;
@@ -432,6 +443,7 @@ void mqtt_command_processor(const char* topic, const char* payload) {
  TaskHandle_t flightStateCallbackTaskHandle;
  TaskHandle_t MQTT_TransmitTelemetryTaskHandle;
  TaskHandle_t kalmanFilterTaskHandle;
+ 
  TaskHandle_t debugToTerminalTaskHandle;
  TaskHandle_t logToMemoryTaskHandle;
  TaskHandle_t opModeIndicateTaskHandle;
@@ -603,6 +615,8 @@ QueueHandle_t log_to_mem_queue_handle;
 QueueHandle_t check_state_queue_handle;
 QueueHandle_t debug_to_term_queue_handle;
 QueueHandle_t kalman_filter_queue_handle;
+QueueHandle_t kalman2d_input_queue_handle;
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////// ACCELERATION AND ROCKET ATTITUDE DETERMINATION /////////////////
@@ -618,10 +632,11 @@ QueueHandle_t kalman_filter_queue_handle;
  *******************************************************************************/
 void readAccelerationTask(void* pvParameter) {
     telemetry_type_t acc_data_lcl;
+    static uint32_t record_counter = 0; // Reset to 0 on each reboot
 
     while(1) {
         acc_data_lcl.operation_mode = operation_mode;
-        acc_data_lcl.record_number++;
+        acc_data_lcl.record_number = ++record_counter; // Use pre-increment for proper counting
         acc_data_lcl.state = current_state;
         acc_data_lcl.alt_data.rel_altitude = altimeter_packet.rel_altitude;
         acc_data_lcl.drogue_pin_state = drogue_pin_state;
@@ -647,12 +662,17 @@ void readAccelerationTask(void* pvParameter) {
         acc_data_lcl.acc_data.pitch = imu.getPitch();
         acc_data_lcl.acc_data.roll = imu.getRoll();
         
+        // 🔥 SYNCHRONIZED KALMAN DATA - Include latest Kalman filter results in all telemetry packets
+        acc_data_lcl.alt_data = altimeter_packet; // Copy entire altimeter data including Kalman results
+        
         // Send to queues for other tasks
         xQueueSend(log_to_mem_queue_handle, &acc_data_lcl, 0);
         xQueueSend(check_state_queue_handle, &acc_data_lcl, 0);
         xQueueSend(debug_to_term_queue_handle, &acc_data_lcl, 0);
+        //Testing to be commented out
+        //xQueueSend(telemetry_data_queue_handle, &acc_data_lcl, 0);
 
-        // MQTT transmission (if enabled) - only send to queue when armed or in test mode
+        //MQTT transmission (if enabled) - only send to queue when armed or in test mode
         if (MQTT) {
             // 🔥 ENHANCED DATA CONTINUITY - Always queue data for MQTT task when MQTT mode is active
             if (comm_manager.isMQTTActive()) {
@@ -661,7 +681,7 @@ void readAccelerationTask(void* pvParameter) {
             }
         }
         
-        vTaskDelay(CONSUME_TASK_DELAY/ portTICK_PERIOD_MS);
+        vTaskDelay(20/ portTICK_PERIOD_MS);
     }
 
 }
@@ -703,10 +723,11 @@ double altimeter_get_pressure()
 // /*!****************************************************************************
 //  * @brief Read atm pressure data from the barometric sensor onboard
 //  *******************************************************************************/
+
+
+float estimatedAltitude = 100;
 void readAltimeterTask(void* pvParameters) {
     telemetry_type_t alt_data_lcl;
-    static double previous_altitude = 0.0;
-    static unsigned long previous_time = 0;
 
     while(1) {
 
@@ -714,26 +735,31 @@ void readAltimeterTask(void* pvParameters) {
         P = altimeter_get_pressure();
         a = altimeter.altitude(P, baseline);
         
-        // Calculate velocity (altitude change over time)
-        unsigned long current_time = millis();
-        if (previous_time > 0) {
-            double time_diff = (current_time - previous_time) / 1000.0; // Convert to seconds
-            if (time_diff > 0) {
-                altimeter_packet.velocity = (a - previous_altitude) / time_diff; // m/s
-            }
-        }
-        previous_altitude = a;
-        previous_time = current_time;
+        //a = 100 + ((rand() % 2001 - 1000) / 100.0); // 100 ± 10m noise
+        
+        //Serial.print("\nRaw Alt"); Serial.print(a);Serial.print("\nRaw Alt");
+        estimatedAltitude = a;
+        //altimeter_packet.filtered_altitude_1d = kalmanFilter(a);
+        float filtered_alt = kalmanFilter(a);
+        altimeter_packet.filtered_altitude_1d = filtered_alt;
+        xQueueSend(kalman2d_input_queue_handle, &filtered_alt, 0);  // 👈 send to 2D filter
 
+        //Serial.print("\n");Serial.print("Raw Altitude");Serial.print(a);Serial.print("\n");
         /* send to altimeter global packet */
         altimeter_packet.temperature = altimeter_temperature;
         altimeter_packet.pressure = P;
         altimeter_packet.rel_altitude = a;
         
-        /* CRITICAL: Add task delay to yield control and prevent watchdog timeout */
-        vTaskDelay(CONSUME_TASK_DELAY / portTICK_PERIOD_MS);
+        // Update global altimeter packet with latest Kalman filter results
+        // Note: These values are updated by taskKalman2D, this ensures they're always available
+        altimeter_packet.kalman_altitude = AltitudeKalman;
+        altimeter_packet.kalman_vertical_velocity = VelocityVerticalKalman;
+        
+        //vTaskDelay(CONSUME_TASK_DELAY / portTICK_PERIOD_MS);
+        vTaskDelay(20 / portTICK_PERIOD_MS);
     }
 }
+ 
 
 // //Uncomment me to simulate altimeter data
 // void readAltimeterTask(void* pvParameters) {
@@ -834,15 +860,195 @@ void readGPSTask(void* pvParameters){
  * @brief Kalman filter estimated value calculation
  * 
  */
-float kalmanFilter(float z) {
-    float estimated_altitude_pred = estimated_altitude;
-    float error_covariance_pred = error_covariance_bmp + process_variance_bmp;
-    kalman_gain_bmp = error_covariance_pred / (error_covariance_pred + measurement_variance_bmp);
-    estimated_altitude = estimated_altitude_pred + kalman_gain_bmp * (z - estimated_altitude_pred);
-    error_covariance_bmp = (1 - kalman_gain_bmp) * error_covariance_pred;
+// float kalmanFilter(float z) {
+//     float estimated_altitude_pred = estimated_altitude;
+//     float error_covariance_pred = error_covariance_bmp + process_variance_bmp;
+//     kalman_gain_bmp = error_covariance_pred / (error_covariance_pred + measurement_variance_bmp);
+//     estimated_altitude = estimated_altitude_pred + kalman_gain_bmp * (z - estimated_altitude_pred);
+//     error_covariance_bmp = (1 - kalman_gain_bmp) * error_covariance_pred;
 
-    return estimated_altitude;
+//     return estimated_altitude;
+// }
+BLA::Matrix<2,2> F, P, Q, I;
+BLA::Matrix<2,1> G, S, K;
+BLA::Matrix<1,2> H;
+BLA::Matrix<1,1> R, L, inv_L, Acc, M;
+
+extern float estimatedAltitude;
+float timeStep = 0.003; // 3ms time step for 2D Kalman filter (matches task delay)
+const int ledPin= 25;
+unsigned long timer = 0;
+
+float errorCovariance_bmp = 1.0;
+float processVariance_bmp = 0.001;
+float measurementVariance_bmp = 0.1;
+float kalmanGain_bmp;
+
+
+  void init_kalman_matrices() {
+  F = {1, 0.0034, 0, 1};
+  G = {0.5 * 0.003 * 0.003, 0.003};
+  H = {1, 0};
+  I = {1, 0, 0, 1};
+  Q = G * ~G * 4.0f * 4.0f;
+  R = {0.3 * 0.3};
+  P = {0, 0, 0, 0};
+  S = {0, 0};
+  }
+// Apply Kalman filter to new altitude measurements
+float kalmanFilter(float z) {
+  float estimatedAltitude_pred = estimatedAltitude;
+  float errorCovariance_pred = errorCovariance_bmp + processVariance_bmp;
+  kalmanGain_bmp = errorCovariance_pred / (errorCovariance_pred + measurementVariance_bmp);
+  estimatedAltitude = estimatedAltitude_pred + kalmanGain_bmp * (z - estimatedAltitude_pred);
+  errorCovariance_bmp = (1 - kalmanGain_bmp) * errorCovariance_pred;
+
+  return estimatedAltitude;
 }
+// void taskKalman2D(void *pvParameters) {
+//     Serial.println("📡 Kalman2D Task Started");
+//     telemetry_type_t input_data;
+//     telemetry_type_t telemetry_data;
+//     telemetry_type_t acc_data_lcl;
+//     while (true) {
+//         //Serial.println("📡 Kalman2D Task Started in loop");
+     
+
+//     timer = millis();
+
+//     // Read raw acceleration and gyroscope data
+    
+
+
+//     // Calculate tilt-adjusted AccZInertial
+//     // AngleRoll = atan2(a.acceleration.y, sqrt(a.acceleration.x * a.acceleration.x + (a.acceleration.z+1.0) * a.acceleration.z)) * 180 / PI;
+//     // AnglePitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + (a.acceleration.z+1.0)* a.acceleration.z)) * 180 / PI;
+//     // //Gravitational acceleration is in the downward direction and is taken as positive ,since we are moving upwards, we need to invert the sign so that g is negative
+//     // AccZInertial = -((-sin(AnglePitch * (PI / 180)) * a.acceleration.x +
+//     //         cos(AnglePitch * (PI / 180)) * sin(AngleRoll * (PI / 180)) * a.acceleration.y +
+//     //         cos(AnglePitch * (PI / 180)) * cos(AngleRoll * (PI / 180)) * a.acceleration.z) - 8.93);//should be -9.81 , taken as 9 to account for error
+//     // AccZInertial_g = AccZInertial / 9.81;
+//     float AccYInertial = acc_data_lcl.acc_data.az-1.03;
+//     float AccYInertial_g = AccYInertial / 9.81;
+//     // Apply 2D Kalman filter
+//     Acc = {AccYInertial};
+//     //Acc= 0 ;
+//     S = F * S + G * Acc;
+//     P = F * P * ~F + Q;
+//     L = H * P * ~H + R;
+//     inv_L = Inverse(L);
+//     K = P * ~H * inv_L;
+//     float input_alt;
+//     if (xQueueReceive(kalman2d_input_queue_handle, &input_alt, 0) == pdTRUE) {
+//     M = {input_alt};  
+//     }
+
+    
+//     S = S + K * (M - H * S);
+//     AltitudeKalman = S(0, 0);
+//     VelocityVerticalKalman = S(1, 0);
+
+//     altimeter_packet.kalman_altitude = AltitudeKalman;
+//     altimeter_packet.kalman_vertical_velocity = VelocityVerticalKalman;
+//     P = (I - K * H) * P;
+   
+//     telemetry_data.alt_data.kalman_altitude = altimeter_packet.kalman_altitude;
+//     telemetry_data.alt_data.kalman_vertical_velocity = altimeter_packet.kalman_vertical_velocity;
+
+//      // After updating altimeter_packet.kalman_altitude and altimeter_packet.kalman_vertical_velocity
+
+//    telemetry_type_t telemetry_data;
+//    telemetry_data.alt_data = altimeter_packet; // Copy all altimeter data, including filtered values
+// // Fill other fields as needed (accel, gyro, gps, etc.)
+
+//    xQueueSend(debug_to_term_queue_handle, &telemetry_data, 0); // Or your actual output queue
+
+
+    
+//     // Serial output
+//     digitalWrite(ledPin,HIGH);
+//     //Serial.println("📡 Kalman2D Task Running");
+
+//     // Serial.print(" Raw acceleration:");Serial.print(az);Serial.print("\n");
+//     // Serial.print("accleration in z direction:");Serial.print(AccZInertial);Serial.print("\n");
+//     // Serial.print("Raw Altitude:");Serial.print(estimatedAltitude);Serial.print("\n");
+//     //Serial.print("Filtered Altitude:"); Serial.print(AltitudeKalman); Serial.print("\n");
+//     // Serial.print("VerticalVelocity:"); Serial.print(VelocityVerticalKalman); Serial.print("\n");
+//     //Serial.print("AccZInertial (m/s²):"); Serial.print(AccYInertial); Serial.print("\n");
+//     //Serial.print("AccZInertial (g):"); Serial.print(AccYInertial_g); Serial.print("\n");
+//      vTaskDelay((timeStep * 1000) / portTICK_PERIOD_MS);
+//     }
+   
+//     }
+
+
+
+
+void taskKalman2D(void *pvParameters) {
+    float input_altitude;
+    telemetry_type_t acc_data_lcl; // For acceleration data access
+    
+    while (true) {
+        // Wait for filtered altitude data from the readAltimeterTask
+        if (xQueueReceive(kalman2d_input_queue_handle, &input_altitude, portMAX_DELAY) == pdTRUE) {
+            // We need acceleration data for the 2D Kalman filter
+            // Read the latest acceleration data (non-blocking)
+            if (xQueuePeek(debug_to_term_queue_handle, &acc_data_lcl, 0) == pdTRUE) {
+                float AccYInertial = acc_data_lcl.acc_data.az - 1.03;
+                Acc = {AccYInertial};
+            } else {
+                // If no acceleration data available, use 0
+                Acc = {0.0};
+            }
+        
+            //Serial.printf("RawAcc");Serial.printf(%2f,Acc);Serial.printf("\n");
+            //Serial.printf("Raw Alt: %.2f  Acc: %.2f\n", altimeter_packet.filtered_altitude_1d, AccYInertial);
+            //Serial.printf("Before Prediction S: %.4f %.4f\n", S(0,0), S(1,0));
+
+            // PREDICTION
+            S = F * S + G * Acc;
+            P = F * P * ~F + Q;
+
+            //Serial.printf("After Prediction S: %.4f %.4f\n", S(0,0), S(1,0));
+            //Serial.printf("P(0,0): %.4f  P(1,1): %.4f\n", P(0,0), P(1,1));
+
+            // UPDATE
+            L = H * P * ~H + R;
+
+            if (fabs(L(0, 0)) < 1e-6 || isnan(L(0,0))) {
+                Serial.println(" Skipping update: L is zero or NaN");
+                vTaskDelay((timeStep * 1000) / portTICK_PERIOD_MS);
+                continue;
+            }
+
+            inv_L = Inverse(L);
+            K = P * ~H * inv_L;
+
+            // Use the input altitude from the queue instead of altimeter_packet
+            M = {input_altitude};
+
+            //Serial.printf("M (meas): %.4f\n", M(0,0));
+            //Serial.printf("Kalman Gain K: %.4f %.4f\n", K(0,0), K(1,0));
+
+            S = S + K * (M - H * S);
+
+            //  FINAL VALUES
+            AltitudeKalman = S(0, 0);
+            VelocityVerticalKalman = S(1, 0);
+            
+            // 🔥 SYNCHRONIZED KALMAN OUTPUT - Update global altimeter packet for consistent data across all tasks
+            altimeter_packet.kalman_altitude = AltitudeKalman;
+            altimeter_packet.kalman_vertical_velocity = VelocityVerticalKalman;
+
+            //Serial.printf(" Filtered Alt: %.4f  Vel: %.4f\n", AltitudeKalman, VelocityVerticalKalman);
+            Serial.printf("2D Kalman: Alt=%.2f, Vel=%.2f\n", AltitudeKalman, VelocityVerticalKalman);
+
+        }
+
+        vTaskDelay((timeStep * 1000) / portTICK_PERIOD_MS);
+    }
+}
+
 
 /*!***************************************************************************
  * @brief Filter data using the Kalman Filter 
@@ -853,6 +1059,11 @@ void kalmanFilterTask(void* pvParameters) {
     while (1) {
         vTaskDelay(CONSUME_TASK_DELAY/portTICK_PERIOD_MS);
     }
+}
+
+extern "C" void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
+  Serial.print("🔥 Stack overflow in task: ");
+  Serial.println(pcTaskName);
 }
 
 // /*!****************************************************************************
@@ -1159,9 +1370,9 @@ void debugToTerminalTask(void* pvParameters){
         // get telemetry data
         xQueueReceive(debug_to_term_queue_handle, &telemetry_received_packet, 0);
         
-        // Create unified 23-field CSV format matching MQTT format
+        // Create unified 25-field CSV format with Kalman filter outputs
         sprintf(telemetry_packet_buffer,
-                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.8f,%.8f,%.2f,%u,%.2f,%.2f,%.2f,%.2f,%d,%d,%.2f,%d\n",
+                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.8f,%.8f,%.2f,%u,%.2f,%.2f,%.2f,%.2f,%d,%d,%.2f,%d,%.2f,%.2f\n",
                 telemetry_received_packet.record_number,    // 0
                 telemetry_received_packet.operation_mode,   // 1  
                 telemetry_received_packet.state,            // 2
@@ -1184,7 +1395,10 @@ void debugToTerminalTask(void* pvParameters){
                 telemetry_received_packet.drogue_pin_state, // 19
                 telemetry_received_packet.main_chute_pin_state, // 20
                 telemetry_received_packet.battery_voltage,  // 21 - battery voltage
-                telemetry_received_packet.wifi_rssi);       // 22 - RSSI from telemetry packet
+                telemetry_received_packet.wifi_rssi,        // 22 - RSSI from telemetry packet
+                altimeter_packet.kalman_altitude,           // 23 - 2D Kalman filtered altitude
+                altimeter_packet.kalman_vertical_velocity   // 24 - 2D Kalman filtered vertical velocity
+            );       
         
         // 🔥 UPDATE GLOBAL TELEMETRY BUFFER for seamless mode switching
         updateGlobalTelemetryBuffer(telemetry_packet_buffer);
@@ -1220,24 +1434,49 @@ void debugToTerminalTask(void* pvParameters){
  * so it is not valid to pass the address of a stack variable.
  * 
  *******************************************************************************/
+// void logToMemory(void* pvParameter) {
+//     telemetry_type_t received_packet;
+
+//     while(1) {
+//         xQueueReceive(log_to_mem_queue_handle, &received_packet, portMAX_DELAY);
+
+//         // received_packet.record_number++; 
+
+//         // is it time to record?
+//         current_log_time = millis();
+
+//         if(current_log_time - previous_log_time > log_sample_interval) {
+//             previous_log_time = current_log_time;
+//             data_logger.loggerWrite(received_packet);
+//         }
+        
+//     }
+
+// }
 void logToMemory(void* pvParameter) {
     telemetry_type_t received_packet;
 
-    while(1) {
+    while (1) {
         xQueueReceive(log_to_mem_queue_handle, &received_packet, portMAX_DELAY);
 
-        // received_packet.record_number++; 
-
-        // is it time to record?
         current_log_time = millis();
 
-        if(current_log_time - previous_log_time > log_sample_interval) {
+        if (current_log_time - previous_log_time > log_sample_interval) {
             previous_log_time = current_log_time;
-            data_logger.loggerWrite(received_packet);
-        }
-        
-    }
 
+            //  Log to Flash 
+            disableAllDevices();
+            digitalWrite(flash_cs_pin, LOW);
+            data_logger.loggerWrite(received_packet);
+            digitalWrite(flash_cs_pin, HIGH);
+
+            //  Log to SD Card 
+            disableAllDevices();
+            digitalWrite(SD_CS_PIN, LOW);
+            sdLogger.log(received_packet, gps_packet);
+            digitalWrite(SD_CS_PIN, HIGH);
+        }
+    }
 }
 
 /*!****************************************************************************
@@ -1253,9 +1492,9 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
     while(1) {
         xQueueReceive(telemetry_data_queue_handle, &telemetry_received_packet, portMAX_DELAY);
 
-        // Create comprehensive CSV string for MQTT transmission
+        // Create comprehensive 25-field CSV string for MQTT transmission with Kalman filter data
         sprintf(telemetry_packet_buffer,
-                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.8f,%.8f,%.2f,%u,%.2f,%.2f,%.2f,%.2f,%d,%d,%.2f,%d\n",
+                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.8f,%.8f,%.2f,%u,%.2f,%.2f,%.2f,%.2f,%d,%d,%.2f,%d,%.2f,%.2f\n",
                 telemetry_received_packet.record_number,    // 0
                 telemetry_received_packet.operation_mode,   // 1  
                 telemetry_received_packet.state,            // 2
@@ -1278,8 +1517,10 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
                 telemetry_received_packet.drogue_pin_state, // 19
                 telemetry_received_packet.main_chute_pin_state, // 20
                 telemetry_received_packet.battery_voltage,  // 21 - battery voltage
-                telemetry_received_packet.wifi_rssi);       // 22 - RSSI from telemetry packet
-
+                telemetry_received_packet.wifi_rssi,        // 22 - RSSI from telemetry packet
+                altimeter_packet.kalman_altitude,           // 23 - 2D Kalman filtered altitude
+                altimeter_packet.kalman_vertical_velocity   // 24 - 2D Kalman filtered vertical velocity
+                );
         // 🔥 UPDATE GLOBAL TELEMETRY BUFFER for seamless mode switching
         updateGlobalTelemetryBuffer(telemetry_packet_buffer);
 
@@ -1539,15 +1780,24 @@ void xCreateAllTasks() {
 
         
 
-        BaseType_t kf = xTaskCreatePinnedToCore(kalmanFilterTask, "kalman filter", STACK_SIZE*2, NULL, 2, &kalmanFilterTaskHandle, 1);
+        // BaseType_t kf = xTaskCreatePinnedToCore(kalmanFilterTask, "kalman filter", STACK_SIZE*2, NULL, 2, &kalmanFilterTaskHandle, 1);
 
-        if(kf == pdPASS) {
-            debugln("[+]kalmanFilter task created OK.");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]kalman_filter_queue_handle creation OK.\r\n");
+        // if(kf == pdPASS) {
+        //     debugln("[+]kalmanFilter task created OK.");
+        //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]kalman_filter_queue_handle creation OK.\r\n");
+        // } else {
+        //     debugln("[-]kalmanFilter task failed to create");
+        //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]kalmanFilter task failed to create\r\n");
+        // }
+        BaseType_t kf2d = xTaskCreatePinnedToCore(taskKalman2D, "Kalman2D", STACK_SIZE*4, NULL, 2, NULL, 1);
+        if(kf2d == pdPASS) {
+            debugln("[+]Kalman2D task created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Kalman2D task created OK.\r\n");
         } else {
-            debugln("[-]kalmanFilter task failed to create");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]kalmanFilter task failed to create\r\n");
+            debugln("[-]Kalman2D task creation failed");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Kalman2D task creation failed\r\n");
         }
+
 
         #if DEBUG_TO_TERMINAL   // set DEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
 
@@ -1586,7 +1836,7 @@ void xCreateAllTasks() {
         }
 
         /* READ ALTIMETER DATA */
-        BaseType_t ra = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*2,NULL,2, &readAltimeterTaskHandle, 1);
+        BaseType_t ra = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*3,NULL,2, &readAltimeterTaskHandle, 1);
         if(ra == pdPASS) {
             debugln("[+]readAltimeterTask created OK.");
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]readAltimeterTask created OK.\r\n");
@@ -1705,9 +1955,23 @@ void setup() {
     uint8_t bmp_init_state = BMPInit();
     uint8_t imu_init_state = imu.init();
     uint8_t gps_init_state = GPSInit();
-    // uint8_t sd_init_state = initSD();
+    disableAllDevices();
+    uint8_t sd_init_state = initSD();
+    disableAllDevices();
     uint8_t flash_init_state = data_logger.loggerInit();
     debug("Flash memory init state:"); debugln(flash_init_state);
+    debugln(F("=============================================="));
+    Serial.print("Available heap: ");
+    debugln(F("=============================================="));
+    Serial.println(esp_get_free_heap_size());
+    debugln(F("=============================================="));
+    debugln(F("=============================================="));
+    Serial.print("Task stack watermark: ");
+    debugln(F("=============================================="));
+    Serial.println(uxTaskGetStackHighWaterMark(NULL));
+    debugln(F("=============================================="));
+    //For Debugging to be deleted
+    esp_task_wdt_init(10, true);  // Set timeout to 10 seconds instead of default 5
 
     /* initialize mqtt */
     //MQTTInit(MQTT_SERVER, MQTT_PORT);
@@ -1744,10 +2008,18 @@ void setup() {
     // }
 
     /* register the baseline pressure at launch site - check docs to see how this works */
+    debugln(F("==============================================="));
+    debugln(F("==================== BASELINE ================="));
+    debugln(F("=============================================="));
     baseline = altimeter_get_pressure();
+    Serial.print("\n");Serial.print("Baseline ");Serial.print(baseline);Serial.print("\n");
+   
 
     /* initialize the ring buffer - used for apogee detection */
     ring_buffer_init(&altitude_ring_buffer);
+
+    //Initialize Kalman Matrices 
+    init_kalman_matrices();
 
     /* check whether we are in TEST or RUN mode */
     checkRunTestToggle();
@@ -1775,6 +2047,8 @@ void setup() {
     debugln(F("===== INITIALIZING DATA LOGGING SYSTEM ======="));
     debugln(F("=============================================="));
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==INITIALIZING DATA LOGGING SYSTEM==\r\n");
+    sdLogger.begin();
+    debug("===== SDlogger initialization =======");
         
     debugln();
     debugln(F("=============================================="));
@@ -1788,6 +2062,7 @@ void setup() {
     check_state_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
     debug_to_term_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
     kalman_filter_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
+    kalman2d_input_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(float));
 
     if(telemetry_data_queue_handle == NULL) {
         debugln("[-]telemetry_data_queue_handle creation failed");
@@ -1859,7 +2134,13 @@ void setup() {
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "\nEND OF INITIALIZATION\r\n");
 
     /* buzz to indicate start of setup */
-    blocking_buzz(BUZZ_INTERVALS::SETUP_INIT);
+    //blocking_buzz(BUZZ_INTERVALS::SETUP_INIT);
+
+    //Simultaneous memory logging prerequisites
+    pinMode(flash_cs_pin, OUTPUT);
+    pinMode(SD_CS_PIN, OUTPUT);
+    disableAllDevices();
+    SPI.begin(18, 19, 23);
     
 } /* End of setup */
 

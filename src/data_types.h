@@ -30,6 +30,8 @@ typedef struct Acceleration_Data{
     float gz;                   /*!< z angular velocity */
     float pitch;                /*!< pitch angle */
     float roll;                 /*!< roll angle */
+    double kalman_altitude;      //Fully Filtered Altitude
+    double kalman_vertical_velocity;
 } accel_type_t;
 
 /**
@@ -61,6 +63,9 @@ typedef struct Altimeter_Data{
     double temperature;          /*!< altimeter temperature */
     double filtered_altitude;    /*!< filtered altitude using Kalman filter */
     double AGL;                  /*!< altitude above ground level */
+    double filtered_altitude_1d;  //Partially Filtered Altitude
+    double kalman_altitude;      //Fully Filtered Altitude
+    double kalman_vertical_velocity;  //Fully Filtered Velocity
 } altimeter_type_t;
 
 /**
@@ -78,6 +83,10 @@ typedef struct Telemetry_Data {
     uint8_t main_chute_pin_state; /*!< main parachute deployment state */
     float battery_voltage;      /*!< battery voltage */
     int32_t wifi_rssi;          /*!< WiFi RSSI or beacon RSSI */
+    //double kalman_altitude;
+    //double kalman_vertical_velocity;
+            
+    
 } telemetry_type_t;
 
 #endif

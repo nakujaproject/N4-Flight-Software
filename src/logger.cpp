@@ -9,7 +9,8 @@
 #include "defs.h"
 
 telemetry_type_t t;
-char pckt_buff[50];
+char pckt_buff[150];
+
 
 /**
  * @brief class constructor 
@@ -156,65 +157,107 @@ void DataLogger::loggerTest() {
  * 
  * 
 */
-void DataLogger::loggerWrite(telemetry_type_t packet){
-    // write the record to the flash chip
+// void DataLogger::loggerWrite(telemetry_type_t packet){
+//     // write the record to the flash chip
     
-    // sprintf(pckt_buff, 
-    //         "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n",
-    //         packet.acc_data.ax,
-    //         packet.acc_data.ay,
-    //         packet.acc_data.az,
-    //         packet.acc_data.pitch,
-    //         packet.acc_data.roll,
-    //         packet.alt_data.pressure);
+//     // sprintf(pckt_buff, 
+//     //         "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n",
+//     //         packet.acc_data.ax,
+//     //         packet.acc_data.ay,
+//     //         packet.acc_data.az,
+//     //         packet.acc_data.pitch,
+//     //         packet.acc_data.roll,
+//     //         packet.alt_data.pressure);
 
-    // write the packet to memory
-    this->_file.write((uint8_t*)&packet, sizeof(packet));
+//     // write the packet to memory
+//     this->_file.write((uint8_t*)&packet, sizeof(packet));
 
-    // Serial.print( packet.record_number );
-    // Serial.print( "," );
-    // Serial.print( packet.operation_mode );
-    // Serial.print( "," );
-    // Serial.print( packet.state );
-    // Serial.print( "," );
-    // Serial.print( packet.acc_data.ax );
-    // Serial.print( "," );
-    // Serial.print( packet.acc_data.ay );
-    // Serial.print( "," );
-    // Serial.print( packet.acc_data. az );
-    // Serial.print( "," );
-    // Serial.print( packet.acc_data.pitch );
-    // Serial.print( "," );
-    // Serial.print( packet.acc_data.roll );
-    // Serial.print( "," );
-    // Serial.print( packet.gyro_data.gx );
-    // Serial.print( "," );
-    // Serial.print( packet.gyro_data.gy );
-    // Serial.print( "," );
-    // Serial.print( packet.gyro_data.gz );
-    // Serial.print( "," );
-    // Serial.print( packet.alt_data.altitude );
-    // Serial.print( "," );
-    // Serial.print( packet.alt_data.velocity );
-    // Serial.print( "," );
-    // Serial.print( packet.alt_data.pressure );
-    // Serial.print( "," );
-    // Serial.println( packet.alt_data.temperature );
+//     // Serial.print( packet.record_number );
+//     // Serial.print( "," );
+//     // Serial.print( packet.operation_mode );
+//     // Serial.print( "," );
+//     // Serial.print( packet.state );
+//     // Serial.print( "," );
+//     // Serial.print( packet.acc_data.ax );
+//     // Serial.print( "," );
+//     // Serial.print( packet.acc_data.ay );
+//     // Serial.print( "," );
+//     // Serial.print( packet.acc_data. az );
+//     // Serial.print( "," );
+//     // Serial.print( packet.acc_data.pitch );
+//     // Serial.print( "," );
+//     // Serial.print( packet.acc_data.roll );
+//     // Serial.print( "," );
+//     // Serial.print( packet.gyro_data.gx );
+//     // Serial.print( "," );
+//     // Serial.print( packet.gyro_data.gy );
+//     // Serial.print( "," );
+//     // Serial.print( packet.gyro_data.gz );
+//     // Serial.print( "," );
+//     // Serial.print( packet.alt_data.altitude );
+//     // Serial.print( "," );
+//     // Serial.print( packet.alt_data.velocity );
+//     // Serial.print( "," );
+//     // Serial.print( packet.alt_data.pressure );
+//     // Serial.print( "," );
+//     // Serial.println( packet.alt_data.temperature );
 
-    // Serial.println(F("logged"));
+//     // Serial.println(F("logged"));
     
-    // at this point, the flash memory is ready for writing and reading 
-    // check that the passed struct is not null
-    // if(data == NULL) {
-    //     // do sth here 
-    //     // maybe log error
-    // } else {
-    //     // data valid, ready to proceed
-    // }
+//     // at this point, the flash memory is ready for writing and reading 
+//     // check that the passed struct is not null
+//     // if(data == NULL) {
+//     //     // do sth here 
+//     //     // maybe log error
+//     // } else {
+//     //     // data valid, ready to proceed
+//     // }
 
-    // TODO: maybe return the size of memory written 
+//     // TODO: maybe return the size of memory written 
 
+// }
+
+void DataLogger::loggerWrite(telemetry_type_t packet) {
+    extern gps_type_t gps_packet;
+    extern altimeter_type_t altimeter_packet;
+    extern telemetry_type_t telemetry_received_packet;
+
+    sprintf(pckt_buff,
+        "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.4f,%.2f,%.2f,%d,%d,%.2f,%d\n",
+        packet.record_number,
+        packet.operation_mode,
+        packet.state,
+        packet.acc_data.ax,
+        packet.acc_data.ay,
+        packet.acc_data.az,
+        packet.acc_data.pitch,
+        packet.acc_data.roll,
+        packet.gyro_data.gx,
+        packet.gyro_data.gy,
+        packet.gyro_data.gz,
+        gps_packet.latitude,
+        gps_packet.longitude,
+        gps_packet.gps_altitude,
+        altimeter_packet.pressure,
+        altimeter_packet.temperature,
+        altimeter_packet.rel_altitude,
+        altimeter_packet.kalman_altitude,           // 19replace altitude after drone test
+        altimeter_packet.kalman_vertical_velocity,  // 20replace vertical velocity after drone test
+        telemetry_received_packet.drogue_pin_state, // 21
+        telemetry_received_packet.main_chute_pin_state, // 22
+        telemetry_received_packet.battery_voltage,  // 23 - battery voltage
+        telemetry_received_packet.wifi_rssi
+        
+    );
+
+    // Write it to flash as a string
+    this->_file.write((uint8_t*)pckt_buff, strlen(pckt_buff));
+
+    // Optional: echo to serial for debugging
+    Serial.print("[LOGGED]: ");
+    Serial.print(pckt_buff);
 }
+
 
 /**
  * @brief Read data from the start of the file to the end of the file 
