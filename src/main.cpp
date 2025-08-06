@@ -987,7 +987,8 @@ void taskKalman2D(void *pvParameters) {
             // We need acceleration data for the 2D Kalman filter
             // Read the latest acceleration data (non-blocking)
             if (xQueuePeek(debug_to_term_queue_handle, &acc_data_lcl, 0) == pdTRUE) {
-                float AccYInertial = acc_data_lcl.acc_data.az - 1.03;
+                float offset = 9.425; // Adjust this offset based on your calibration
+                float AccYInertial = (acc_data_lcl.acc_data.az*9.8)-offset;
                 Acc = {AccYInertial};
             } else {
                 // If no acceleration data available, use 0
