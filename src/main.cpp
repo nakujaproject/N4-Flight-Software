@@ -107,6 +107,22 @@ void arm_pyros() {
     vTaskDelay(pdMS_TO_TICKS(10));
 }
 
+void drogueChuteDeploy() {
+    digitalWrite(DROGUE_PIN, HIGH);
+    DROGUE_DEPLOY_FLAG = 1;  // Set deployment flag
+    vTaskDelay(pdMS_TO_TICKS(100)); // Keep pin high for 100ms
+    digitalWrite(DROGUE_PIN, LOW);
+    debug("📦 DROGUE DEPLOYED - Pin fired for 100ms");
+}
+
+void mainChuteDeploy() {
+    digitalWrite(MAIN_CHUTE_EJECT_PIN, HIGH);
+    MAIN_CHUTE_EJECT_FLAG = 1;  // Set deployment flag
+    vTaskDelay(pdMS_TO_TICKS(100)); // Keep pin high for 100ms
+    digitalWrite(MAIN_CHUTE_EJECT_PIN, LOW);
+    debug("📦 MAIN CHUTE DEPLOYED - Pin fired for 100ms");
+}
+
 void chutesInit() {
     pinMode(DROGUE_PIN, OUTPUT);
     pinMode(MAIN_CHUTE_EJECT_PIN, OUTPUT);
@@ -304,41 +320,40 @@ void espnowCommandTask(void* pvParameters) {
                 comm_manager.handleModeCommand(String(cmdBuffer), "ESP_NOW");
             }
             else if (strcmp(cmdBuffer, "ARM") == 0) {
-                // 🛡️ ARM SAFETY: Check altitude requirement (50m minimum using Kalman filtered data)
+                // 🛡️ MANUAL ARM COMMAND: Always allow manual arming, but warn about altitude
                 #if USE_KALMAN_FOR_STATE_DETECTION
                 float current_altitude = g_current_telemetry.alt_data.kalman_altitude;
                 #else
                 float current_altitude = g_current_telemetry.alt_data.rel_altitude;
                 #endif
                 
-                // Check if telemetry data is recent (within last 2 seconds)
+                // Always execute ARM command
+                arm_pyros();
+                chutesInit();
+                if (use_beacon_mode) {
+                    transmitter.setArmed(true);
+                }
+                is_system_armed = true;  // Set global armed state
+                operation_mode = OPERATION_MODE::ARMED_MODE;
+                blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
+                
+                // Check telemetry freshness for altitude warning
                 if ((millis() - g_last_telemetry_update) > 2000) {
-                    debugln("❌ ARM DENIED: Telemetry data too old for altitude check");
+                    debugln("⚠️ ARMED via ESP-NOW (Warning: Stale telemetry data)");
                     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING,
-                                           system_log_file, "ARM DENIED: Stale telemetry data\r\n");
+                                           system_log_file, "ARMED via ESP-NOW - Stale telemetry data\r\n");
                 } else if (current_altitude < ARM_ALTITUDE_THRESHOLD) {
-                    debug("❌ ARM DENIED: Altitude too low (");
+                    debug("⚠️ ARMED via ESP-NOW (Warning: Low altitude ");
                     debug(current_altitude);
                     debug("m < ");
                     debug(ARM_ALTITUDE_THRESHOLD);
-                    debugln("m requirement)");
+                    debugln("m)");
                     
                     char log_msg[100];
-                    snprintf(log_msg, sizeof(log_msg), "ARM DENIED: Alt %.1fm < %dm threshold\r\n", 
-                            current_altitude, ARM_ALTITUDE_THRESHOLD);
+                    snprintf(log_msg, sizeof(log_msg), "ARMED via ESP-NOW - Low altitude %.1fm\r\n", current_altitude);
                     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING,
                                            system_log_file, log_msg);
                 } else {
-                    // ✅ ARM CONDITIONS MET
-                    arm_pyros();
-                    chutesInit();
-                    if (use_beacon_mode) {
-                        transmitter.setArmed(true);
-                    }
-                    is_system_armed = true;  // Set global armed state
-                    operation_mode = OPERATION_MODE::ARMED_MODE;
-                    blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
-                    
                     debug("🚀 ARMED via ESP-NOW (Alt: ");
                     debug(current_altitude);
                     debugln("m ✓)");
@@ -403,6 +418,7 @@ void mqtt_command_processor(const char* topic, const char* payload) {
         
         // Check the payload content for the actual command
         if(strcmp(payload, "ARM") == 0) {
+            // 🛡️ MANUAL ARM COMMAND: Always allow manual arming via MQTT
             arm_pyros();
             chutesInit();
             if (use_beacon_mode) {
@@ -411,11 +427,35 @@ void mqtt_command_processor(const char* topic, const char* payload) {
             is_system_armed = true;  // Set global armed state
             operation_mode = OPERATION_MODE::ARMED_MODE;
             blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
-            debugln("🚀 ARMED via MQTT!");
             
-            // Simplified logging to reduce stack usage
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, 
-                                   system_log_file, "ARMED via MQTT\r\n");
+            // Check altitude for informational logging
+            #if USE_KALMAN_FOR_STATE_DETECTION
+            float current_altitude = g_current_telemetry.alt_data.kalman_altitude;
+            #else
+            float current_altitude = g_current_telemetry.alt_data.rel_altitude;
+            #endif
+            
+            if ((millis() - g_last_telemetry_update) > 2000) {
+                debugln("⚠️ ARMED via MQTT (Warning: Stale telemetry data)");
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, 
+                                       system_log_file, "ARMED via MQTT - Stale telemetry data\r\n");
+            } else if (current_altitude < ARM_ALTITUDE_THRESHOLD) {
+                debug("⚠️ ARMED via MQTT (Warning: Low altitude ");
+                debug(current_altitude);
+                debugln("m)");
+                char log_msg[100];
+                snprintf(log_msg, sizeof(log_msg), "ARMED via MQTT - Low altitude %.1fm\r\n", current_altitude);
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING,
+                                       system_log_file, log_msg);
+            } else {
+                debug("🚀 ARMED via MQTT (Alt: ");
+                debug(current_altitude);
+                debugln("m ✓)");
+                char log_msg[100];
+                snprintf(log_msg, sizeof(log_msg), "ARMED via MQTT at %.1fm altitude\r\n", current_altitude);
+                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, 
+                                       system_log_file, log_msg);
+            }
             
             // Yield CPU after ARM operation to ensure stack integrity
             vTaskDelay(pdMS_TO_TICKS(50));
@@ -793,7 +833,7 @@ float estimatedAltitude = 100;
 // }
  
 
-// 🚀 FLIGHT SIMULATION - Uncommented for state machine testing
+// 🚀 120M ALTITUDE SIMULATION - Testing with realistic low altitude profile
 void readAltimeterTask(void* pvParameters) {
     telemetry_type_t alt_data_lcl;
     static double a = 0; // simulated altitude
@@ -802,26 +842,49 @@ void readAltimeterTask(void* pvParameters) {
     static int count = 0;
 
     while(1) {
-        // Ascent: 1000m over 60s (600 cycles at 100ms, +1.67m per cycle)
+        // Ascent: 120m over 6s (60 cycles at 100ms, +2m per cycle)
         if (phase == 0) {
-            a += 1.67;
-            debug("🚀 ASCENT: Alt="); debug(a); debug("m, Count="); debug(count); debugln("/600");
-            if (++count >= 600) { 
+            a += 2.0;  // 2m per 100ms cycle = 20m/s climb rate
+            debug("🚀 ASCENT: Alt="); debug(a); debug("m, Count="); debug(count); debugln("/60");
+            if (++count >= 60) {  // 60 cycles = 6 seconds to reach 120m
                 phase = 1; 
                 count = 0; 
-                debugln("🎯 REACHED APOGEE - Starting apogee hold");
+                debugln("🎯 REACHED 120M APOGEE - Short apogee hold");
             }
-        } else if (phase == 1) { // Apogee hold: 20s (200 cycles)
-            debug("🎯 APOGEE HOLD: Alt="); debug(a); debug("m, Count="); debug(count); debugln("/200");
-            if (++count >= 200) { 
+        } else if (phase == 1) { // Short apogee hold: 1s (10 cycles)
+            debug("🎯 APOGEE 120M: Alt="); debug(a); debug("m, Count="); debug(count); debugln("/10");
+            if (++count >= 10) {  // 10 cycles = 1 second at apogee
                 phase = 2; 
                 count = 0;
-                debugln("⬇️ STARTING DESCENT");
+                debugln("⬇️ STARTING DESCENT FROM 120M");
             }
-        } else if (phase == 2) { // Descent: 1000m over 60s
-            a -= 1.67;
+        } else if (phase == 2) { // Descent: 120m over 12s (120 cycles, -1m per cycle)
+            a -= 1.0;  // 1m per 100ms cycle = 10m/s descent rate
             if (a < 0) a = 0;
-            debug("⬇️ DESCENT: Alt="); debug(a); debugln("m");
+            debug("⬇️ DESCENT: Alt="); debug(a); debug("m");
+            
+            // Add chute deployment status to descent logging
+            if (DROGUE_DEPLOY_FLAG) {
+                debug(" [DROGUE✓]");
+            }
+            if (MAIN_CHUTE_EJECT_FLAG) {
+                debug(" [MAIN✓]");
+            }
+            debugln("");
+            
+            // Reset simulation when landed for continuous testing
+            if (a <= 0) {
+                debugln("🏁 LANDED - RESTARTING 120M SIMULATION");
+                phase = 0;
+                count = 0;
+                a = 0;
+                // Reset deployment flags for next simulation cycle
+                DROGUE_DEPLOY_FLAG = 0;
+                MAIN_CHUTE_EJECT_FLAG = 0;
+                apogee_flag = 0;
+                main_eject_flag = 0;
+                vTaskDelay(3000 / portTICK_PERIOD_MS); // 3 second pause before restart
+            }
         }
 
         P = 101325 * exp(-a / 8434.5);
@@ -840,7 +903,7 @@ void readAltimeterTask(void* pvParameters) {
         altimeter_packet.kalman_altitude = AltitudeKalman;
         altimeter_packet.kalman_vertical_velocity = VelocityVerticalKalman;
 
-        vTaskDelay(100 / portTICK_PERIOD_MS); // 100ms cycle for simulation
+        vTaskDelay(100 / portTICK_PERIOD_MS); // 100ms cycle for 120m simulation
     }
 }
 
@@ -883,7 +946,7 @@ void readAltimeterTask(void* pvParameters) {
 //     }
 // }
 
-// 🛰️ GPS SIMULATION - Uncommented for state machine testing
+// 🛰️ FAST GPS SIMULATION - Matching the fast flight simulation
 void readGPSTask(void* pvParameters){
     
     static float sim_gps_altitude = 0;
@@ -892,13 +955,19 @@ void readGPSTask(void* pvParameters){
 
     while(1){
         if (phase == 0) {
-            sim_gps_altitude += 1.67;
-            if (++count >= 600) { phase = 1; count = 0; }
+            sim_gps_altitude += 2.0;  // Match 120m ascent rate
+            if (++count >= 60) { phase = 1; count = 0; }
         } else if (phase == 1) {
-            if (++count >= 200) { phase = 2; count = 0; }
+            if (++count >= 10) { phase = 2; count = 0; }  // Short apogee hold
         } else if (phase == 2) {
-            sim_gps_altitude -= 1.67;
-            if (sim_gps_altitude < 0) sim_gps_altitude = 0;
+            sim_gps_altitude -= 1.0;  // Match descent rate
+            if (sim_gps_altitude < 0) {
+                sim_gps_altitude = 0;
+                // Reset GPS simulation when landed
+                phase = 0;
+                count = 0;
+                vTaskDelay(3000 / portTICK_PERIOD_MS); // Match main simulation pause
+            }
         }
 
         // Simulate JKUAT coordinates with altitude changes
@@ -1216,28 +1285,28 @@ void checkFlightState(void* pvParameters) {
         g_current_telemetry = flight_data;
         g_last_telemetry_update = millis();
 
-        // 🚀 AUTOMATIC ARMING: Auto-arm when reaching 50m altitude (if not already armed)
-        if (!is_system_armed && alt >= ARM_ALTITUDE_THRESHOLD) {
-            arm_pyros();
-            chutesInit();
-            if (use_beacon_mode) {
-                transmitter.setArmed(true);
-            }
-            is_system_armed = true;
-            operation_mode = OPERATION_MODE::ARMED_MODE;
-            blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
-            
-            debug("🚀 AUTO-ARMED at ");
-            debug(alt);
-            debug("m altitude (threshold: ");
-            debug(ARM_ALTITUDE_THRESHOLD);
-            debugln("m) ✓");
-            
-            char log_msg[100];
-            snprintf(log_msg, sizeof(log_msg), "AUTO-ARMED at %.1fm altitude\r\n", alt);
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO,
-                                   system_log_file, log_msg);
-        }
+        // 🚀 AUTOMATIC ARMING DISABLED - Only manual ARM commands will arm the system
+        // if (!is_system_armed && alt >= ARM_ALTITUDE_THRESHOLD) {
+        //     arm_pyros();
+        //     chutesInit();
+        //     if (use_beacon_mode) {
+        //         transmitter.setArmed(true);
+        //     }
+        //     is_system_armed = true;
+        //     operation_mode = OPERATION_MODE::ARMED_MODE;
+        //     blocking_buzz(BUZZ_INTERVALS::ARMING_PROCEDURE);
+        //     
+        //     debug("🚀 AUTO-ARMED at ");
+        //     debug(alt);
+        //     debug("m altitude (threshold: ");
+        //     debug(ARM_ALTITUDE_THRESHOLD);
+        //     debugln("m) ✓");
+        //     
+        //     char log_msg[100];
+        //     snprintf(log_msg, sizeof(log_msg), "AUTO-ARMED at %.1fm altitude\r\n", alt);
+        //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO,
+        //                            system_log_file, log_msg);
+        // }
 
         // --- Pre-apogee states ---
         if (!apogee_flag) {
@@ -1252,20 +1321,48 @@ void checkFlightState(void* pvParameters) {
 
             // 🎯 Enhanced apogee detection using Kalman filtered altitude
             ring_buffer_put(&altitude_ring_buffer, alt);
-            if (ring_buffer_full(&altitude_ring_buffer)) {
-                oldest_val = ring_buffer_get(&altitude_ring_buffer);
-                // debug("Current alt: "); debug(alt);
-                // debug(" | Oldest alt: "); debug(oldest_val);
-                // debug(" | Diff: "); debugln(oldest_val - alt);
-            }
-            if ((oldest_val - alt) >= APOGEE_DETECTION_THRESHOLD && apogee_flag == 0) {
-                apogee_val = oldest_val;
-                current_state = ARMED_FLIGHT_STATE::APOGEE;
-                apogee_flag = 1;
-                apogee_detected_time = millis(); // Record apogee detection time
-                debug("🎯 APOGEE DETECTED at ");
-                debug(alt);
-                debugln("m (Kalman filtered)!");
+            
+            // Only check for apogee if we're above a reasonable flight altitude (50m for 120m simulation)
+            if (alt > (LAUNCH_DETECTION_THRESHOLD + 50)) { // At least 50m above launch threshold for 120m simulation
+                static float max_altitude = 0;
+                static uint8_t descent_count = 0;
+                
+                // Track maximum altitude reached
+                if (alt > max_altitude) {
+                    max_altitude = alt;
+                    descent_count = 0; // Reset descent counter when still climbing
+                    debug("🚀 New max altitude: ");
+                    debug(max_altitude);
+                    debugln("m");
+                }
+                // Check if we're consistently descending from maximum
+                else if (alt < (max_altitude - 2)) { // 2m descent from max for 120m simulation
+                    descent_count++;
+                    debug("⬇️ Descent detected (");
+                    debug(descent_count);
+                    debug("/3): Alt=");
+                    debug(alt);
+                    debug("m, Max=");
+                    debug(max_altitude);
+                    debugln("m");
+                    
+                    // Confirm apogee after 3 consecutive readings showing descent
+                    if (descent_count >= 3 && apogee_flag == 0) {
+                        apogee_val = max_altitude;
+                        current_state = ARMED_FLIGHT_STATE::APOGEE;
+                        apogee_flag = 1;
+                        apogee_detected_time = millis(); // Record apogee detection time
+                        debug("🎯 APOGEE DETECTED at max altitude: ");
+                        debug(max_altitude);
+                        debug("m, current: ");
+                        debug(alt);
+                        debugln("m (Kalman filtered)!");
+                        
+                        char log_msg[150];
+                        snprintf(log_msg, sizeof(log_msg), "APOGEE DETECTED - Max: %.1fm, Current: %.1fm\r\n", max_altitude, alt);
+                        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, log_msg);
+                    }
+                }
             }
         }
         // --- Post-apogee states ---
@@ -1281,10 +1378,34 @@ void checkFlightState(void* pvParameters) {
                     }
                     break;
                 case ARMED_FLIGHT_STATE::DROGUE_DEPLOY:
-                    // Wait for deploy flag
-                    if (DROGUE_DEPLOY_FLAG) {
+                    // Deploy drogue immediately when entering this state (if armed and in flight)
+                    if(operation_mode == OPERATION_MODE::ARMED_MODE && is_system_armed && DROGUE_DEPLOY_FLAG == 0) {
+                        // Additional safety check: Only deploy if we've actually been in flight (above launch threshold)
+                        #if USE_KALMAN_FOR_STATE_DETECTION
+                        float current_alt = g_current_telemetry.alt_data.kalman_altitude;
+                        #else
+                        float current_alt = g_current_telemetry.alt_data.rel_altitude;
+                        #endif
+                        
+                        if (current_alt > LAUNCH_DETECTION_THRESHOLD) {
+                            drogueChuteDeploy();
+                            current_state = ARMED_FLIGHT_STATE::DROGUE_DESCENT; // Move to next state immediately
+                            debug("📦 DROGUE DEPLOYED at ");
+                            debug(current_alt);
+                            debugln("m altitude");
+                            
+                            char log_msg[100];
+                            snprintf(log_msg, sizeof(log_msg), "DROGUE DEPLOYED at %.1fm altitude\r\n", current_alt);
+                            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, log_msg);
+                        } else {
+                            debug("⚠️ DROGUE deployment blocked - altitude too low: ");
+                            debug(current_alt);
+                            debugln("m");
+                        }
+                    } else if (DROGUE_DEPLOY_FLAG == 1) {
+                        // Drogue already deployed, move to descent state
                         current_state = ARMED_FLIGHT_STATE::DROGUE_DESCENT;
-                        DROGUE_DEPLOY_FLAG = 0; // Reset for safety
+                        debugln("✅ DROGUE already deployed - moving to descent");
                     }
                     break;
                 case ARMED_FLIGHT_STATE::DROGUE_DESCENT:
@@ -1300,10 +1421,34 @@ void checkFlightState(void* pvParameters) {
                     }
                     break;
                 case ARMED_FLIGHT_STATE::MAIN_DEPLOY:
-                    // Wait for main deploy flag
-                    if (MAIN_CHUTE_EJECT_FLAG) {
+                    // Deploy main chute immediately when entering this state (if armed and in flight)
+                    if(operation_mode == OPERATION_MODE::ARMED_MODE && is_system_armed && MAIN_CHUTE_EJECT_FLAG == 0) {
+                        // Additional safety check: Only deploy if we're descending from a reasonable altitude
+                        #if USE_KALMAN_FOR_STATE_DETECTION
+                        float current_alt = g_current_telemetry.alt_data.kalman_altitude;
+                        #else
+                        float current_alt = g_current_telemetry.alt_data.rel_altitude;
+                        #endif
+                        
+                        if (current_alt > LAUNCH_DETECTION_THRESHOLD) {
+                            mainChuteDeploy();
+                            current_state = ARMED_FLIGHT_STATE::MAIN_DESCENT; // Move to next state immediately
+                            debug("📦 MAIN CHUTE DEPLOYED at ");
+                            debug(current_alt);
+                            debugln("m altitude");
+                            
+                            char log_msg[100];
+                            snprintf(log_msg, sizeof(log_msg), "MAIN CHUTE DEPLOYED at %.1fm altitude\r\n", current_alt);
+                            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, log_msg);
+                        } else {
+                            debug("⚠️ MAIN CHUTE deployment blocked - altitude too low: ");
+                            debug(current_alt);
+                            debugln("m");
+                        }
+                    } else if (MAIN_CHUTE_EJECT_FLAG == 1) {
+                        // Main chute already deployed, move to descent state
                         current_state = ARMED_FLIGHT_STATE::MAIN_DESCENT;
-                        MAIN_CHUTE_EJECT_FLAG = 0; // Reset for safety
+                        debugln("✅ MAIN CHUTE already deployed - moving to descent");
                     }
                     break;
                 case ARMED_FLIGHT_STATE::MAIN_DESCENT:
@@ -1421,11 +1566,21 @@ void flightStateCallback(void* pvParameters) {
 
             // DROGUE_DEPLOY
             case ARMED_FLIGHT_STATE::DROGUE_DEPLOY:
-                /* fire charges ony if the flight computer has been armed */
-                if(operation_mode == OPERATION_MODE::ARMED_MODE) {
-                    drogueChuteDeploy();
+                // Backup deployment logic in case checkFlightState didn't trigger it
+                if(operation_mode == OPERATION_MODE::ARMED_MODE && is_system_armed && DROGUE_DEPLOY_FLAG == 0) {
+                    #if USE_KALMAN_FOR_STATE_DETECTION
+                    float current_alt = g_current_telemetry.alt_data.kalman_altitude;
+                    #else
+                    float current_alt = g_current_telemetry.alt_data.rel_altitude;
+                    #endif
+                    
+                    if (current_alt > LAUNCH_DETECTION_THRESHOLD) {
+                        drogueChuteDeploy();
+                        debug("🔄 BACKUP DROGUE DEPLOYMENT at ");
+                        debug(current_alt);
+                        debugln("m altitude");
+                    }
                 }
-
                 break;
 
             // DROGUE_DESCENT
@@ -1434,10 +1589,21 @@ void flightStateCallback(void* pvParameters) {
 
             // MAIN_DEPLOY
             case ARMED_FLIGHT_STATE::MAIN_DEPLOY:
-                if(operation_mode == OPERATION_MODE::ARMED_MODE) {
-                    mainChuteDeploy();
+                // Backup deployment logic in case checkFlightState didn't trigger it
+                if(operation_mode == OPERATION_MODE::ARMED_MODE && is_system_armed && MAIN_CHUTE_EJECT_FLAG == 0) {
+                    #if USE_KALMAN_FOR_STATE_DETECTION
+                    float current_alt = g_current_telemetry.alt_data.kalman_altitude;
+                    #else
+                    float current_alt = g_current_telemetry.alt_data.rel_altitude;
+                    #endif
+                    
+                    if (current_alt > LAUNCH_DETECTION_THRESHOLD) {
+                        mainChuteDeploy();
+                        debug("🔄 BACKUP MAIN CHUTE DEPLOYMENT at ");
+                        debug(current_alt);
+                        debugln("m altitude");
+                    }
                 }
-
                 break;
 
             // MAIN_DESCENT
@@ -1826,70 +1992,6 @@ void xOperationModeIndicateTask(void* pvParameters) {
     // }
 
 //}
-
-void drogueChuteDeploy() {
-    static bool firing = false;
-    static unsigned long fireStart = 0;
-
-    if (!firing) {
-        // Start firing
-        digitalWrite(DROGUE_PIN, HIGH);
-        fireStart = millis();
-        firing = true;
-        debugln("DROGUE CHUTE EJECTION STARTED");
-    }
-
-    // Keep pin HIGH for the required time, then turn off
-    if (firing && (millis() - fireStart >= PYRO_CHARGE_TIME)) {
-        digitalWrite(DROGUE_PIN, LOW);
-        DROGUE_DEPLOY_FLAG = 1;
-        firing = false;
-        debugln("DROGUE CHUTE DEPLOYED");
-    }
-}
-
-/*!****************************************************************************
- * @brief fires the pyro-charge to deploy the main chute
- * Turn on the main chute ejection circuit by running the GPIO
- * HIGH for a preset No. of seconds
- * Default no. of seconds to remain HIGH is 5
- * 
- *******************************************************************************/
-//void mainChuteDeploy() {
-    // // check for drogue chute deploy conditions 
-
-    // //if the drogue deploy pin is HIGH, there is an error
-    // if(digitalRead(MAIN_CHUTE_EJECT_PIN)) { // NOT NECESSARY - TEST WITHOUT
-    //     // error 
-    // } else {
-    //     // pulse the drogue pin for a number of seconds - determined from pop tests
-    //     digitalWrite(MAIN_CHUTE_EJECT_PIN, HIGH);
-    //     delay(MAIN_DESCENT_PYRO_CHARGE_TIME); // TODO- Make this delay non-blocking
-
-    //     // update the drogue deployed telemetry variable
-    //     MAIN_CHUTE_EJECT_FLAG = 1;
-    //     debugln("MAIN CHUTE DEPLOYED");
-    // }
-//}
-
-void mainChuteDeploy() {
-    static bool firing = false;
-    static unsigned long fireStart = 0;
-
-    if (!firing) {
-        digitalWrite(MAIN_CHUTE_EJECT_PIN, HIGH);
-        fireStart = millis();
-        firing = true;
-        debugln("MAIN CHUTE EJECTION STARTED");
-    }
-
-    if (firing && (millis() - fireStart >= MAIN_DESCENT_PYRO_CHARGE_TIME)) {
-        digitalWrite(MAIN_CHUTE_EJECT_PIN, LOW);
-        MAIN_CHUTE_EJECT_FLAG = 1;
-        firing = false;
-        debugln("MAIN CHUTE DEPLOYED");
-    }
-}
 
 
 void xCreateAllTasks() {

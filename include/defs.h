@@ -114,15 +114,15 @@ extern volatile uint8_t MAIN_CHUTE_EJECT_FLAG;     /*!< Set to 1 when main chute
 #define ALTITUDE 1525.0 // altitude of iPIC building, JKUAT, Juja. TODO: Change to launch site altitude
 #define LAUNCH_DETECTION_THRESHOLD 10         /*!< altitude in meters, above which we register that we have launched  */
 #define LAUNCH_DETECTION_ALTITUDE_WINDOW 20  /*!< Window in meters where we register a launch */
-#define APOGEE_DETECTION_THRESHOLD 3         /*!< value in meters for detecting apogee */
-#define MAIN_EJECTION_HEIGHT 500            /*!< height to eject the main chute  */
+#define APOGEE_DETECTION_THRESHOLD 2         /*!< value in meters for detecting apogee - reduced for 120m simulation */
+#define MAIN_EJECTION_HEIGHT 50             /*!< height to eject the main chute - 50m from ground for 120m simulation */
 #define DROGUE_EJECTION_HEIGHT  1000             /*!< height to eject the drogue chute - ideally it should be at apogee  */
 #define SEA_LEVEL_PRESSURE 101325            /*!< sea level pressure to be used for altitude calculations */
 #define BASE_ALTITUDE 1417                   /*!< this value is the altitude at rocket launch site - adjust accordingly */
 
 // Enhanced flight state detection using Kalman filtered data
 #define ARM_ALTITUDE_THRESHOLD 50            /*!< minimum relative altitude (filtered) required for arming in meters */
-#define DROGUE_DEPLOY_DELAY_MS 2000         /*!< delay after apogee detection before drogue deployment in milliseconds */
+#define DROGUE_DEPLOY_DELAY_MS 1000          /*!< delay after apogee detection before drogue deployment in milliseconds - 1 second for 120m simulation */
 #define USE_KALMAN_FOR_STATE_DETECTION 1    /*!< set to 1 to use Kalman filtered altitude for all state decisions */
 
 // Flight operation modes
