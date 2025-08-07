@@ -7,23 +7,22 @@
 
 #include "communication_manager.h"
 #include "system_logger.h"
+#include "system_log_levels.h"
 #include "wifi-config.h"
+#include "espnow_beacon_transmitter.h"
+#include "defs.h"
+#include "data_types.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <FS.h>
 #include <SPIFFS.h>
-#include "esp_wifi.h"
-#include "esp_now.h"
-#include "espnow_beacon_transmitter.h"
-#include "defs.h"
-#include <WiFi.h>
+#include <esp_wifi.h>
 #include <esp_now.h>
 
-// External references from main.cpp
+// External references from main.cpp (other than those already in header)
 extern SystemLogger SYSTEM_LOGGER;
 extern const char* system_log_file;
 extern ESPNowBeaconTransmitter transmitter;
-#include "defs.h"
 
 
 
@@ -149,10 +148,35 @@ void CommunicationManager::handleModeCommand(String command, String source) {
     } else if (command == "CMD_GET_MODE") {
         reportCurrentMode();
     } else if (command == "CMD_ARM") {
-        // Handle arming
-        is_system_armed = true;
-        Serial.printf("[COMM MANAGER] ARMED by %s\n", source.c_str());
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "System armed\r\n");
+        // 🛡️ ARM SAFETY: Check altitude requirement (50m minimum using Kalman filtered data)
+        #if USE_KALMAN_FOR_STATE_DETECTION
+        float current_altitude = g_current_telemetry.alt_data.kalman_altitude;
+        #else
+        float current_altitude = g_current_telemetry.alt_data.rel_altitude;
+        #endif
+        
+        // Check if telemetry data is recent (within last 2 seconds)
+        if ((millis() - g_last_telemetry_update) > 2000) {
+            Serial.printf("[COMM MANAGER] ARM DENIED by %s: Telemetry data too old\n", source.c_str());
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, system_log_file, "ARM DENIED: Stale telemetry data\r\n");
+        } else if (current_altitude < ARM_ALTITUDE_THRESHOLD) {
+            Serial.printf("[COMM MANAGER] ARM DENIED by %s: Altitude %.1fm < %dm threshold\n", source.c_str(), current_altitude, ARM_ALTITUDE_THRESHOLD);
+            char log_msg[100];
+            snprintf(log_msg, sizeof(log_msg), "ARM DENIED: Alt %.1fm < %dm threshold\r\n", current_altitude, ARM_ALTITUDE_THRESHOLD);
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, system_log_file, log_msg);
+        } else {
+            // ✅ ARM CONDITIONS MET
+            arm_pyros();
+            chutesInit();
+            is_system_armed = true;
+            operation_mode = OPERATION_MODE::ARMED_MODE;
+            blocking_buzz(500); // ARMING_PROCEDURE interval
+            
+            Serial.printf("[COMM MANAGER] ARMED by %s (Alt: %.1fm ✓)\n", source.c_str(), current_altitude);
+            char log_msg[100];
+            snprintf(log_msg, sizeof(log_msg), "ARMED by %s at %.1fm altitude\r\n", source.c_str(), current_altitude);
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, log_msg);
+        }
     } else if (command == "CMD_DISARM") {
         // Handle disarming
         is_system_armed = false;

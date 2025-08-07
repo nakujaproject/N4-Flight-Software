@@ -118,6 +118,14 @@ bool DataLogger::loggerInit() {
                 flight_file = SerialFlash.open(this->_filename);
                 flight_file.erase();
                 Serial.println("Done erasing file contents");
+                
+                // 🔥 FIX: Re-open the file after erasing for CSV logging
+                this->_file = SerialFlash.open(this->_filename);
+                if (this->_file) {
+                    Serial.println("✅ Flash file re-opened successfully for CSV logging");
+                } else {
+                    Serial.println("❌ Failed to re-open flash file after erase");
+                }
             } else {
                 Serial.println("flightk_data.txt file does not exist. Creating file...");
                 uint8_t file_create_status = SerialFlash.createErasable(this->_filename, this->_file_size);
@@ -126,6 +134,11 @@ bool DataLogger::loggerInit() {
                 } else {
                     Serial.println(F("Created flight_data.txt file. Ready for data logging!"));
                     this->_file = SerialFlash.open(this->_filename);
+                    if (this->_file) {
+                        Serial.println("✅ New flash file opened successfully for CSV logging");
+                    } else {
+                        Serial.println("❌ Failed to open newly created flash file");
+                    }
                 }
 
             }
@@ -286,6 +299,59 @@ void DataLogger::loggerWrite(telemetry_type_t packet) {
     // Optional: echo to serial for debugging
     Serial.print("[LOGGED]: ");
     Serial.print(pckt_buff);
+}
+
+/*!****************************************************************************
+ * @brief Write CSV string directly to flash memory - OPTIMIZED for queue-based logging
+ * @param csv_string - Pre-formatted CSV string ready for logging
+ *******************************************************************************/
+void DataLogger::loggerWriteCSV(const char* csv_string) {
+    static uint32_t csv_record_count = 0;  // Track number of CSV records logged
+    
+    // 🛡️ SAFETY CHECK: Verify flash file is open and valid
+    if (!this->_file) {
+        Serial.println("❌ [CSV LOG ERROR] Flash file not open!");
+        return;
+    }
+    
+    // 🛡️ SAFETY CHECK: Verify CSV string is valid
+    if (!csv_string || strlen(csv_string) == 0) {
+        Serial.println("❌ [CSV LOG ERROR] Invalid CSV string!");
+        return;
+    }
+    
+    size_t csv_length = strlen(csv_string);
+    if (csv_length > 512) {  // Reasonable limit
+        Serial.println("❌ [CSV LOG ERROR] CSV string too long!");
+        return;
+    }
+    
+    // 🛡️ MEMORY SAFE: Direct write of CSV string to flash memory with proper error checking
+    size_t bytes_written = this->_file.write(csv_string, csv_length);
+    csv_record_count++;
+    
+    // Enhanced debug output with record count and status
+    Serial.print("🔥 [CSV LOGGED #");
+    Serial.print(csv_record_count);
+    Serial.print("] (");
+    Serial.print(bytes_written);
+    Serial.print("/");
+    Serial.print(csv_length);
+    Serial.print(" bytes): ");
+    
+    // Only print first 50 chars to avoid overflow
+    String preview = String(csv_string);
+    if (preview.length() > 50) {
+        preview = preview.substring(0, 50) + "...";
+    }
+    Serial.println(preview);
+    
+    // Check write success
+    if (bytes_written != csv_length) {
+        Serial.println("⚠️ [CSV LOG WARNING] Partial write detected!");
+    } else {
+        Serial.println(" ✅ Write successful!");
+    }
 }
 
 

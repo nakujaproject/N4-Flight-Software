@@ -11,7 +11,18 @@
 
 #include <Arduino.h>
 #include "defs.h"
+#include "data_types.h"  // For telemetry_type_t
 
+// External declarations for global variables and functions from main.cpp
+extern telemetry_type_t g_current_telemetry;
+extern unsigned long g_last_telemetry_update;
+extern bool is_system_armed;
+extern uint8_t operation_mode;
+extern void blocking_buzz(uint16_t interval);  // Fixed parameter type to match main.cpp
+extern void arm_pyros();
+extern void chutesInit();
+extern bool use_beacon_mode;
+extern class ESPNowBeaconTransmitter transmitter;
 
 // C++ linkage only (no extern "C")
 void reconfigureForBeaconMode();

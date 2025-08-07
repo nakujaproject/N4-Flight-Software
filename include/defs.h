@@ -11,7 +11,7 @@
 /*!< To select the telemetry transfer method used */
 /*!< note: u can use wifi and xbee at the same time, so both of these handles can be set */
 /*!< at the same time */
-#define MQTT 1                                 /*!< Set to 1 for normal mode (MQTT + Beacon switching), 0 for STRICT BEACON MODE (no WiFi/MQTT) */
+#define MQTT 0                                 /*!< Set to 1 for normal mode (MQTT + Beacon switching), 0 for STRICT BEACON MODE (no WiFi/MQTT) */
 #define TEST 1                                /*!< set to 1 to enable test mode - allows data transmission even when disarmed */
 #define XBEE 0                               /*!< set to 1 if using XBEE for telemetry transfer */
 
@@ -58,11 +58,11 @@ extern communication_status_t comm_status;
 
 /* debug parameters for use during testing - set to 0 for production */
 #define DEBUGGING 1                           /*!< allow debugging to terminal. Set to 0 pre flight to disable serial terminal printing and improve speed  */
-#define LOG_TO_MEMORY 0                      /*!< allow data logging to memory. Set to 1 to log data to external flash memory. Must be set during flight */
+#define LOG_TO_MEMORY 1                      /*!< allow data logging to memory. Set to 1 to log data to external flash memory. Must be set during flight */
 #define DEBUG_TO_TERMINAL 1                 /*!< allow create task that print data to terminal. Set to 0 before flight  */
 
 // Flash memory logging configuration to prevent blocking
-#define ENABLE_FLASH_LOGGING 0              /*!< Set to 0 to disable flash logging and prevent performance issues */
+#define ENABLE_FLASH_LOGGING 1              /*!< Set to 1 to enable flash logging for data storage */
 #define ENABLE_QUEUE_LOGGING 1              /*!< Set to 1 to use queue-based logging instead of direct writes */
 #define LOG_QUEUE_SIZE 50                    /*!< Size of logging queue - prevents blocking when flash is busy */
 #define LOG_TASK_PRIORITY 1                  /*!< Low priority for logging task to not interfere with telemetry */
@@ -119,6 +119,17 @@ extern volatile uint8_t MAIN_CHUTE_EJECT_FLAG;     /*!< Set to 1 when main chute
 #define DROGUE_EJECTION_HEIGHT  1000             /*!< height to eject the drogue chute - ideally it should be at apogee  */
 #define SEA_LEVEL_PRESSURE 101325            /*!< sea level pressure to be used for altitude calculations */
 #define BASE_ALTITUDE 1417                   /*!< this value is the altitude at rocket launch site - adjust accordingly */
+
+// Enhanced flight state detection using Kalman filtered data
+#define ARM_ALTITUDE_THRESHOLD 50            /*!< minimum relative altitude (filtered) required for arming in meters */
+#define DROGUE_DEPLOY_DELAY_MS 2000         /*!< delay after apogee detection before drogue deployment in milliseconds */
+#define USE_KALMAN_FOR_STATE_DETECTION 1    /*!< set to 1 to use Kalman filtered altitude for all state decisions */
+
+// Flight operation modes
+enum OPERATION_MODE {
+    SAFE_MODE = 0, /* Pyro-charges are disarmed  */
+    ARMED_MODE      /* Pyro charges are armed and ready to deploy on apogee --see docs for more-- */
+};
 
 // MAC address declarations for global access
 #include <stdint.h>
