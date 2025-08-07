@@ -61,6 +61,14 @@ extern communication_status_t comm_status;
 #define LOG_TO_MEMORY 0                      /*!< allow data logging to memory. Set to 1 to log data to external flash memory. Must be set during flight */
 #define DEBUG_TO_TERMINAL 1                 /*!< allow create task that print data to terminal. Set to 0 before flight  */
 
+// Flash memory logging configuration to prevent blocking
+#define ENABLE_FLASH_LOGGING 0              /*!< Set to 0 to disable flash logging and prevent performance issues */
+#define ENABLE_QUEUE_LOGGING 1              /*!< Set to 1 to use queue-based logging instead of direct writes */
+#define LOG_QUEUE_SIZE 50                    /*!< Size of logging queue - prevents blocking when flash is busy */
+#define LOG_TASK_PRIORITY 1                  /*!< Low priority for logging task to not interfere with telemetry */
+#define LOG_TASK_STACK_SIZE 4096            /*!< Dedicated stack for logging task */
+#define LOG_WRITE_TIMEOUT_MS 10             /*!< Maximum time to wait for flash write (non-blocking) */
+
 #if DEBUGGING
     #define debug(x) Serial.print(x)
     #define debugln(x) Serial.println(x)
@@ -141,6 +149,13 @@ extern void MQTT_Reconnect();
 #define FILTERED_DATA_QUEUE_LENGTH 10       /*!< length of the filtered data queue */
 #define FLIGHT_STATES_QUEUE_LENGTH 1        /*!< length of the flight states queue */
 #define CONSUME_TASK_DELAY    100           /*!< Task delay in ms - increased to prevent watchdog timeouts */
+
+// Logger queue management - prevents blocking main telemetry tasks
+#define LOG_TO_MEM_QUEUE_LENGTH 100         /*!< Large queue for flash logging to prevent data loss */
+extern QueueHandle_t log_to_mem_queue_handle;  /*!< Queue handle for non-blocking flash logging */
+
+// Memory safety for strict beacon mode
+#define BEACON_MODE_SAFETY_CHECKS 1         /*!< Enable additional memory checks in beacon-only mode */
 
 /* MQTT constants */
 // MQTT server IP and port are now configured dynamically via WiFiManager

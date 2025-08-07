@@ -48,6 +48,17 @@ uint8_t WIFIConfig::WifiConnect(bool enable_ap_mode, const uint8_t* rocket_mac) 
         WiFi.mode(WIFI_AP_STA);                                // 1. Set mode
         esp_wifi_set_mac(WIFI_IF_AP, rocket_mac);
         esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);        // 3. Set channel
+        
+        // 4. Start the Access Point for beacon transmission
+        bool ap_started = WiFi.softAP("N4-Beacon-AP", nullptr, 1, 0, 1); // SSID, password, channel, hidden, max_clients
+        if (ap_started) {
+            Serial.println("[WiFiConfig] Access Point started for beacon transmission");
+            Serial.print("[WiFiConfig] AP IP: ");
+            Serial.println(WiFi.softAPIP());
+        } else {
+            Serial.println("[WiFiConfig] Failed to start Access Point");
+            return 0;
+        }
 
         // No WiFiManager — skip real WiFi connection
         return 1;

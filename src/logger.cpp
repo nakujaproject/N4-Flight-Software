@@ -220,35 +220,65 @@ void DataLogger::loggerTest() {
 void DataLogger::loggerWrite(telemetry_type_t packet) {
     extern gps_type_t gps_packet;
     extern altimeter_type_t altimeter_packet;
-    extern telemetry_type_t telemetry_received_packet;
+    telemetry_type_t telemetry_received_packet;
+    
 
-    sprintf(pckt_buff,
-        "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.4f,%.2f,%.2f,%d,%d,%.2f,%d\n",
-        packet.record_number,
-        packet.operation_mode,
-        packet.state,
-        packet.acc_data.ax,
-        packet.acc_data.ay,
-        packet.acc_data.az,
-        packet.acc_data.pitch,
-        packet.acc_data.roll,
-        packet.gyro_data.gx,
-        packet.gyro_data.gy,
-        packet.gyro_data.gz,
-        gps_packet.latitude,
-        gps_packet.longitude,
-        gps_packet.gps_altitude,
-        altimeter_packet.pressure,
-        altimeter_packet.temperature,
-        altimeter_packet.rel_altitude,
-        altimeter_packet.kalman_altitude,           // 19replace altitude after drone test
-        altimeter_packet.kalman_vertical_velocity,  // 20replace vertical velocity after drone test
-        telemetry_received_packet.drogue_pin_state, // 21
-        telemetry_received_packet.main_chute_pin_state, // 22
-        telemetry_received_packet.battery_voltage,  // 23 - battery voltage
-        telemetry_received_packet.wifi_rssi
+    // sprintf(pckt_buff,
+    //     "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.4f,%.2f,%.2f,%d,%d,%.2f,%d\n",
+    //     packet.record_number,
+    //     packet.operation_mode,
+    //     packet.state,
+    //     packet.acc_data.ax,
+    //     packet.acc_data.ay,
+    //     packet.acc_data.az,
+    //     packet.acc_data.pitch,
+    //     packet.acc_data.roll,
+    //     packet.gyro_data.gx,
+    //     packet.gyro_data.gy,
+    //     packet.gyro_data.gz,
+    //     gps_packet.latitude,
+    //     gps_packet.longitude,
+    //     gps_packet.gps_altitude,
+    //     altimeter_packet.pressure,
+    //     altimeter_packet.temperature,
+    //     altimeter_packet.rel_altitude,
+    //     altimeter_packet.kalman_altitude,           // 19replace altitude after drone test
+    //     altimeter_packet.kalman_vertical_velocity,  // 20replace vertical velocity after drone test
+    //     telemetry_received_packet.drogue_pin_state, // 21
+    //     telemetry_received_packet.main_chute_pin_state, // 22
+    //     telemetry_received_packet.battery_voltage,  // 23 - battery voltage
+    //     telemetry_received_packet.wifi_rssi
         
-    );
+    // );
+    
+    sprintf(pckt_buff,
+                "%d,%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.8f,%.8f,%.2f,%u,%.2f,%.2f,%.2f,%.2f,%d,%d,%.2f,%d,%.2f,%.2f\n",
+                telemetry_received_packet.record_number,    // 0
+                telemetry_received_packet.operation_mode,   // 1  
+                telemetry_received_packet.state,            // 2
+                telemetry_received_packet.acc_data.ax,      // 3
+                telemetry_received_packet.acc_data.ay,      // 4
+                telemetry_received_packet.acc_data.az,      // 5
+                telemetry_received_packet.acc_data.pitch,   // 6
+                telemetry_received_packet.acc_data.roll,    // 7
+                telemetry_received_packet.gyro_data.gx,     // 8
+                telemetry_received_packet.gyro_data.gy,     // 9
+                telemetry_received_packet.gyro_data.gz,     // 10
+                gps_packet.latitude,                        // 11
+                gps_packet.longitude,                       // 12
+                gps_packet.gps_altitude,                    // 13
+                gps_packet.time,                            // 14 - GPS time
+                altimeter_packet.pressure,                  // 15
+                altimeter_packet.temperature,               // 16
+                altimeter_packet.rel_altitude,              // 17
+                altimeter_packet.velocity,                  // 18 - velocity
+                telemetry_received_packet.drogue_pin_state, // 19
+                telemetry_received_packet.main_chute_pin_state, // 20
+                telemetry_received_packet.battery_voltage,  // 21 - battery voltage
+                telemetry_received_packet.wifi_rssi,        // 22 - RSSI from telemetry packet
+                altimeter_packet.kalman_altitude,           // 23 - 2D Kalman filtered altitude
+                altimeter_packet.kalman_vertical_velocity   // 24 - 2D Kalman filtered vertical velocity
+            ); 
 
     // Write it to flash as a string
     this->_file.write((uint8_t*)pckt_buff, strlen(pckt_buff));

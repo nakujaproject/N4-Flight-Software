@@ -36,11 +36,11 @@ bool SerialFlashChip::begin(uint8_t pin, uint8_t wp, uint8_t hold) {
 }
 
 void SerialFlashChip::eraseAll() {
-    Serial.println("[eraseAll] Erasing entire flash...");
+    //Serial.println("[eraseAll] Erasing entire flash...");
     for (uint32_t addr = 0; addr < CHIP_SIZE; addr += SECTOR_SIZE) {
         eraseSector(addr);
     }
-    Serial.println("[eraseAll] Done.");
+    ///Serial.println("[eraseAll] Done.");
 }
 
 bool SerialFlashChip::create(const char *filename, uint32_t length) {
@@ -86,14 +86,14 @@ bool SerialFlashChip::create(const char *filename, uint32_t length) {
 
     saveFileTable();
 
-    Serial.println("[create] File successfully created.");
+    //Serial.println("[create] File successfully created.");
     next_free_address += length;
     return true;
 }
 
 bool SerialFlashChip::createErasable(const char* filename, uint32_t length) {
-    Serial.printf("[createErasable] Requested file: %s, size: %lu\n", filename, length);
-    Serial.printf("[createErasable] Next free address: 0x%06lX\n", next_free_address);
+    //Serial.printf("[createErasable] Requested file: %s, size: %lu\n", filename, length);
+    //Serial.printf("[createErasable] Next free address: 0x%06lX\n", next_free_address);
 
     if (strlen(filename) >= MAX_FILENAME_LEN - 1) {
         Serial.println("[createErasable] ❌ Filename too long.");
@@ -143,7 +143,7 @@ bool SerialFlashChip::createErasable(const char* filename, uint32_t length) {
     saveFileTable();
     next_free_address = end;
 
-    Serial.println("[createErasable] ✅ File created and sectors erased.");
+    //Serial.println("[createErasable] ✅ File created and sectors erased.");
     return true;
 }
 
@@ -227,7 +227,7 @@ void SerialFlashChip::write(uint32_t addr, const void *buf, uint32_t len) {
 
 bool SerialFlashChip::initFileSystem() {
     read(METADATA_ADDRESS, &file_table, sizeof(file_table));
-    Serial.println("[initFileSystem] Reading file table...");
+    //Serial.println("[initFileSystem] Reading file table...");
 
     // Validate CRCs and remove invalid entries
     for (int i = 0; i < MAX_FILES; i++) {
@@ -252,7 +252,7 @@ bool SerialFlashChip::initFileSystem() {
         }
     }
 
-    Serial.printf("[initFileSystem] ✅ Initialized. Next free address: 0x%06lX\n", next_free_address);
+    //Serial.printf("[initFileSystem] ✅ Initialized. Next free address: 0x%06lX\n", next_free_address);
     return true;
 }
 
@@ -345,7 +345,7 @@ void SerialFlashChip::eraseSector(uint32_t addr) {
     digitalWrite(cs_pin, HIGH);
 
     if (!waitReady(5000)) {
-        Serial.println("[eraseSector] Timeout!");
+       // Serial.println("[eraseSector] Timeout!");
     }
 }
 

@@ -1,5 +1,6 @@
 #include "espnow_beacon_transmitter.h"
 #include "defs.h"  // Include defs.h to access TEST flag
+#include <WiFi.h>  // Include WiFi for mode checking
 
 ESPNowBeaconTransmitter* ESPNowBeaconTransmitter::instance = nullptr;
 
@@ -15,6 +16,12 @@ ESPNowBeaconTransmitter::~ESPNowBeaconTransmitter() {
 }
 
 bool ESPNowBeaconTransmitter::begin() {
+    // Safety check: Ensure WiFi is available before initializing ESP-NOW
+    if (WiFi.getMode() == WIFI_MODE_NULL) {
+        Serial.println("❌ WiFi not initialized - cannot start ESP-NOW");
+        return false;
+    }
+    
     if (esp_now_init() != ESP_OK) {
         Serial.println("❌ ESP-NOW init failed");
         return false;

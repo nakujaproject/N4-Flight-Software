@@ -249,7 +249,7 @@ volatile uint8_t MAIN_CHUTE_EJECT_FLAG = 0;
 void initDynamicWIFI() {
     // 🔥 STRICT BEACON MODE - Only initialize WiFi if MQTT flag is enabled
     if (MQTT) {
-        uint8_t wifi_result = wifi_config.WifiConnect(use_beacon_mode, ROCKET_MAC);
+        uint8_t wifi_result = wifi_config.WifiConnect(false, ROCKET_MAC); // MQTT mode: use_beacon_mode = false
         if(wifi_result) {
             debugln("Wifi config OK!");
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Wifi config OK!\r\n");
@@ -258,8 +258,8 @@ void initDynamicWIFI() {
             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Wifi config failed\r\n");
         }
     } else {
-        debugln("MQTT disabled - WiFi not initialized (Strict Beacon Mode)");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "MQTT disabled - WiFi not initialized (Strict Beacon Mode)\r\n");
+        debugln("MQTT disabled - WiFi not initialized in initDynamicWIFI (will be handled separately for beacon mode)");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "MQTT disabled - WiFi skipped in initDynamicWIFI\r\n");
     }
 }
 
@@ -1035,7 +1035,7 @@ void taskKalman2D(void *pvParameters) {
             altimeter_packet.kalman_vertical_velocity = VelocityVerticalKalman;
 
             //Serial.printf(" Filtered Alt: %.4f  Vel: %.4f\n", AltitudeKalman, VelocityVerticalKalman);
-            Serial.printf("2D Kalman: Alt=%.2f, Vel=%.2f\n", AltitudeKalman, VelocityVerticalKalman);
+            //Serial.printf("2D Kalman: Alt=%.2f, Vel=%.2f\n", AltitudeKalman, VelocityVerticalKalman);
 
         }
 
@@ -1451,24 +1451,30 @@ void logToMemory(void* pvParameter) {
     telemetry_type_t received_packet;
 
     while (1) {
-        xQueueReceive(log_to_mem_queue_handle, &received_packet, portMAX_DELAY);
+        // Wait for data from the queue (blocks until data arrives)
+        if (xQueueReceive(log_to_mem_queue_handle, &received_packet, portMAX_DELAY) == pdTRUE) {
+            current_log_time = millis();
 
-        current_log_time = millis();
+            if (current_log_time - previous_log_time > log_sample_interval) {
+                previous_log_time = current_log_time;
 
-        if (current_log_time - previous_log_time > log_sample_interval) {
-            previous_log_time = current_log_time;
+                #if ENABLE_FLASH_LOGGING
+                //  Log to Flash Memory (controlled by flag to prevent performance issues)
+                disableAllDevices();
+                digitalWrite(flash_cs_pin, LOW);
+                data_logger.loggerWrite(received_packet);
+                digitalWrite(flash_cs_pin, HIGH);
+                #endif
 
-            //  Log to Flash 
-            disableAllDevices();
-            digitalWrite(flash_cs_pin, LOW);
-            data_logger.loggerWrite(received_packet);
-            digitalWrite(flash_cs_pin, HIGH);
-
-            //  Log to SD Card 
-            disableAllDevices();
-            digitalWrite(SD_CS_PIN, LOW);
-            sdLogger.log(received_packet, gps_packet);
-            digitalWrite(SD_CS_PIN, HIGH);
+                //  Log to SD Card (always enabled for primary data backup)
+                disableAllDevices();
+                digitalWrite(SD_CS_PIN, LOW);
+                sdLogger.log(received_packet, gps_packet);
+                digitalWrite(SD_CS_PIN, HIGH);
+            }
+            
+            // Yield to other tasks to prevent blocking beacon transmission
+            vTaskDelay(pdMS_TO_TICKS(1));
         }
     }
 }
@@ -1521,6 +1527,13 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
         // 🔥 ISOLATED MQTT TRANSMISSION - Only transmit via MQTT when MQTT mode is active
         bool mqtt_success = false;
         if (comm_manager.isMQTTActive()) {
+            #if BEACON_MODE_SAFETY_CHECKS
+            // Additional safety check - ensure MQTT flag is enabled
+            if (MQTT == 0) {
+                debugln("[MQTT TX] MQTT disabled by flag - skipping transmission");
+                mqtt_success = false;
+            } else 
+            #endif
             // Check WiFi connection status for MQTT mode
             if (!WiFi.isConnected()) {
                 debugln("[MQTT TX] WiFi not connected - transmission failed");
@@ -1707,139 +1720,165 @@ void mainChuteDeploy() {
 
 
 void xCreateAllTasks() {
-        debugln("Creating all tasks");
-        //vTaskDelay(200/portTICK_PERIOD_MS);
+    debugln("Creating all tasks with enhanced error protection");
+    
+    // 🛡️ MEMORY CHECK: Verify available heap before task creation
+    size_t free_heap_before = esp_get_free_heap_size();
+    Serial.printf("[TASK CREATION] Available heap before tasks: %d bytes\n", free_heap_before);
+    
+    if (free_heap_before < 50000) { // Less than 50KB free
+        Serial.println("[ERROR] Insufficient memory for task creation - halting");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::ERROR, system_log_file, "CRITICAL: Insufficient memory for task creation\r\n");
+        return;
+    }
+    
+    uint8_t tasks_created = 0;
+    uint8_t tasks_failed = 0;
 
-        /* READ ACCELERATION DATA */
-        BaseType_t gr = xTaskCreatePinnedToCore(readAccelerationTask, "readAccelerometer", STACK_SIZE*4, NULL, 2, &readAccelerationTaskHandle, 1);
-        if(gr == pdPASS) {
-            debugln("[+]Read acceleration task created OK.");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Read acceleration task created OK.\r\n");
-        } else {
-            debugln("[-]Read acceleration task creation failed");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Read acceleration task creation failed\r\n");
-        }
+    /* 🛡️ READ ACCELERATION DATA - with memory protection */
+    BaseType_t gr = xTaskCreatePinnedToCore(readAccelerationTask, "readAccelerometer", STACK_SIZE*4, NULL, 2, &readAccelerationTaskHandle, 1);
+    if(gr == pdPASS) {
+        tasks_created++;
+        debugln("[+]Read acceleration task created OK.");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Read acceleration task created OK.\r\n");
+    } else {
+        tasks_failed++;
+        debugln("[-]Read acceleration task creation failed - CRITICAL");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::ERROR, system_log_file, "[CRITICAL]Read acceleration task creation failed\r\n");
+    }
 
-        /* TASK 3: READ GPS DATA */
-        BaseType_t rg = xTaskCreatePinnedToCore(readGPSTask, "readGPS", STACK_SIZE*2, NULL, 2, &readGPSTaskHandle, 1);
-        if(rg == pdPASS) {
-            debugln("[+]Read GPS task created OK.");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Read GPS task created OK.\r\n");
-        } else {
-            debugln("[-]Failed to create GPS task");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create GPS task\r\n");
-        }
+    /* 🛡️ TASK 3: READ GPS DATA - with error protection */
+    BaseType_t rg = xTaskCreatePinnedToCore(readGPSTask, "readGPS", STACK_SIZE*2, NULL, 2, &readGPSTaskHandle, 1);
+    if(rg == pdPASS) {
+        tasks_created++;
+        debugln("[+]Read GPS task created OK.");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Read GPS task created OK.\r\n");
+    } else {
+        tasks_failed++;
+        debugln("[-]Failed to create GPS task");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, system_log_file, "[-]Failed to create GPS task\r\n");
+    }
 
-        /* CHECK FLIGHT STATE TASK */
-         BaseType_t cf = xTaskCreatePinnedToCore(checkFlightState,"checkFlightState",STACK_SIZE*2,NULL, 2, &checkFlightStateTaskHandle, 1);
+    /* 🛡️ CHECK FLIGHT STATE TASK - essential for flight safety */
+    BaseType_t cf = xTaskCreatePinnedToCore(checkFlightState,"checkFlightState",STACK_SIZE*2,NULL, 2, &checkFlightStateTaskHandle, 1);
+    if(cf == pdPASS) {
+        tasks_created++;
+        debugln("[+]checkFlightState task created OK.");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]checkFlightState task created OK.\r\n");
+    } else {
+        tasks_failed++;
+        debugln("[-]Failed to create checkFlightState task - CRITICAL");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::ERROR, system_log_file, "[CRITICAL]Failed to create checkFlightState task\r\n");
+    }
 
-         if(cf == pdPASS) {
-             debugln("[+]checkFlightState task created OK.");
-             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]checkFlightState task created OK.\r\n");
-         } else {
-             debugln("[-]Failed to create checkFlightState task");
-             SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create checkFlightState task\r\n");
-         }
+    /* 🛡️ FLIGHT STATE CALLBACK TASK - essential for pyro control */
+    BaseType_t fs = xTaskCreatePinnedToCore(flightStateCallback, "flightStateCallback", STACK_SIZE*2, NULL, 2, &flightStateCallbackTaskHandle, 1);
+    if(fs == pdPASS) {
+        tasks_created++;
+        debugln("[+]flightStateCallback task created OK.");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]flightStateCallback task created OK.\r\n");
+    } else {
+        tasks_failed++;
+        debugln("[-]Failed to create flightStateCallback task - CRITICAL");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::ERROR, system_log_file, "[CRITICAL]Failed to create flightStateCallback task\r\n");
+    }
+    
+    /* 🛡️ MONITOR CHUTE PINS TASK - essential for status monitoring */
+    BaseType_t mp = xTaskCreatePinnedToCore(monitorChutePinsTask, "monitorChutePins", STACK_SIZE, NULL, 2, NULL, 1);
+    if(mp == pdPASS) {
+        tasks_created++;
+        debugln("[+]monitorChutePinsTask created OK.");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]monitorChutePinsTask created OK.\r\n");
+    } else {
+        tasks_failed++;
+        debugln("[-]Failed to create monitorChutePinsTask");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, system_log_file, "[-]Failed to create monitorChutePinsTask\r\n");
+    } 
 
-        /* FLIGHT STATE CALLBACK TASK */
-        BaseType_t fs = xTaskCreatePinnedToCore(flightStateCallback, "flightStateCallback", STACK_SIZE*2, NULL, 2, &flightStateCallbackTaskHandle, 1);
-        if(fs == pdPASS) {
-            debugln("[+]flightStateCallback task created OK.");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]flightStateCallback task created OK.\r\n");
-        } else {
-            debugln("[-]Failed to create flightStateCallback task");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create flightStateCallback task\r\n");
-        }
-        /* MONITOR CHUTE PINS TASK */
-        BaseType_t mp = xTaskCreatePinnedToCore(monitorChutePinsTask, "monitorChutePins", STACK_SIZE, NULL, 2, NULL, 1);
-        if(mp == pdPASS) {
-                debugln("[+]monitorChutePinsTask created OK.");
-        } else {
-               debugln("[-]Failed to create monitorChutePinsTask");
-        } 
-
-
-        
-        /* TRANSMIT TELEMETRY DATA */
+    /* 🛡️ TRANSMIT TELEMETRY DATA - communication essential (only if MQTT enabled) */
+    #if BEACON_MODE_SAFETY_CHECKS
+    if (MQTT == 1) {
+    #endif
         BaseType_t th = xTaskCreatePinnedToCore(MQTT_TransmitTelemetry, "transmit_telemetry", STACK_SIZE*4, NULL, 2, &MQTT_TransmitTelemetryTaskHandle, 1);
-
         if(th == pdPASS){
-                debugln("[+]MQTT transmit task created OK");
-                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]MQTT transmit task created OK\r\n");
-                
+            tasks_created++;
+            debugln("[+]MQTT transmit task created OK");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]MQTT transmit task created OK\r\n");
         } else {
-                debugln("[-]MQTT transmit task failed to create");
-                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]MQTT transmit task failed to create\r\n");
+            tasks_failed++;
+            debugln("[-]MQTT transmit task failed to create");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, system_log_file, "[-]MQTT transmit task failed to create\r\n");
         }
+    #if BEACON_MODE_SAFETY_CHECKS
+    } else {
+        debugln("[+] MQTT transmit task skipped - strict beacon mode");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "MQTT transmit task skipped - strict beacon mode\r\n");
+    }
+    #endif
 
-        
+    /* 🛡️ KALMAN FILTER 2D TASK - essential for altitude estimation */
+    BaseType_t kf2d = xTaskCreatePinnedToCore(taskKalman2D, "Kalman2D", STACK_SIZE*4, NULL, 2, NULL, 1);
+    if(kf2d == pdPASS) {
+        tasks_created++;
+        debugln("[+]Kalman2D task created OK.");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Kalman2D task created OK.\r\n");
+    } else {
+        tasks_failed++;
+        debugln("[-]Kalman2D task creation failed - CRITICAL");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::ERROR, system_log_file, "[CRITICAL]Kalman2D task creation failed\r\n");
+    }
 
-        // BaseType_t kf = xTaskCreatePinnedToCore(kalmanFilterTask, "kalman filter", STACK_SIZE*2, NULL, 2, &kalmanFilterTaskHandle, 1);
-
-        // if(kf == pdPASS) {
-        //     debugln("[+]kalmanFilter task created OK.");
-        //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]kalman_filter_queue_handle creation OK.\r\n");
-        // } else {
-        //     debugln("[-]kalmanFilter task failed to create");
-        //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]kalmanFilter task failed to create\r\n");
-        // }
-        BaseType_t kf2d = xTaskCreatePinnedToCore(taskKalman2D, "Kalman2D", STACK_SIZE*4, NULL, 2, NULL, 1);
-        if(kf2d == pdPASS) {
-            debugln("[+]Kalman2D task created OK.");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]Kalman2D task created OK.\r\n");
+    #if DEBUG_TO_TERMINAL   // set DEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
+        /* 🛡️ TASK 7: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
+        BaseType_t dt = xTaskCreatePinnedToCore(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE*4, NULL,2,&debugToTerminalTaskHandle, 1);
+        if(dt == pdPASS) {
+            tasks_created++;
+            debugln("[+]debugToTerminal task created OK");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]debugToTerminal task created OK\r\n");
         } else {
-            debugln("[-]Kalman2D task creation failed");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Kalman2D task creation failed\r\n");
+            tasks_failed++;
+            debugln("[-]debugToTerminal task not created");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, system_log_file, "[-]debugToTerminal task not created\r\n");
         }
+    #endif // DEBUG_TO_TERMINAL_TASK
 
-
-        #if DEBUG_TO_TERMINAL   // set DEBUG_TO_TERMINAL to 0 to prevent serial debug data to serial monitor
-
-            /* TASK 7: DISPLAY DATA ON SERIAL MONITOR - FOR DEBUGGING */
-            BaseType_t dt = xTaskCreatePinnedToCore(debugToTerminalTask,"debugToTerminalTask",STACK_SIZE*4, NULL,2,&debugToTerminalTaskHandle, 1);
-        
-            if(dt == pdPASS) {
-                debugln("[+]debugToTerminal task created OK");
-                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]debugToTerminal task created OK\r\n");
-            } else {
-                debugln("[-]debugToTerminal task not created");
-                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]debugToTerminal task not created\r\n");
-            }
-        
-        #endif // DEBUG_TO_TERMINAL_TASK
-
-        #if LOG_TO_MEMORY   // set LOG_TO_MEMORY to 1 to allow logging to memory 
-            /* TASK 9: LOG DATA TO MEMORY */
-            if(xTaskCreatePinnedToCore(logToMemory,"logToMemory",STACK_SIZE*4,NULL,2,&logToMemoryTaskHandle,1) != pdPASS){
-                debugln("[-]logToMemory task failed to create");
-                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]logToMemory task failed to create\r\n");
-
-            }else{
-                debugln("[+]logToMemory task created OK.");
-                SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]logToMemory task created OK.\r\n");
-            }
-        #endif // LOG_TO_MEMORY
-
-        if(xTaskCreatePinnedToCore(xOperationModeIndicateTask,"xOperationModeIndicateTask",STACK_SIZE*2,NULL,2,&opModeIndicateTaskHandle,1) != pdPASS){
-
-            debugln("[-]xOperationModeIndicateTask task failed to create");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]xOperationModeIndicateTask task failed to create\r\n");
+    #if LOG_TO_MEMORY   // set LOG_TO_MEMORY to 1 to allow logging to memory 
+        /* 🛡️ TASK 9: LOG DATA TO MEMORY */
+        if(xTaskCreatePinnedToCore(logToMemory,"logToMemory",STACK_SIZE*4,NULL,2,&logToMemoryTaskHandle,1) != pdPASS){
+            tasks_failed++;
+            debugln("[-]logToMemory task failed to create");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, system_log_file, "[-]logToMemory task failed to create\r\n");
         }else{
-            debugln("[+]xOperationModeIndicateTask task created OK.");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]xOperationModeIndicateTask task created OK.\r\n");
+            tasks_created++;
+            debugln("[+]logToMemory task created OK.");
+            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]logToMemory task created OK.\r\n");
         }
+    #endif // LOG_TO_MEMORY
 
-        /* READ ALTIMETER DATA */
-        BaseType_t ra = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*3,NULL,2, &readAltimeterTaskHandle, 1);
-        if(ra == pdPASS) {
-            debugln("[+]readAltimeterTask created OK.");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]readAltimeterTask created OK.\r\n");
-        } else {
-            debugln("[-]Failed to create readAltimeterTask");
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create readAltimeterTask\r\n");
-        }
+    /* 🛡️ OPERATION MODE INDICATION TASK - essential for user feedback */
+    if(xTaskCreatePinnedToCore(xOperationModeIndicateTask,"xOperationModeIndicateTask",STACK_SIZE*2,NULL,2,&opModeIndicateTaskHandle,1) != pdPASS){
+        tasks_failed++;
+        debugln("[-]xOperationModeIndicateTask task failed to create");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, system_log_file, "[-]xOperationModeIndicateTask task failed to create\r\n");
+    }else{
+        tasks_created++;
+        debugln("[+]xOperationModeIndicateTask task created OK.");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]xOperationModeIndicateTask task created OK.\r\n");
+    }
 
-    // Create ESP-NOW command task - will be managed by communication manager
+    /* 🛡️ READ ALTIMETER DATA - essential for flight state detection */
+    BaseType_t ra = xTaskCreatePinnedToCore(readAltimeterTask,"readAltimeter",STACK_SIZE*3,NULL,2, &readAltimeterTaskHandle, 1);
+    if(ra == pdPASS) {
+        tasks_created++;
+        debugln("[+]readAltimeterTask created OK.");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]readAltimeterTask created OK.\r\n");
+    } else {
+        tasks_failed++;
+        debugln("[-]Failed to create readAltimeterTask - CRITICAL");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::ERROR, system_log_file, "[CRITICAL]Failed to create readAltimeterTask\r\n");
+    }
+
+    /* 🛡️ Create ESP-NOW command task - will be managed by communication manager */
     BaseType_t ec = xTaskCreatePinnedToCore(
         espnowCommandTask,
         "ESPNowCmd",
@@ -1851,35 +1890,41 @@ void xCreateAllTasks() {
     );
 
     if (ec == pdPASS) {
+        tasks_created++;
         debugln("[+]ESPNowCmd task created OK.");
         SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]ESPNowCmd task created OK.\r\n");
     } else {
-        debugln("[-]Failed to create ESPNowCmd task");
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create ESPNowCmd task\r\n");
+        tasks_failed++;
+        debugln("[-]Failed to create ESPNowCmd task - CRITICAL");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::ERROR, system_log_file, "[CRITICAL]Failed to create ESPNowCmd task\r\n");
     }
 
-        /* RECONNECT MQTT */
-        // BaseType_t rp = xTaskCreatePinnedToCore(MQTT_Reconnect,"reconnectMQTT",STACK_SIZE*2,NULL,2, NULL, 1);
-        // if(rp == pdPASS) {
-        //     debugln("[+]reconnectMQTT created OK.");
-        //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[+]reconnectMQTT created OK.\r\n");
-        // } else {
-        //     debugln("[-]Failed to create reconnectMQTT");
-        //     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "[-]Failed to create reconnectMQTT\r\n");
-        // }
-
-
-        debugln();
-        debugln(F("=============================================="));
-        debugln(F("========== FINISHED CREATING TASKS ==========="));
-        debugln(F("==============================================\n"));
-
-        // resume all tasks after creation
-
-        // delete this task
-        // vTaskDelete(NULL);
+    // 🛡️ MEMORY CHECK AFTER TASK CREATION
+    size_t free_heap_after = esp_get_free_heap_size();
+    size_t heap_used = free_heap_before - free_heap_after;
     
+    Serial.printf("[TASK CREATION SUMMARY] Tasks created: %d, Failed: %d\n", tasks_created, tasks_failed);
+    Serial.printf("[MEMORY USAGE] Heap before: %d, After: %d, Used: %d bytes\n", 
+                  free_heap_before, free_heap_after, heap_used);
     
+    if (tasks_failed > 0) {
+        Serial.printf("[WARNING] %d tasks failed to create - system may be unstable\n", tasks_failed);
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, system_log_file, 
+                               ("Task creation failures: " + String(tasks_failed) + "\r\n").c_str());
+    }
+    
+    if (free_heap_after < 20000) { // Less than 20KB remaining
+        Serial.println("[WARNING] Low memory after task creation - monitoring required");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, system_log_file, "Low memory after task creation\r\n");
+    }
+
+    debugln();
+    debugln(F("=============================================="));
+    debugln(F("========== FINISHED CREATING TASKS ==========="));
+    debugln(F("==============================================\n"));
+    
+    // 🛡️ WATCHDOG PROTECTION: Reset watchdog after task creation
+    esp_task_wdt_reset();
 }
 
 /*!****************************************************************************
@@ -1916,16 +1961,42 @@ void setup() {
     debugln(F("========= CREATING DYNAMIC WIFI ==========="));
     debugln(F("=============================================="));
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==CREATING DYNAMIC WIFI==\r\n");
+    
+    #if BEACON_MODE_SAFETY_CHECKS
+    // Safety check: Only initialize WiFi/MQTT if MQTT flag is enabled
+    if (MQTT == 1) {
+        debugln("[+] MQTT enabled - initializing WiFi and MQTT");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "MQTT enabled - full WiFi init\r\n");
+        initDynamicWIFI(); // TODO - uncomment on live testing and production
+    } else {
+        debugln("[+] MQTT disabled - strict beacon mode (WiFi setup for ESP-NOW only)");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Strict beacon mode - ESP-NOW WiFi setup\r\n");
+        // Initialize WiFi for ESP-NOW in beacon-only mode using existing beacon setup
+        uint8_t wifi_result = wifi_config.WifiConnect(true, ROCKET_MAC); // use_beacon_mode = true
+        if(wifi_result) {
+            debugln("[+] WiFi initialized for ESP-NOW beacon mode");
+        } else {
+            debugln("[-] WiFi beacon mode initialization failed");
+        }
+    }
+    #else
     initDynamicWIFI(); // TODO - uncomment on live testing and production
+    #endif
 
     #if MQTT
 
-    // create and wait for dynamic WIFI connection
-    MQTTInit(wifi_config.getBaseStationIP(), wifi_config.getMQTTPort());
-    MQTT_Reconnect();  
-    debugln("[+]Dynamic WIFI created OK.");
-
-
+    // create and wait for dynamic WIFI connection - only if MQTT is enabled
+    #if BEACON_MODE_SAFETY_CHECKS
+    if (MQTT == 1) {
+    #endif
+        MQTTInit(wifi_config.getBaseStationIP(), wifi_config.getMQTTPort());
+        MQTT_Reconnect();  
+        debugln("[+]Dynamic WIFI created OK.");
+    #if BEACON_MODE_SAFETY_CHECKS
+    } else {
+        debugln("[+] MQTT initialization skipped - running in strict beacon mode");
+    }
+    #endif
 
     #endif // MQTT
 
@@ -1937,23 +2008,42 @@ void setup() {
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "==Initializing peripherals==\r\n");
     
     // Initialize transmitter for beacon capability (will be managed by communication manager)
-    transmitter.begin();
-    debugln("[+] ESP-NOW transmitter initialized for communication manager");
-    SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "ESP-NOW transmitter initialized for comm manager\r\n");
+    // ESP-NOW requires WiFi to be initialized first (done above)
+    debugln("[DEBUG] Starting ESP-NOW transmitter initialization...");
+    if (transmitter.begin()) {
+        debugln("[+] ESP-NOW transmitter initialized for communication manager");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "ESP-NOW transmitter initialized for comm manager\r\n");
+    } else {
+        debugln("[-] ESP-NOW transmitter initialization failed - beacon functionality disabled");
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, system_log_file, "ESP-NOW transmitter init failed\r\n");
+    }
     
     // 🔥 INITIALIZE COMMUNICATION MANAGER for isolated mode control
+    debugln("[DEBUG] Starting Communication Manager initialization...");
     comm_manager.init();
     debugln("[+] Communication Manager initialized with isolated mode control");
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Communication Manager initialized\r\n");
     
+    debugln("[DEBUG] Starting BMP initialization...");
     uint8_t bmp_init_state = BMPInit();
+    debugln("[DEBUG] Starting IMU initialization...");
     uint8_t imu_init_state = imu.init();
+    debugln("[DEBUG] Starting GPS initialization...");
     uint8_t gps_init_state = GPSInit();
+    debugln("[DEBUG] Disabling all devices...");
     disableAllDevices();
+    debugln("[DEBUG] Starting SD initialization...");
     uint8_t sd_init_state = initSD();
+    debugln("[DEBUG] Disabling all devices again...");
     disableAllDevices();
+    debugln("[DEBUG] Starting flash logger initialization...");
+    #if ENABLE_FLASH_LOGGING
     uint8_t flash_init_state = data_logger.loggerInit();
     debug("Flash memory init state:"); debugln(flash_init_state);
+    #else
+    debugln("[DEBUG] Flash logging disabled - skipping flash logger initialization");
+    uint8_t flash_init_state = 1; // Set to success since we're not using it
+    #endif
     debugln(F("=============================================="));
     Serial.print("Available heap: ");
     debugln(F("=============================================="));
@@ -2052,7 +2142,7 @@ void setup() {
 
     /* Every producer task sends queue to a different queue to avoid data popping issue */
     telemetry_data_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
-    log_to_mem_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
+    log_to_mem_queue_handle = xQueueCreate(LOG_TO_MEM_QUEUE_LENGTH, sizeof(telemetry_type_t));  // Use large queue for flash logging
     check_state_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
     debug_to_term_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));
     kalman_filter_queue_handle = xQueueCreate(TELEMETRY_DATA_QUEUE_LENGTH, sizeof(telemetry_type_t));

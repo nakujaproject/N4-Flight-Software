@@ -16,6 +16,7 @@
 #include <Arduino.h>
 #include "CustomSerialFlash.h"
 #include "data_types.h"
+extern QueueHandle_t log_to_mem_queue_handle;
 
 class DataLogger {
     private:
