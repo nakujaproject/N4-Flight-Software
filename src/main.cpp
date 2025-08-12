@@ -1739,80 +1739,109 @@ void debugToTerminalTask(void* pvParameters){
 //     }
 
 // }
+// void logToMemory(void* pvParameter) {
+//     telemetry_type_t received_packet;
+//     char csv_data[256];  // Buffer for CSV string data
+
+//     while (1) {
+//         bool data_received = false;
+        
+//         // 🔥 PRIORITY 1: Check for CSV string data (optimized logging)
+//         if (xQueueReceive(csv_log_queue_handle, csv_data, 0) == pdTRUE) {
+//             current_log_time = millis();
+            
+//             if (current_log_time - previous_log_time > log_sample_interval) {
+//                 previous_log_time = current_log_time;
+                
+//                 #if ENABLE_FLASH_LOGGING
+//                 // 🛡️ MEMORY PROTECTION: Add safety checks before flash operations
+//                 Serial.println("📝 Processing CSV data for flash logging...");
+                
+//                 // Verify CSV data integrity
+//                 if (strlen(csv_data) > 0 && strlen(csv_data) < 256) {
+//                     disableAllDevices();
+//                     digitalWrite(flash_cs_pin, LOW);
+                    
+//                     // Add small delay for flash chip select stabilization
+//                     delayMicroseconds(10);
+                    
+//                     data_logger.loggerWriteCSV(csv_data);
+                    
+//                     // Add small delay before releasing chip select
+//                     delayMicroseconds(10);
+//                     digitalWrite(flash_cs_pin, HIGH);
+//                 } else {
+//                     Serial.println("❌ [CSV LOG] Invalid CSV data - skipping flash write");
+//                 }
+//                 #endif
+                
+//                 // Log to SD Card using the existing telemetry_type_t method
+//                 // Note: We still use the traditional method for SD card for compatibility
+//                 // The CSV logging is primarily for high-speed flash memory logging
+//             }
+            
+//             data_received = true;
+//         }
+        
+//         // 🔥 PRIORITY 2: Check for traditional telemetry packet data (fallback)
+//         if (!data_received && xQueueReceive(log_to_mem_queue_handle, &received_packet, 0) == pdTRUE) {
+//             current_log_time = millis();
+
+//             if (current_log_time - previous_log_time > log_sample_interval) {
+//                 previous_log_time = current_log_time;
+
+//                 #if ENABLE_FLASH_LOGGING
+//                 //  Log to Flash Memory (controlled by flag to prevent performance issues)
+//                 disableAllDevices();
+//                 digitalWrite(flash_cs_pin, LOW);
+//                 data_logger.loggerWrite(received_packet);
+//                 digitalWrite(flash_cs_pin, HIGH);
+//                 #endif
+
+//                 //  Log to SD Card (always enabled for primary data backup)
+//                 disableAllDevices();
+//                 digitalWrite(SD_CS_PIN, LOW);
+//                 sdLogger.log(received_packet, gps_packet);
+//                 digitalWrite(SD_CS_PIN, HIGH);
+//             }
+            
+//             data_received = true;
+//         }
+        
+//         // If no data was received, yield to other tasks
+//         if (!data_received) {
+//             vTaskDelay(pdMS_TO_TICKS(10));
+//         } else {
+//             // Yield to other tasks to prevent blocking beacon transmission
+//             vTaskDelay(pdMS_TO_TICKS(1));
+//         }
+//     }
+// }
+
 void logToMemory(void* pvParameter) {
     telemetry_type_t received_packet;
-    char csv_data[256];  // Buffer for CSV string data
 
     while (1) {
-        bool data_received = false;
-        
-        // 🔥 PRIORITY 1: Check for CSV string data (optimized logging)
-        if (xQueueReceive(csv_log_queue_handle, csv_data, 0) == pdTRUE) {
-            current_log_time = millis();
-            
-            if (current_log_time - previous_log_time > log_sample_interval) {
-                previous_log_time = current_log_time;
-                
-                #if ENABLE_FLASH_LOGGING
-                // 🛡️ MEMORY PROTECTION: Add safety checks before flash operations
-                Serial.println("📝 Processing CSV data for flash logging...");
-                
-                // Verify CSV data integrity
-                if (strlen(csv_data) > 0 && strlen(csv_data) < 256) {
-                    disableAllDevices();
-                    digitalWrite(flash_cs_pin, LOW);
-                    
-                    // Add small delay for flash chip select stabilization
-                    delayMicroseconds(10);
-                    
-                    data_logger.loggerWriteCSV(csv_data);
-                    
-                    // Add small delay before releasing chip select
-                    delayMicroseconds(10);
-                    digitalWrite(flash_cs_pin, HIGH);
-                } else {
-                    Serial.println("❌ [CSV LOG] Invalid CSV data - skipping flash write");
-                }
-                #endif
-                
-                // Log to SD Card using the existing telemetry_type_t method
-                // Note: We still use the traditional method for SD card for compatibility
-                // The CSV logging is primarily for high-speed flash memory logging
-            }
-            
-            data_received = true;
-        }
-        
-        // 🔥 PRIORITY 2: Check for traditional telemetry packet data (fallback)
-        if (!data_received && xQueueReceive(log_to_mem_queue_handle, &received_packet, 0) == pdTRUE) {
-            current_log_time = millis();
+        if (xQueueReceive(log_to_mem_queue_handle, &received_packet, portMAX_DELAY) == pdTRUE) {
+            // if (millis() - g_last_telemetry_update > 500) {
+            //     Serial.println("⏩ Skipped stale telemetry");
+            //     continue;
+            // }
 
-            if (current_log_time - previous_log_time > log_sample_interval) {
-                previous_log_time = current_log_time;
+            //  to Flash
+            #if ENABLE_FLASH_LOGGING
+            disableAllDevices();
+            digitalWrite(flash_cs_pin, LOW);
+            data_logger.loggerWrite(received_packet);
+            digitalWrite(flash_cs_pin, HIGH);
+            #endif
 
-                #if ENABLE_FLASH_LOGGING
-                //  Log to Flash Memory (controlled by flag to prevent performance issues)
-                disableAllDevices();
-                digitalWrite(flash_cs_pin, LOW);
-                data_logger.loggerWrite(received_packet);
-                digitalWrite(flash_cs_pin, HIGH);
-                #endif
+            // 2️⃣ Log CSV to SD
+            disableAllDevices();
+            digitalWrite(SD_CS_PIN, LOW);
+            sdLogger.log(received_packet, gps_packet);
+            digitalWrite(SD_CS_PIN, HIGH);
 
-                //  Log to SD Card (always enabled for primary data backup)
-                disableAllDevices();
-                digitalWrite(SD_CS_PIN, LOW);
-                sdLogger.log(received_packet, gps_packet);
-                digitalWrite(SD_CS_PIN, HIGH);
-            }
-            
-            data_received = true;
-        }
-        
-        // If no data was received, yield to other tasks
-        if (!data_received) {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        } else {
-            // Yield to other tasks to prevent blocking beacon transmission
             vTaskDelay(pdMS_TO_TICKS(1));
         }
     }
