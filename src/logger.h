@@ -17,7 +17,6 @@
 #include "CustomSerialFlash.h"
 #include "data_types.h"
 extern QueueHandle_t log_to_mem_queue_handle;
-extern QueueHandle_t csv_log_queue_handle;  // 🔥 NEW: CSV string logging queue
 
 class DataLogger {
     private:
@@ -37,7 +36,6 @@ class DataLogger {
         void loggerInfo();
         void loggerTest();
         void loggerWrite(telemetry_type_t);
-        void loggerWriteCSV(const char* csv_string);  // 🔥 NEW: Direct CSV string logging
         void loggerRead(uint8_t file_pointer, char buffer);
         void loggerSpaces();
         void loggerEquals();

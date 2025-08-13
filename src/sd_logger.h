@@ -18,6 +18,7 @@ public:
     bool begin();
     void setFilename(const char* fname);
     bool log(const telemetry_type_t& packet, const gps_type_t& gps);
+    bool logRawCSV(const char* csv_line); // append pre-formatted CSV line (must include trailing \n if desired)
     bool initialized() const;
 
 private:

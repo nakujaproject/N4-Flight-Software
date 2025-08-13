@@ -108,19 +108,44 @@ void arm_pyros() {
 }
 
 void drogueChuteDeploy() {
-    digitalWrite(DROGUE_PIN, HIGH);
-    DROGUE_DEPLOY_FLAG = 1;  // Set deployment flag
-    vTaskDelay(pdMS_TO_TICKS(100)); // Keep pin high for 100ms
-    digitalWrite(DROGUE_PIN, LOW);
-    debug("📦 DROGUE DEPLOYED - Pin fired for 100ms");
+    static bool started = false;
+    static unsigned long start_ms = 0;
+    static uint8_t duty = 0;
+
+    if (!started) {
+        // Compute duty once (approx 6V from 15V supply)
+        float ratio = PYRO_TARGET_VOLTAGE / PYRO_SUPPLY_VOLTAGE; if (ratio > 1.0f) ratio = 1.0f;
+        duty = (uint8_t)(ratio * ((1 << PYRO_PWM_RES_BITS) - 1));
+        ledcWrite(DROGUE_PWM_CHANNEL, duty);
+        start_ms = millis();
+        started = true;
+        DROGUE_DEPLOY_FLAG = 1; // latch immediately for telemetry packet
+        debug("📦 DROGUE PWM START duty="); debug(duty); debugln("");
+    }
+    // Maintain PWM for at least PYRO_CHARGE_TIME; keep energized afterwards (indicator) per requirement
+    if (millis() - start_ms >= PYRO_CHARGE_TIME) {
+        // Optionally we could reduce holding power; keeping constant by spec (stay on)
+        // ledcWrite(DROGUE_PWM_CHANNEL, duty/2); // uncomment if you later want a reduced hold
+    }
 }
 
 void mainChuteDeploy() {
-    digitalWrite(MAIN_CHUTE_EJECT_PIN, HIGH);
-    MAIN_CHUTE_EJECT_FLAG = 1;  // Set deployment flag
-    vTaskDelay(pdMS_TO_TICKS(100)); // Keep pin high for 100ms
-    digitalWrite(MAIN_CHUTE_EJECT_PIN, LOW);
-    debug("📦 MAIN CHUTE DEPLOYED - Pin fired for 100ms");
+    static bool started = false;
+    static unsigned long start_ms = 0;
+    static uint8_t duty = 0;
+
+    if (!started) {
+        float ratio = PYRO_TARGET_VOLTAGE / PYRO_SUPPLY_VOLTAGE; if (ratio > 1.0f) ratio = 1.0f;
+        duty = (uint8_t)(ratio * ((1 << PYRO_PWM_RES_BITS) - 1));
+        ledcWrite(MAIN_PWM_CHANNEL, duty);
+        start_ms = millis();
+        started = true;
+        MAIN_CHUTE_EJECT_FLAG = 1; // latch immediately
+        debug("📦 MAIN PWM START duty="); debug(duty); debugln("");
+    }
+    if (millis() - start_ms >= MAIN_DESCENT_PYRO_CHARGE_TIME) {
+        // Keep on (latched). Optionally reduce power later.
+    }
 }
 
 void chutesInit() {
@@ -130,6 +155,14 @@ void chutesInit() {
     digitalWrite(DROGUE_PIN, LOW); // set drogue pin LOW
     digitalWrite(MAIN_CHUTE_EJECT_PIN, LOW); // set main chute pin LOW
     digitalWrite(REMOTE_SWITCH, LOW); // set remote switch LOW
+
+    // Setup LEDC PWM for drogue & main outputs (override direct digital writes once deployed)
+    ledcSetup(DROGUE_PWM_CHANNEL, PYRO_PWM_FREQ, PYRO_PWM_RES_BITS);
+    ledcSetup(MAIN_PWM_CHANNEL, PYRO_PWM_FREQ, PYRO_PWM_RES_BITS);
+    ledcAttachPin(DROGUE_PIN, DROGUE_PWM_CHANNEL);
+    ledcAttachPin(MAIN_CHUTE_EJECT_PIN, MAIN_PWM_CHANNEL);
+    ledcWrite(DROGUE_PWM_CHANNEL, 0);
+    ledcWrite(MAIN_PWM_CHANNEL, 0);
 }
 
 /**
@@ -796,116 +829,52 @@ double altimeter_get_pressure()
 //  *******************************************************************************/
 
 
-float estimatedAltitude = 100;
-// Real altimeter task - commented out for simulation
-// void readAltimeterTask(void* pvParameters) {
-//     telemetry_type_t alt_data_lcl;
+float estimatedAltitude = 0;
 
-//     while(1) {
-
-//         double a, P;
-//         P = altimeter_get_pressure();
-//         a = altimeter.altitude(P, baseline);
-        
-//         //a = 100 + ((rand() % 2001 - 1000) / 100.0); // 100 ± 10m noise
-        
-//         //Serial.print("\nRaw Alt"); Serial.print(a);Serial.print("\nRaw Alt");
-//         estimatedAltitude = a;
-//         //altimeter_packet.filtered_altitude_1d = kalmanFilter(a);
-//         float filtered_alt = kalmanFilter(a);
-//         altimeter_packet.filtered_altitude_1d = filtered_alt;
-//         xQueueSend(kalman2d_input_queue_handle, &filtered_alt, 0);  // 👈 send to 2D filter
-
-//         //Serial.print("\n");Serial.print("Raw Altitude");Serial.print(a);Serial.print("\n");
-//         /* send to altimeter global packet */
-//         altimeter_packet.temperature = altimeter_temperature;
-//         altimeter_packet.pressure = P;
-//         altimeter_packet.rel_altitude = a;
-        
-//         // Update global altimeter packet with latest Kalman filter results
-//         // Note: These values are updated by taskKalman2D, this ensures they're always available
-//         altimeter_packet.kalman_altitude = AltitudeKalman;
-//         altimeter_packet.kalman_vertical_velocity = VelocityVerticalKalman;
-        
-//         //vTaskDelay(CONSUME_TASK_DELAY / portTICK_PERIOD_MS);
-//         vTaskDelay(20 / portTICK_PERIOD_MS);
-//     }
-// }
- 
-
-// 🚀 120M ALTITUDE SIMULATION - Testing with realistic low altitude profile
+#if USE_SIMULATION
+// Simulated 120m flight profile (as previously used)
 void readAltimeterTask(void* pvParameters) {
-    telemetry_type_t alt_data_lcl;
-    static double a = 0; // simulated altitude
+    static double a = 0; // altitude
     static double P = 101325;
-    static int phase = 0; // 0: ascent, 1: apogee, 2: descent
+    static int phase = 0; // 0 ascent, 1 apogee hold, 2 descent
     static int count = 0;
-
     while(1) {
-        // Ascent: 120m over 6s (60 cycles at 100ms, +2m per cycle)
-        if (phase == 0) {
-            a += 2.0;  // 2m per 100ms cycle = 20m/s climb rate
-            debug("🚀 ASCENT: Alt="); debug(a); debug("m, Count="); debug(count); debugln("/60");
-            if (++count >= 60) {  // 60 cycles = 6 seconds to reach 120m
-                phase = 1; 
-                count = 0; 
-                debugln("🎯 REACHED 120M APOGEE - Short apogee hold");
-            }
-        } else if (phase == 1) { // Short apogee hold: 1s (10 cycles)
-            debug("🎯 APOGEE 120M: Alt="); debug(a); debug("m, Count="); debug(count); debugln("/10");
-            if (++count >= 10) {  // 10 cycles = 1 second at apogee
-                phase = 2; 
-                count = 0;
-                debugln("⬇️ STARTING DESCENT FROM 120M");
-            }
-        } else if (phase == 2) { // Descent: 120m over 12s (120 cycles, -1m per cycle)
-            a -= 1.0;  // 1m per 100ms cycle = 10m/s descent rate
-            if (a < 0) a = 0;
-            debug("⬇️ DESCENT: Alt="); debug(a); debug("m");
-            
-            // Add chute deployment status to descent logging
-            if (DROGUE_DEPLOY_FLAG) {
-                debug(" [DROGUE✓]");
-            }
-            if (MAIN_CHUTE_EJECT_FLAG) {
-                debug(" [MAIN✓]");
-            }
-            debugln("");
-            
-            // Reset simulation when landed for continuous testing
-            if (a <= 0) {
-                debugln("🏁 LANDED - RESTARTING 120M SIMULATION");
-                phase = 0;
-                count = 0;
-                a = 0;
-                // Reset deployment flags for next simulation cycle
-                DROGUE_DEPLOY_FLAG = 0;
-                MAIN_CHUTE_EJECT_FLAG = 0;
-                apogee_flag = 0;
-                main_eject_flag = 0;
-                vTaskDelay(3000 / portTICK_PERIOD_MS); // 3 second pause before restart
-            }
-        }
-
+        if (phase == 0) { a += 2.0; if(++count>=60){phase=1;count=0;} }
+        else if (phase == 1) { if(++count>=10){phase=2;count=0;} }
+        else if (phase == 2) { a -= 1.0; if(a<0){a=0; phase=0; count=0; vTaskDelay(3000/portTICK_PERIOD_MS);} }
         P = 101325 * exp(-a / 8434.5);
-        
-        // Apply Kalman filtering to simulated data
         estimatedAltitude = a;
         float filtered_alt = kalmanFilter(a);
         altimeter_packet.filtered_altitude_1d = filtered_alt;
         xQueueSend(kalman2d_input_queue_handle, &filtered_alt, 0);
-        
-        altimeter_packet.temperature = 25.0; // Simulated temperature
+        altimeter_packet.temperature = 25.0;
         altimeter_packet.pressure = P;
         altimeter_packet.rel_altitude = a;
-        
-        // Update global altimeter packet with latest Kalman filter results
         altimeter_packet.kalman_altitude = AltitudeKalman;
         altimeter_packet.kalman_vertical_velocity = VelocityVerticalKalman;
-
-        vTaskDelay(100 / portTICK_PERIOD_MS); // 100ms cycle for 120m simulation
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
+#else
+// Real altimeter task (BMP sensor)
+void readAltimeterTask(void* pvParameters) {
+    telemetry_type_t alt_data_lcl;
+    while(1) {
+        double P = altimeter_get_pressure();
+        double a = altimeter.altitude(P, baseline);
+        estimatedAltitude = a;
+        float filtered_alt = kalmanFilter(a);
+        altimeter_packet.filtered_altitude_1d = filtered_alt;
+        xQueueSend(kalman2d_input_queue_handle, &filtered_alt, 0);
+        altimeter_packet.temperature = altimeter_temperature;
+        altimeter_packet.pressure = P;
+        altimeter_packet.rel_altitude = a;
+        altimeter_packet.kalman_altitude = AltitudeKalman;
+        altimeter_packet.kalman_vertical_velocity = VelocityVerticalKalman;
+        vTaskDelay(50 / portTICK_PERIOD_MS);
+    }
+}
+#endif
 
 
 
@@ -916,69 +885,35 @@ void readAltimeterTask(void* pvParameters) {
 //  * so it is not valid to pass the address of a stack variable.
 //  * 
 //  *******************************************************************************/
-// Real GPS task - commented out for simulation
-// void readGPSTask(void* pvParameters){
-//     float latitude, longitude, g_altitude;
-
-//     gps_type_t gps_data_lcl;
-
-//     while(1){
-//         if(gpsSerial.available() > 0) {
-//             gps.encode(gpsSerial.read());
-
-//             /* get GPS coordinates */
-//             if(gps.location.isValid()) {
-//                 latitude = gps.location.lat();
-//                 longitude = gps.location.lng();
-//             } 
-
-//             /* get GPS altitude */
-//             if(gps.altitude.isValid()) {
-//                 g_altitude = gps.altitude.meters();
-//             }
-//         } else {
-//             vTaskDelay(10/portTICK_PERIOD_MS);
-//         }
-
-//         gps_packet.latitude = latitude;
-//         gps_packet.longitude = longitude;
-//         gps_packet.gps_altitude = g_altitude;
-//     }
-// }
-
-// 🛰️ FAST GPS SIMULATION - Matching the fast flight simulation
+#if USE_SIMULATION
 void readGPSTask(void* pvParameters){
-    
-    static float sim_gps_altitude = 0;
-    static int phase = 0;
-    static int count = 0;
-
+    static float sim_gps_altitude = 0; static int phase=0; static int count=0;
     while(1){
-        if (phase == 0) {
-            sim_gps_altitude += 2.0;  // Match 120m ascent rate
-            if (++count >= 60) { phase = 1; count = 0; }
-        } else if (phase == 1) {
-            if (++count >= 10) { phase = 2; count = 0; }  // Short apogee hold
-        } else if (phase == 2) {
-            sim_gps_altitude -= 1.0;  // Match descent rate
-            if (sim_gps_altitude < 0) {
-                sim_gps_altitude = 0;
-                // Reset GPS simulation when landed
-                phase = 0;
-                count = 0;
-                vTaskDelay(3000 / portTICK_PERIOD_MS); // Match main simulation pause
-            }
-        }
-
-        // Simulate JKUAT coordinates with altitude changes
-        gps_packet.latitude = -1.2833;   // JKUAT latitude
-        gps_packet.longitude = 36.8167;  // JKUAT longitude
+        if(phase==0){sim_gps_altitude+=2.0; if(++count>=60){phase=1;count=0;}}
+        else if(phase==1){ if(++count>=10){phase=2;count=0;} }
+        else if(phase==2){ sim_gps_altitude-=1.0; if(sim_gps_altitude<0){sim_gps_altitude=0; phase=0; count=0; vTaskDelay(3000/portTICK_PERIOD_MS);} }
+        gps_packet.latitude = -1.2833;
+        gps_packet.longitude = 36.8167;
         gps_packet.gps_altitude = sim_gps_altitude;
-        gps_packet.time = millis();      // Simulated GPS time
-
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        gps_packet.time = millis();
+        vTaskDelay(100/portTICK_PERIOD_MS);
     }
 }
+#else
+void readGPSTask(void* pvParameters){
+    float latitude = 0, longitude = 0, g_altitude = 0;
+    while(1){
+        while(gpsSerial.available()>0){ gps.encode(gpsSerial.read()); }
+        if(gps.location.isValid()){ latitude = gps.location.lat(); longitude = gps.location.lng(); }
+        if(gps.altitude.isValid()){ g_altitude = gps.altitude.meters(); }
+        gps_packet.latitude = latitude;
+        gps_packet.longitude = longitude;
+        gps_packet.gps_altitude = g_altitude;
+        gps_packet.time = millis();
+        vTaskDelay(200/portTICK_PERIOD_MS);
+    }
+}
+#endif
 
 /**
  * @brief Kalman filter estimated value calculation
@@ -1322,8 +1257,11 @@ void checkFlightState(void* pvParameters) {
             // 🎯 Enhanced apogee detection using Kalman filtered altitude
             ring_buffer_put(&altitude_ring_buffer, alt);
             
-            // Only check for apogee if we're above a reasonable flight altitude (50m for 120m simulation)
-            if (alt > (LAUNCH_DETECTION_THRESHOLD + 50)) { // At least 50m above launch threshold for 120m simulation
+            // Only check for apogee after we've clearly launched
+            if (alt > (LAUNCH_DETECTION_THRESHOLD + LAUNCH_DETECTION_ALTITUDE_WINDOW)) {
+#if USE_SIMULATION
+                // In simulation we expect relatively small peak (~120m) so logic identical; kept for future tuning.
+#endif
                 static float max_altitude = 0;
                 static uint8_t descent_count = 0;
                 
@@ -1336,7 +1274,7 @@ void checkFlightState(void* pvParameters) {
                     debugln("m");
                 }
                 // Check if we're consistently descending from maximum
-                else if (alt < (max_altitude - 2)) { // 2m descent from max for 120m simulation
+                else if (alt < (max_altitude - APOGEE_DETECTION_THRESHOLD)) { // descent exceeding threshold
                     descent_count++;
                     debug("⬇️ Descent detected (");
                     debug(descent_count);
@@ -1673,6 +1611,11 @@ void debugToTerminalTask(void* pvParameters){
         
         // 🔥 UPDATE GLOBAL TELEMETRY BUFFER for seamless mode switching
         updateGlobalTelemetryBuffer(telemetry_packet_buffer);
+
+        // SD: Log same CSV line (identical to beacon/MQTT) if SD initialized
+        if (sdLogger.initialized()) {
+            sdLogger.logRawCSV(telemetry_packet_buffer);
+        }
         
         // 🔥 QUEUE CSV DATA FOR LOGGING - Send formatted CSV to logger queue
         if (csv_log_queue_handle != NULL) {
@@ -1739,109 +1682,80 @@ void debugToTerminalTask(void* pvParameters){
 //     }
 
 // }
-// void logToMemory(void* pvParameter) {
-//     telemetry_type_t received_packet;
-//     char csv_data[256];  // Buffer for CSV string data
-
-//     while (1) {
-//         bool data_received = false;
-        
-//         // 🔥 PRIORITY 1: Check for CSV string data (optimized logging)
-//         if (xQueueReceive(csv_log_queue_handle, csv_data, 0) == pdTRUE) {
-//             current_log_time = millis();
-            
-//             if (current_log_time - previous_log_time > log_sample_interval) {
-//                 previous_log_time = current_log_time;
-                
-//                 #if ENABLE_FLASH_LOGGING
-//                 // 🛡️ MEMORY PROTECTION: Add safety checks before flash operations
-//                 Serial.println("📝 Processing CSV data for flash logging...");
-                
-//                 // Verify CSV data integrity
-//                 if (strlen(csv_data) > 0 && strlen(csv_data) < 256) {
-//                     disableAllDevices();
-//                     digitalWrite(flash_cs_pin, LOW);
-                    
-//                     // Add small delay for flash chip select stabilization
-//                     delayMicroseconds(10);
-                    
-//                     data_logger.loggerWriteCSV(csv_data);
-                    
-//                     // Add small delay before releasing chip select
-//                     delayMicroseconds(10);
-//                     digitalWrite(flash_cs_pin, HIGH);
-//                 } else {
-//                     Serial.println("❌ [CSV LOG] Invalid CSV data - skipping flash write");
-//                 }
-//                 #endif
-                
-//                 // Log to SD Card using the existing telemetry_type_t method
-//                 // Note: We still use the traditional method for SD card for compatibility
-//                 // The CSV logging is primarily for high-speed flash memory logging
-//             }
-            
-//             data_received = true;
-//         }
-        
-//         // 🔥 PRIORITY 2: Check for traditional telemetry packet data (fallback)
-//         if (!data_received && xQueueReceive(log_to_mem_queue_handle, &received_packet, 0) == pdTRUE) {
-//             current_log_time = millis();
-
-//             if (current_log_time - previous_log_time > log_sample_interval) {
-//                 previous_log_time = current_log_time;
-
-//                 #if ENABLE_FLASH_LOGGING
-//                 //  Log to Flash Memory (controlled by flag to prevent performance issues)
-//                 disableAllDevices();
-//                 digitalWrite(flash_cs_pin, LOW);
-//                 data_logger.loggerWrite(received_packet);
-//                 digitalWrite(flash_cs_pin, HIGH);
-//                 #endif
-
-//                 //  Log to SD Card (always enabled for primary data backup)
-//                 disableAllDevices();
-//                 digitalWrite(SD_CS_PIN, LOW);
-//                 sdLogger.log(received_packet, gps_packet);
-//                 digitalWrite(SD_CS_PIN, HIGH);
-//             }
-            
-//             data_received = true;
-//         }
-        
-//         // If no data was received, yield to other tasks
-//         if (!data_received) {
-//             vTaskDelay(pdMS_TO_TICKS(10));
-//         } else {
-//             // Yield to other tasks to prevent blocking beacon transmission
-//             vTaskDelay(pdMS_TO_TICKS(1));
-//         }
-//     }
-// }
-
 void logToMemory(void* pvParameter) {
     telemetry_type_t received_packet;
+    char csv_data[256];  // Buffer for CSV string data
 
     while (1) {
-        if (xQueueReceive(log_to_mem_queue_handle, &received_packet, portMAX_DELAY) == pdTRUE) {
-            // if (millis() - g_last_telemetry_update > 500) {
-            //     Serial.println("⏩ Skipped stale telemetry");
-            //     continue;
-            // }
+        bool data_received = false;
+        
+        // 🔥 PRIORITY 1: Check for CSV string data (optimized logging)
+        if (xQueueReceive(csv_log_queue_handle, csv_data, 0) == pdTRUE) {
+            current_log_time = millis();
+            
+            if (current_log_time - previous_log_time > log_sample_interval) {
+                previous_log_time = current_log_time;
+                
+                #if ENABLE_FLASH_LOGGING
+                // 🛡️ MEMORY PROTECTION: Add safety checks before flash operations
+                Serial.println("📝 Processing CSV data for flash logging...");
+                
+                // Verify CSV data integrity
+                if (strlen(csv_data) > 0 && strlen(csv_data) < 256) {
+                    disableAllDevices();
+                    digitalWrite(flash_cs_pin, LOW);
+                    
+                    // Add small delay for flash chip select stabilization
+                    delayMicroseconds(10);
+                    
+                    data_logger.loggerWriteCSV(csv_data);
+                    
+                    // Add small delay before releasing chip select
+                    delayMicroseconds(10);
+                    digitalWrite(flash_cs_pin, HIGH);
+                } else {
+                    Serial.println("❌ [CSV LOG] Invalid CSV data - skipping flash write");
+                }
+                #endif
+                
+                // Log to SD Card using the existing telemetry_type_t method
+                // Note: We still use the traditional method for SD card for compatibility
+                // The CSV logging is primarily for high-speed flash memory logging
+            }
+            
+            data_received = true;
+        }
+        
+        // 🔥 PRIORITY 2: Check for traditional telemetry packet data (fallback)
+        if (!data_received && xQueueReceive(log_to_mem_queue_handle, &received_packet, 0) == pdTRUE) {
+            current_log_time = millis();
 
-            //  to Flash
-            #if ENABLE_FLASH_LOGGING
-            disableAllDevices();
-            digitalWrite(flash_cs_pin, LOW);
-            data_logger.loggerWrite(received_packet);
-            digitalWrite(flash_cs_pin, HIGH);
-            #endif
+            if (current_log_time - previous_log_time > log_sample_interval) {
+                previous_log_time = current_log_time;
 
-            // 2️⃣ Log CSV to SD
-            disableAllDevices();
-            digitalWrite(SD_CS_PIN, LOW);
-            sdLogger.log(received_packet, gps_packet);
-            digitalWrite(SD_CS_PIN, HIGH);
+                #if ENABLE_FLASH_LOGGING
+                //  Log to Flash Memory (controlled by flag to prevent performance issues)
+                disableAllDevices();
+                digitalWrite(flash_cs_pin, LOW);
+                data_logger.loggerWrite(received_packet);
+                digitalWrite(flash_cs_pin, HIGH);
+                #endif
 
+                //  Log to SD Card (always enabled for primary data backup)
+                disableAllDevices();
+                digitalWrite(SD_CS_PIN, LOW);
+                sdLogger.log(received_packet, gps_packet);
+                digitalWrite(SD_CS_PIN, HIGH);
+            }
+            
+            data_received = true;
+        }
+        
+        // If no data was received, yield to other tasks
+        if (!data_received) {
+            vTaskDelay(pdMS_TO_TICKS(10));
+        } else {
+            // Yield to other tasks to prevent blocking beacon transmission
             vTaskDelay(pdMS_TO_TICKS(1));
         }
     }
@@ -1891,6 +1805,9 @@ void MQTT_TransmitTelemetry(void* pvParameters) {
                 );
         // 🔥 UPDATE GLOBAL TELEMETRY BUFFER for seamless mode switching
         updateGlobalTelemetryBuffer(telemetry_packet_buffer);
+        if (sdLogger.initialized()) {
+            sdLogger.logRawCSV(telemetry_packet_buffer);
+        }
 
         // 🔥 ISOLATED MQTT TRANSMISSION - Only transmit via MQTT when MQTT mode is active
         bool mqtt_success = false;

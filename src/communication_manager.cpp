@@ -7,22 +7,23 @@
 
 #include "communication_manager.h"
 #include "system_logger.h"
-#include "system_log_levels.h"
 #include "wifi-config.h"
-#include "espnow_beacon_transmitter.h"
-#include "defs.h"
-#include "data_types.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <FS.h>
 #include <SPIFFS.h>
-#include <esp_wifi.h>
+#include "esp_wifi.h"
+#include "esp_now.h"
+#include "espnow_beacon_transmitter.h"
+#include "defs.h"
+#include <WiFi.h>
 #include <esp_now.h>
 
-// External references from main.cpp (other than those already in header)
+// External references from main.cpp
 extern SystemLogger SYSTEM_LOGGER;
 extern const char* system_log_file;
 extern ESPNowBeaconTransmitter transmitter;
+#include "defs.h"
 
 
 
@@ -65,10 +66,16 @@ void reconfigureForBeaconMode() {
     // 4. Deinit and re-init ESP-NOW (clean state)
     esp_now_deinit();
     delay(50);
-    if (esp_now_init() == ESP_OK) {
-        Serial.println("[RECONFIG] ESP-NOW re-initialized for beacon mode");
+    static bool espnow_initialized = false;
+    if(!espnow_initialized){
+        if (esp_now_init() == ESP_OK) {
+            Serial.println("[RECONFIG] ESP-NOW initialized for beacon mode");
+            espnow_initialized = true;
+        } else {
+            Serial.println("[RECONFIG] ESP-NOW init failed!");
+        }
     } else {
-        Serial.println("[RECONFIG] ESP-NOW re-init failed!");
+        Serial.println("[RECONFIG] ESP-NOW already initialized - skip re-init");
     }
     // 5. Re-initialize beacon transmitter (sets up peer, callback, etc.)
     transmitter.begin();
@@ -90,26 +97,16 @@ void CommunicationManager::init() {
     comm_status.current_mode = "STARTING";
     comm_status.last_command_source = "SYSTEM";
     
-    // 🔥 STRICT BEACON MODE - Set communication modes based on MQTT flag
-    if (MQTT) {
-        // Normal mode: Start with MQTT, allow switching
-        use_mqtt_mode = true;
-        use_beacon_mode = false;
-        auto_fallback_enabled = true;
-        Serial.println("[COMM MANAGER] Initialized - MQTT mode enabled, auto-fallback active");
-    } else {
-        // Strict beacon mode: Only beacon, no switching
-        use_mqtt_mode = false;
-        use_beacon_mode = true;
-        auto_fallback_enabled = false;
-        Serial.println("[COMM MANAGER] Initialized - Strict Beacon Mode (MQTT disabled)");
-    }
-    
+    // Set default communication modes
+    use_mqtt_mode = true;
+    use_beacon_mode = false;
+    auto_fallback_enabled = true;
     communication_mode_locked = false;
     
     last_mode_check = millis();
     last_status_report = millis();
     
+    Serial.println("[COMM MANAGER] Initialized - MQTT mode enabled, auto-fallback active");
     SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Communication Manager initialized\r\n");
 }
 
@@ -122,25 +119,15 @@ void CommunicationManager::handleModeCommand(String command, String source) {
     comm_status.last_command_source = source.c_str();
     
     if (command == "CMD_MQTT_MODE") {
-        // 🔥 STRICT BEACON MODE - Only allow MQTT mode if MQTT flag is enabled
-        if (MQTT) {
-            setMQTTMode(source);
-        } else {
-            Serial.printf("[COMM MANAGER] MQTT mode blocked - MQTT flag disabled (Strict Beacon Mode) by %s\n", source.c_str());
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, system_log_file, "MQTT mode command rejected - MQTT disabled\r\n");
-        }
+        setMQTTMode(source);
     } else if (command == "CMD_BEACON_MODE") {
         setBeaconMode(source);
+    } else if (command == "CMD_DUAL_MODE") {
+        setDualMode(source);
     } else if (command == "CMD_AUTO_FALLBACK_ON") {
-        // 🔥 STRICT BEACON MODE - Only allow auto-fallback if MQTT flag is enabled
-        if (MQTT) {
-            auto_fallback_enabled = true;
-            Serial.printf("[COMM MANAGER] Auto-fallback ENABLED by %s\n", source.c_str());
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Auto-fallback enabled\r\n");
-        } else {
-            Serial.printf("[COMM MANAGER] Auto-fallback blocked - MQTT flag disabled (Strict Beacon Mode) by %s\n", source.c_str());
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, system_log_file, "Auto-fallback command rejected - MQTT disabled\r\n");
-        }
+        auto_fallback_enabled = true;
+        Serial.printf("[COMM MANAGER] Auto-fallback ENABLED by %s\n", source.c_str());
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Auto-fallback enabled\r\n");
     } else if (command == "CMD_AUTO_FALLBACK_OFF") {
         auto_fallback_enabled = false;
         Serial.printf("[COMM MANAGER] Auto-fallback DISABLED by %s\n", source.c_str());
@@ -148,35 +135,10 @@ void CommunicationManager::handleModeCommand(String command, String source) {
     } else if (command == "CMD_GET_MODE") {
         reportCurrentMode();
     } else if (command == "CMD_ARM") {
-        // 🛡️ ARM SAFETY: Check altitude requirement (50m minimum using Kalman filtered data)
-        #if USE_KALMAN_FOR_STATE_DETECTION
-        float current_altitude = g_current_telemetry.alt_data.kalman_altitude;
-        #else
-        float current_altitude = g_current_telemetry.alt_data.rel_altitude;
-        #endif
-        
-        // Check if telemetry data is recent (within last 2 seconds)
-        if ((millis() - g_last_telemetry_update) > 2000) {
-            Serial.printf("[COMM MANAGER] ARM DENIED by %s: Telemetry data too old\n", source.c_str());
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, system_log_file, "ARM DENIED: Stale telemetry data\r\n");
-        } else if (current_altitude < ARM_ALTITUDE_THRESHOLD) {
-            Serial.printf("[COMM MANAGER] ARM DENIED by %s: Altitude %.1fm < %dm threshold\n", source.c_str(), current_altitude, ARM_ALTITUDE_THRESHOLD);
-            char log_msg[100];
-            snprintf(log_msg, sizeof(log_msg), "ARM DENIED: Alt %.1fm < %dm threshold\r\n", current_altitude, ARM_ALTITUDE_THRESHOLD);
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, system_log_file, log_msg);
-        } else {
-            // ✅ ARM CONDITIONS MET
-            arm_pyros();
-            chutesInit();
-            is_system_armed = true;
-            operation_mode = OPERATION_MODE::ARMED_MODE;
-            blocking_buzz(500); // ARMING_PROCEDURE interval
-            
-            Serial.printf("[COMM MANAGER] ARMED by %s (Alt: %.1fm ✓)\n", source.c_str(), current_altitude);
-            char log_msg[100];
-            snprintf(log_msg, sizeof(log_msg), "ARMED by %s at %.1fm altitude\r\n", source.c_str(), current_altitude);
-            SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, log_msg);
-        }
+        // Handle arming
+        is_system_armed = true;
+        Serial.printf("[COMM MANAGER] ARMED by %s\n", source.c_str());
+        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "System armed\r\n");
     } else if (command == "CMD_DISARM") {
         // Handle disarming
         is_system_armed = false;
@@ -194,13 +156,6 @@ void CommunicationManager::handleModeCommand(String command, String source) {
 }
 
 void CommunicationManager::setMQTTMode(String source) {
-    // 🔥 STRICT BEACON MODE - Prevent switching to MQTT mode if MQTT flag is disabled
-    if (!MQTT) {
-        Serial.printf("[COMM MANAGER] MQTT mode blocked - MQTT flag disabled (Strict Beacon Mode) by %s\n", source.c_str());
-        SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::WARNING, system_log_file, "MQTT mode switch blocked - MQTT disabled\r\n");
-        return;
-    }
-    
     bool was_mqtt = use_mqtt_mode && !use_beacon_mode;
     use_mqtt_mode = true;
     use_beacon_mode = false;
@@ -226,6 +181,15 @@ void CommunicationManager::setBeaconMode(String source) {
     }
 }
 
+void CommunicationManager::setDualMode(String source) {
+    use_mqtt_mode = true;
+    use_beacon_mode = true;
+    comm_status.current_mode = "DUAL_MODE";
+    
+    Serial.printf("[COMM MANAGER] Switched to Dual mode (MQTT + Beacon) by %s\n", source.c_str());
+    SYSTEM_LOGGER.logToFile(SPIFFS, LOG_MODE::APPEND, "FC1", LOG_LEVEL::INFO, system_log_file, "Switched to dual communication mode\r\n");
+}
+
 void CommunicationManager::reportCurrentMode() {
     String mode = getCurrentMode();
     String status = "";
@@ -233,15 +197,11 @@ void CommunicationManager::reportCurrentMode() {
     if (communication_mode_locked) {
         status += " [LOCKED]";
     }
-    if (auto_fallback_enabled && MQTT) {
+    if (auto_fallback_enabled) {
         status += " [AUTO-FALLBACK]";
     }
     if (is_system_armed) {
         status += " [ARMED]";
-    }
-    // 🔥 STRICT BEACON MODE - Show when MQTT is compile-time disabled
-    if (!MQTT) {
-        status += " [MQTT-DISABLED]";
     }
     
     uint32_t now = millis();
@@ -284,8 +244,7 @@ void CommunicationManager::updateTransmissionStatus(bool mqtt_success, bool beac
 }
 
 void CommunicationManager::checkAutoFallback() {
-    // 🔥 STRICT BEACON MODE - Only perform auto-fallback if MQTT flag is enabled
-    if (!MQTT || !auto_fallback_enabled || communication_mode_locked) {
+    if (!auto_fallback_enabled || communication_mode_locked) {
         return;
     }
     
@@ -359,15 +318,12 @@ void CommunicationManager::update() {
 }
 
 String CommunicationManager::getCurrentMode() {
-    if (use_mqtt_mode) {
+    if (use_mqtt_mode && use_beacon_mode) {
+        return "DUAL_MODE";
+    } else if (use_mqtt_mode) {
         return "MQTT_ONLY";
     } else if (use_beacon_mode) {
-        // 🔥 STRICT BEACON MODE - Show when MQTT is disabled
-        if (!MQTT) {
-            return "STRICT_BEACON";
-        } else {
-            return "BEACON_ONLY";
-        }
+        return "BEACON_ONLY";
     } else {
         return "NO_COMMS";
     }

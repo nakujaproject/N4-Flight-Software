@@ -1,6 +1,5 @@
 #include "espnow_beacon_transmitter.h"
 #include "defs.h"  // Include defs.h to access TEST flag
-#include <WiFi.h>  // Include WiFi for mode checking
 
 ESPNowBeaconTransmitter* ESPNowBeaconTransmitter::instance = nullptr;
 
@@ -16,15 +15,23 @@ ESPNowBeaconTransmitter::~ESPNowBeaconTransmitter() {
 }
 
 bool ESPNowBeaconTransmitter::begin() {
-    // Safety check: Ensure WiFi is available before initializing ESP-NOW
-    if (WiFi.getMode() == WIFI_MODE_NULL) {
-        Serial.println("❌ WiFi not initialized - cannot start ESP-NOW");
-        return false;
+    // Prevent double initialization if another module already called esp_now_init
+    static bool espnow_initialized = false;
+    wifi_mode_t currentMode;
+    esp_wifi_get_mode(&currentMode);
+    if(currentMode != WIFI_MODE_AP && currentMode != WIFI_MODE_APSTA && currentMode != WIFI_MODE_STA && currentMode != WIFI_MODE_APSTA) {
+        Serial.println("[ESP-NOW] Invalid WiFi mode; forcing WIFI_AP_STA");
+        WiFi.mode(WIFI_AP_STA);
+        delay(50);
     }
-    
-    if (esp_now_init() != ESP_OK) {
-        Serial.println("❌ ESP-NOW init failed");
-        return false;
+    if(!espnow_initialized) {
+        if (esp_now_init() != ESP_OK) {
+            Serial.println("❌ ESP-NOW init failed");
+            return false;
+        }
+        espnow_initialized = true;
+    } else {
+        Serial.println("[ESP-NOW] Already initialized - skipping esp_now_init()");
     }
 
     esp_now_peer_info_t peerInfo = {};

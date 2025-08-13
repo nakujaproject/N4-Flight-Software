@@ -11,13 +11,11 @@
 /*!< To select the telemetry transfer method used */
 /*!< note: u can use wifi and xbee at the same time, so both of these handles can be set */
 /*!< at the same time */
-#define MQTT 0                                 /*!< Set to 1 for normal mode (MQTT + Beacon switching), 0 for STRICT BEACON MODE (no WiFi/MQTT) */
+#define MQTT 0                                 /*!< Default to MQTT mode - can be overridden dynamically */
 #define TEST 1                                /*!< set to 1 to enable test mode - allows data transmission even when disarmed */
 #define XBEE 0                               /*!< set to 1 if using XBEE for telemetry transfer */
 
-// 🔥 STRICT BEACON MODE CONTROL
-// When MQTT = 0: Only beacon communication, no WiFi AP, no MQTT switching allowed
-// When MQTT = 1: Normal dynamic switching between MQTT and beacon modes
+// 🔥 DYNAMIC COMMUNICATION MODE CONTROL
 extern bool use_mqtt_mode;                       /*!< Enable MQTT transmission */
 extern bool use_beacon_mode;                    /*!< Enable beacon transmission */
 extern bool auto_fallback_enabled;             /*!< Enable automatic fallback to beacon when MQTT fails */
@@ -32,6 +30,7 @@ extern bool is_system_armed;                 /*!< Global armed state for both MQ
 // Command definitions for dynamic mode switching
 #define CMD_MQTT_MODE "MQTT_MODE"
 #define CMD_BEACON_MODE "BEACON_MODE"
+#define CMD_DUAL_MODE "DUAL_MODE"              /*!< Enable both MQTT and beacon simultaneously */
 #define CMD_AUTO_FALLBACK_ON "AUTO_FALLBACK_ON"
 #define CMD_AUTO_FALLBACK_OFF "AUTO_FALLBACK_OFF"
 #define CMD_GET_MODE "GET_MODE"
@@ -58,16 +57,12 @@ extern communication_status_t comm_status;
 
 /* debug parameters for use during testing - set to 0 for production */
 #define DEBUGGING 1                           /*!< allow debugging to terminal. Set to 0 pre flight to disable serial terminal printing and improve speed  */
-#define LOG_TO_MEMORY 1                      /*!< allow data logging to memory. Set to 1 to log data to external flash memory. Must be set during flight */
+#define LOG_TO_MEMORY 0                      /*!< allow data logging to memory. Set to 1 to log data to external flash memory. Must be set during flight */
 #define DEBUG_TO_TERMINAL 1                 /*!< allow create task that print data to terminal. Set to 0 before flight  */
-
-// Flash memory logging configuration to prevent blocking
-#define ENABLE_FLASH_LOGGING 1              /*!< Set to 1 to enable flash logging for data storage */
-#define ENABLE_QUEUE_LOGGING 1              /*!< Set to 1 to use queue-based logging instead of direct writes */
-#define LOG_QUEUE_SIZE 50                    /*!< Size of logging queue - prevents blocking when flash is busy */
-#define LOG_TASK_PRIORITY 1                  /*!< Low priority for logging task to not interfere with telemetry */
-#define LOG_TASK_STACK_SIZE 4096            /*!< Dedicated stack for logging task */
-#define LOG_WRITE_TIMEOUT_MS 10             /*!< Maximum time to wait for flash write (non-blocking) */
+// Simulation toggle: 1 = use internal simulated flight profile & GPS, 0 = use real sensors
+#ifndef USE_SIMULATION
+#define USE_SIMULATION 1
+#endif
 
 #if DEBUGGING
     #define debug(x) Serial.print(x)
@@ -114,37 +109,56 @@ extern volatile uint8_t MAIN_CHUTE_EJECT_FLAG;     /*!< Set to 1 when main chute
 #define ALTITUDE 1525.0 // altitude of iPIC building, JKUAT, Juja. TODO: Change to launch site altitude
 #define LAUNCH_DETECTION_THRESHOLD 10         /*!< altitude in meters, above which we register that we have launched  */
 #define LAUNCH_DETECTION_ALTITUDE_WINDOW 20  /*!< Window in meters where we register a launch */
-#define APOGEE_DETECTION_THRESHOLD 2         /*!< value in meters for detecting apogee - reduced for 120m simulation */
-#define MAIN_EJECTION_HEIGHT 50             /*!< height to eject the main chute - 50m from ground for 120m simulation */
+#define APOGEE_DETECTION_THRESHOLD 3         /*!< value in meters for detecting apogee */
+#define MAIN_EJECTION_HEIGHT 500            /*!< height to eject the main chute  */
 #define DROGUE_EJECTION_HEIGHT  1000             /*!< height to eject the drogue chute - ideally it should be at apogee  */
 #define SEA_LEVEL_PRESSURE 101325            /*!< sea level pressure to be used for altitude calculations */
 #define BASE_ALTITUDE 1417                   /*!< this value is the altitude at rocket launch site - adjust accordingly */
 
-// Enhanced flight state detection using Kalman filtered data
-#define ARM_ALTITUDE_THRESHOLD 50            /*!< minimum relative altitude (filtered) required for arming in meters */
-#define DROGUE_DEPLOY_DELAY_MS 1000          /*!< delay after apogee detection before drogue deployment in milliseconds - 1 second for 120m simulation */
-#define USE_KALMAN_FOR_STATE_DETECTION 1    /*!< set to 1 to use Kalman filtered altitude for all state decisions */
+// Kalman usage toggle for flight state detection / arming
+#ifndef USE_KALMAN_FOR_STATE_DETECTION
+#define USE_KALMAN_FOR_STATE_DETECTION 1      /*!< 1 = use Kalman filtered altitude & vertical velocity for state detection */
+#endif
 
-// Flight operation modes
-enum OPERATION_MODE {
-    SAFE_MODE = 0, /* Pyro-charges are disarmed  */
-    ARMED_MODE      /* Pyro charges are armed and ready to deploy on apogee --see docs for more-- */
-};
+// Arming altitude safety threshold (filtered altitude must exceed this to accept ARM command)
+#ifndef ARM_ALTITUDE_THRESHOLD
+#define ARM_ALTITUDE_THRESHOLD 50            /*!< meters AGL required before accepting ARM command (prevents pad arming) */
+#endif
 
-// MAC address declarations for global access
+// Drogue deployment delay after apogee detection
+#ifndef DROGUE_DEPLOY_DELAY_MS
+#define DROGUE_DEPLOY_DELAY_MS 1500          /*!< ms delay after apogee detection before firing drogue */
+#endif
+
+// Unified logging queue length (used for flash + CSV queues)
+#ifndef LOG_TO_MEM_QUEUE_LENGTH
+#define LOG_TO_MEM_QUEUE_LENGTH 64           /*!< queue depth for log_to_mem_queue and csv_log_queue */
+#endif
+
+// Operational mode enumeration (used across main.cpp)
+namespace OPERATION_MODE {
+    enum : uint8_t {
+        SAFE_MODE = 0,
+        ARMED_MODE = 1
+    };
+}
+
+// PWM control for pyro outputs (scaled to approximate 6V from 15V supply)
+#define PYRO_SUPPLY_VOLTAGE     15.0f
+#define PYRO_TARGET_VOLTAGE     6.0f
+#define PYRO_PWM_FREQ           500      /*!< Hz - low freq acceptable for MOSFET switching */
+#define PYRO_PWM_RES_BITS       8        /*!< 8-bit resolution (0-255) */
+#define DROGUE_PWM_CHANNEL      3        /*!< LEDC channel for drogue output */
+#define MAIN_PWM_CHANNEL        4        /*!< LEDC channel for main output */
+
+// MAC addresses for ESP-NOW / WiFi operations (update with actual hardware values before flight)
 #include <stdint.h>
+#ifndef MAC_ADDRESS_VALUES_DEFINED
+#define MAC_ADDRESS_VALUES_DEFINED
+static const uint8_t ROCKET_MAC[6] = {0x08, 0xD1, 0xF9, 0x15, 0x9C, 0x04}; // Flight computer ESP32 MAC (placeholder)
+static const uint8_t BASE_MAC[6]   = {0xf4, 0x65, 0x0b, 0x48, 0x5c, 0xf8}; // Ground station / peer MAC (placeholder)
+#endif
 
-// MAC address definitions (now defined here for global access)
-// Alternative MAC addresses (commented for reference):
-// const uint8_t ROCKET_MAC[6] = {0x10, 0x06, 0x1c, 0xa6, 0x11, 0xf0};
-// const uint8_t BASE_MAC[6]   = {0xf4, 0x65, 0x0b, 0x48, 0x5c, 0xf8};
-// const uint8_t BASE_MAC[6]   = {0x10, 0x06, 0x1c, 0xa6, 0x11, 0xf0};
-
-// Current active MAC addresses:
-//const uint8_t ROCKET_MAC[6] = {0x10, 0x06, 0x1c, 0xa6, 0x18, 0x20};
-//const uint8_t BASE_MAC[6]   = {0x10, 0x06, 0x1c, 0xa6, 0x11, 0xf0};
-const uint8_t ROCKET_MAC[6] = {0x84, 0x1f, 0xe8, 0x36, 0x73, 0xac};
-const uint8_t BASE_MAC[6]   = {0x08, 0xd1, 0xf9, 0x15, 0xa2, 0x0c};
 // Externs for communication manager to restore WiFi/MQTT
 class WIFIConfig;
 extern WIFIConfig wifi_config;
@@ -160,13 +174,6 @@ extern void MQTT_Reconnect();
 #define FILTERED_DATA_QUEUE_LENGTH 10       /*!< length of the filtered data queue */
 #define FLIGHT_STATES_QUEUE_LENGTH 1        /*!< length of the flight states queue */
 #define CONSUME_TASK_DELAY    100           /*!< Task delay in ms - increased to prevent watchdog timeouts */
-
-// Logger queue management - prevents blocking main telemetry tasks
-#define LOG_TO_MEM_QUEUE_LENGTH 100         /*!< Large queue for flash logging to prevent data loss */
-extern QueueHandle_t log_to_mem_queue_handle;  /*!< Queue handle for non-blocking flash logging */
-
-// Memory safety for strict beacon mode
-#define BEACON_MODE_SAFETY_CHECKS 1         /*!< Enable additional memory checks in beacon-only mode */
 
 /* MQTT constants */
 // MQTT server IP and port are now configured dynamically via WiFiManager

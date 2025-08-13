@@ -9,7 +9,7 @@
 class WIFIConfig {
 private:
     Preferences preferences;
-    char basestation_ip[16] = "192.168.100.248";  // Default IP
+    char basestation_ip[16] = "192.168.100.45";  // Default IP
     char mqtt_port[6] = "1883";                    // Default port
     
 public:

@@ -127,3 +127,22 @@ bool SDLogger::log(const telemetry_type_t& packet, const gps_type_t& gps) {
     return true;
 }
 
+bool SDLogger::logRawCSV(const char* csv_line) {
+    if (!isInitialized || csv_line == nullptr || csv_line[0] == '\0') return false;
+    disableAllDevices();
+    digitalWrite(cs, LOW);
+    File file = SD.open(filename, FILE_APPEND);
+    if (!file) {
+        Serial.println("❌ SDLogger: Failed to open file for raw CSV");
+        digitalWrite(cs, HIGH);
+        return false;
+    }
+    file.print(csv_line);
+    // Ensure line termination
+    size_t len = strlen(csv_line);
+    if (len == 0 || csv_line[len-1] != '\n') file.print('\n');
+    file.close();
+    digitalWrite(cs, HIGH);
+    return true;
+}
+

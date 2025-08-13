@@ -36,7 +36,7 @@ uint8_t WIFIConfig::WifiConnect(bool enable_ap_mode, const uint8_t* rocket_mac) 
 
     // Always ensure defaults are set before WiFiManager runs
     if (strlen(basestation_ip) == 0 || strcmp(basestation_ip, "0.0.0.0") == 0) {
-        strcpy(basestation_ip, "192.168.100.248");
+        strcpy(basestation_ip, "192.168.100.45");
     }
     if (strlen(mqtt_port) == 0) {
         strcpy(mqtt_port, "1883");
@@ -46,21 +46,25 @@ uint8_t WIFIConfig::WifiConnect(bool enable_ap_mode, const uint8_t* rocket_mac) 
         // Configure AP + STA mode for beacon transmission
         Serial.println("[WiFiConfig] Set mode: WIFI_AP_STA");
         WiFi.mode(WIFI_AP_STA);                                // 1. Set mode
-        esp_wifi_set_mac(WIFI_IF_AP, rocket_mac);
-        esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);        // 3. Set channel
-        
-        // 4. Start the Access Point for beacon transmission
-        bool ap_started = WiFi.softAP("N4-Beacon-AP", nullptr, 1, 0, 1); // SSID, password, channel, hidden, max_clients
-        if (ap_started) {
-            Serial.println("[WiFiConfig] Access Point started for beacon transmission");
-            Serial.print("[WiFiConfig] AP IP: ");
-            Serial.println(WiFi.softAPIP());
-        } else {
-            Serial.println("[WiFiConfig] Failed to start Access Point");
+        esp_wifi_set_mac(WIFI_IF_AP, rocket_mac);              // 2. Set custom AP MAC (optional)
+        esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE);        // 3. Fixed channel for beacon / ESP-NOW
+
+        // Bring up a minimal AP so WIFI_IF_AP is active for esp_wifi_80211_tx
+        // Open network (no password) for lowest overhead; change if security needed
+    // Start open AP (no password) for beacon/ESP-NOW layer
+    bool ap_ok = WiFi.softAP("N4-FC");
+        if(!ap_ok){
+            Serial.println("[WiFiConfig] softAP start FAILED");
             return 0;
+        } else {
+            Serial.print("[WiFiConfig] AP started. IP: ");
+            Serial.println(WiFi.softAPIP());
         }
 
-        // No WiFiManager — skip real WiFi connection
+        // Short delay to ensure AP is fully up before ESP-NOW init
+        delay(100);
+
+        // No WiFiManager — skip infrastructure connection
         return 1;
     } else {
         // Use WiFiManager for infrastructure connection (MQTT)
@@ -106,7 +110,7 @@ uint8_t WIFIConfig::WifiConnect(bool enable_ap_mode, const uint8_t* rocket_mac) 
         IPAddress test_ip;
         if (!test_ip.fromString(basestation_ip)) {
             Serial.println("[WiFiConfig] Invalid IP address format, using default");
-            strcpy(basestation_ip, "192.168.100.248");
+            strcpy(basestation_ip, "192.168.100.45");
         }
 
         // Validate port number
