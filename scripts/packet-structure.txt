@@ -1,0 +1,18 @@
+record_number
+operation_mode (armed or safe)
+state
+ax 
+ay 
+az 
+pitch 
+roll 
+gx 
+gy 
+gz
+latitude 
+longitude
+gps_altitude
+pressure
+temperature
+relative_altitude
+

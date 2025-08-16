@@ -1,0 +1,13 @@
+
+# subsribe to mqtt
+# send arming from base station
+# if arming received, resume ejection task
+# else keep it suspended
+
+# respond with arming success to base station 
+
+# fallback if mqtt fails,
+# if launch detected, activate the ejection task
+
+
+

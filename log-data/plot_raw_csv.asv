@@ -1,0 +1,8 @@
+% plot raw csv data
+% for post flight processing 
+%
+filename = 'x-extracted.csv';
+t = readtable(filename);
+x_vals = t(,:1);
+
+%plot(rec_num, 'b-');

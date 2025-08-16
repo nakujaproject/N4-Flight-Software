@@ -1,0 +1,92 @@
+/**
+ * @file data_types.h
+ * @brief defines the data types, structs and typedefs used to store flight data
+ */
+
+#ifndef DATA_TYPES_H
+#define DATA_TYPES_H
+
+#include <Arduino.h>
+
+#define MAX_COMMAND_LENGTH 20
+#define MAX_BEACON_SIZE 256
+
+struct CommandPacket {
+    uint32_t timestamp;
+    uint8_t length;
+    uint8_t command[MAX_COMMAND_LENGTH];
+};
+
+
+/**
+ * A structure to represent acceleration data
+ */
+typedef struct Acceleration_Data{
+    float ax;                   /*!< x axis acceleration */
+    float ay;                   /*!< y axis acceleration */
+    float az;                   /*!< z axis acceleration */
+    float gx;                   /*!< x angular velocity */
+    float gy;                   /*!< y angular velocity */
+    float gz;                   /*!< z angular velocity */
+    float pitch;                /*!< pitch angle */
+    float roll;                 /*!< roll angle */
+    double kalman_altitude;      //Fully Filtered Altitude
+    double kalman_vertical_velocity;
+} accel_type_t;
+
+/**
+ * A structure to represent angular velocity data
+ */
+typedef struct Gyroscope_Data {
+    double gx;                  /*!< x axis angular velocity */
+    double gy;                  /*!< y axis angular velocity */
+    double gz;                  /*!< z axis angular velocity */
+} gyro_type_t;
+
+/**
+ * A structure to represent GPS data
+ */
+typedef struct GPS_Data{
+    double latitude;            /*!< latitude coordinate */
+    double longitude;           /*!< longitude coordinate */
+    double gps_altitude;        /*!< altitude read by the GPS */
+    uint32_t time;              /*!< time read by the GPS */
+} gps_type_t;
+
+/**
+ * A structure to represent the altimeter data
+ */
+typedef struct Altimeter_Data{
+    double pressure;             /*!< atmospheric pressure */
+    double rel_altitude;         /*!< current relative altitude read by the altimeter */
+    double velocity;             /*!< velocity from the altimeter */
+    double temperature;          /*!< altimeter temperature */
+    double filtered_altitude;    /*!< filtered altitude using Kalman filter */
+    double AGL;                  /*!< altitude above ground level */
+    double filtered_altitude_1d;  //Partially Filtered Altitude
+    double kalman_altitude;      //Fully Filtered Altitude
+    double kalman_vertical_velocity;  //Fully Filtered Velocity
+} altimeter_type_t;
+
+/**
+ * A structure to represent telemetry data. This is the data transmitted to ground
+ */
+typedef struct Telemetry_Data {
+    uint32_t record_number;     /*!< current row number for flight data logging  */
+    uint8_t operation_mode;     /*!< operation mode to tell whether we are in SAFE or FLIGHT mode */
+    uint8_t state;              /*!< current flight state. See states.h */
+    altimeter_type_t alt_data;  /*!< altimeter data */
+    accel_type_t acc_data;      /*!< accelerometer data */
+    gyro_type_t gyro_data;      /*!< gyroscope data */
+    gps_type_t gps_data;        /*!< gps data */
+    uint8_t drogue_pin_state;   /*!< drogue parachute deployment state */
+    uint8_t main_chute_pin_state; /*!< main parachute deployment state */
+    float battery_voltage;      /*!< battery voltage */
+    int32_t wifi_rssi;          /*!< WiFi RSSI or beacon RSSI */
+    //double kalman_altitude;
+    //double kalman_vertical_velocity;
+            
+    
+} telemetry_type_t;
+
+#endif
