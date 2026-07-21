@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['n4_20flight_20software_0',['N4 Flight Software',['../index.html',1,'']]]
+  ['building_20compilation_20and_20downloading_0',['Building, Compilation and Downloading.',['../index.html#install_sec',1,'']]],
+  ['building_20the_20code_1',['Building the code',['../index.html#step11',1,'']]]
 ];
